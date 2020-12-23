@@ -1,13 +1,19 @@
+USERNAME=$1
+PASSWORD=$2
+BUCKET=$3
+ORG=$4
+DATA_FILE=$5
+
 influx setup \
        -f \
-       -u any \
-       -p 12345678 \
-       -b Flight-Database \
-       -o HPI \
+       -u "${USERNAME}" \
+       -p "${PASSWORD}" \
+       -b "${BUCKET}" \
+       -o "${ORG}" \
        -r 0
 
 influx write \
-  -b Flight-Database \
-  -o HPI \
+  -b "${BUCKET}" \
+  -o "${ORG}" \
   -p ns \
-  -f /bird-migration.txt
+  -f /"${DATA_FILE}"

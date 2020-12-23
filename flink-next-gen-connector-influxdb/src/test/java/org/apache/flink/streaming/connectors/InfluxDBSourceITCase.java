@@ -25,21 +25,18 @@ import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.util.TestLogger;
 import org.influxdb.InfluxDB;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.rules.Timeout;
-import org.testcontainers.containers.Container;
-import org.testcontainers.utility.MountableFile;
 import util.InfluxDBContainer;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
@@ -64,20 +61,12 @@ public class InfluxDBSourceITCase extends TestLogger {
 
     @BeforeAll
     static void setUp() {
-        influxDbContainer
-                .withBucket("Flight_Database")
-                .withCopyFileToContainer(MountableFile.forClasspathResource("bird-migration.txt"), "/bird-migration.txt")
-                .withCopyFileToContainer(MountableFile.forClasspathResource("influx-setup.sh"), "/influx-setup.sh")
-                .start();
+        influxDbContainer.startPreIngestedInfluxDB();
+    }
 
-        try {
-            Container.ExecResult execResult = influxDbContainer.execInContainer("chmod", "-x", "/influx-setup.sh");
-            assertEquals(execResult.getExitCode(), 0);
-            Container.ExecResult writeResult = influxDbContainer.execInContainer("/bin/bash", "/influx-setup.sh");
-            assertEquals(writeResult.getExitCode(), 0);
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
+    @AfterAll
+    static void tearDown() {
+        influxDbContainer.stop();
     }
 
     /**
