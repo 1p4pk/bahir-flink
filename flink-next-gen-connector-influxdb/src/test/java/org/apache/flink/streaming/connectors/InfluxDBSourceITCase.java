@@ -24,19 +24,22 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.util.TestLogger;
-
-import org.junit.ClassRule;
-import org.junit.Rule;
+import org.influxdb.InfluxDB;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.rules.Timeout;
-import org.testcontainers.containers.InfluxDBContainer;
-import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.containers.Container;
+import org.testcontainers.utility.MountableFile;
+import util.InfluxDBContainer;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
@@ -44,20 +47,38 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Integration test for the InfluxDB source for Flink.
  */
 public class InfluxDBSourceITCase extends TestLogger {
-    private static final DockerImageName DEFAULT_IMAGE_NAME = DockerImageName.parse("influxdb:v2.0.2");
+    private static InfluxDB influxDB;
 
-    @Rule
-    public InfluxDBContainer influxDbContainer = new InfluxDBContainer(DEFAULT_IMAGE_NAME);
+    @RegisterExtension
+    public static InfluxDBContainer influxDbContainer = new InfluxDBContainer();
 
-    @ClassRule
+    @RegisterExtension
     public static final MiniClusterWithClientResource CLUSTER = new MiniClusterWithClientResource(
             new MiniClusterResourceConfiguration.Builder()
                     .setNumberSlotsPerTaskManager(2)
                     .setNumberTaskManagers(1)
                     .build());
 
-    @Rule
+    @RegisterExtension
     public final Timeout timeout = Timeout.millis(300000L);
+
+    @BeforeAll
+    static void setUp() {
+        influxDbContainer
+                .withBucket("Flight_Database")
+                .withCopyFileToContainer(MountableFile.forClasspathResource("bird-migration.txt"), "/bird-migration.txt")
+                .withCopyFileToContainer(MountableFile.forClasspathResource("influx-setup.sh"), "/influx-setup.sh")
+                .start();
+
+        try {
+            Container.ExecResult execResult = influxDbContainer.execInContainer("chmod", "-x", "/influx-setup.sh");
+            assertEquals(execResult.getExitCode(), 0);
+            Container.ExecResult writeResult = influxDbContainer.execInContainer("/bin/bash", "/influx-setup.sh");
+            assertEquals(writeResult.getExitCode(), 0);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * Test the following topology.
@@ -68,6 +89,7 @@ public class InfluxDBSourceITCase extends TestLogger {
     @Test
     void testIncrementPipeline() throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
         env.setParallelism(2);
 
         CollectSink.VALUES.clear();
