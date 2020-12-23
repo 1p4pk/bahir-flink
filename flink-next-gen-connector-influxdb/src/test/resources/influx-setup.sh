@@ -11,3 +11,4 @@ influx write \
   -o HPI \
   -p ns \
   -f /bird-migration.txt
+  
