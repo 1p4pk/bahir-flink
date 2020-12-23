@@ -20,10 +20,10 @@ public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>> extends Gen
     private static final String INFLUX_SETUP = "influx-setup.sh";
     private static final String DATA = "bird-migration.txt";
 
-    private String username;
-    private String password;
-    private String bucket;
-    private String organization;
+    private final String username;
+    private final String password;
+    private final String bucket;
+    private final String organization;
 
     public InfluxDBContainer() {
         super(DEFAULT_IMAGE_NAME);
