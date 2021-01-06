@@ -14,8 +14,7 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>> extends GenericContainer<SELF> {
-    public static final Integer INFLUXDB_PORT = 8086;
-
+    private static final Integer INFLUXDB_PORT = 8086;
     private static final DockerImageName DEFAULT_IMAGE_NAME = DockerImageName.parse("quay.io/influxdb/influxdb:v2.0.2");
     private static final String INFLUX_SETUP = "influx-setup.sh";
     private static final String DATA = "adsb-test.txt";
@@ -28,10 +27,10 @@ public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>> extends Gen
 
     public InfluxDBContainer() {
         super(DEFAULT_IMAGE_NAME);
-        this.username = "any";
-        this.password = "12345678";
+        this.username = "test-username";
+        this.password = "test-password";
         this.bucket = "test-bucket";
-        this.organization = "HPI";
+        this.organization = "test-org";
         this.waitStrategy = (new WaitAllStrategy())
                 .withStrategy(Wait
                         .forHttp("/ping").withBasicCredentials(this.username, this.password)
