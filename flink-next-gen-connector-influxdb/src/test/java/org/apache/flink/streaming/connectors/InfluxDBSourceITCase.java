@@ -78,7 +78,6 @@ public class InfluxDBSourceITCase extends TestLogger {
     @Test
     void testIncrementPipeline() throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-
         env.setParallelism(2);
 
         CollectSink.VALUES.clear();
