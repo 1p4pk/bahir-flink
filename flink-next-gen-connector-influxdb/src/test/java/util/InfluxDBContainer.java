@@ -18,7 +18,8 @@ public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>> extends Gen
 
     private static final DockerImageName DEFAULT_IMAGE_NAME = DockerImageName.parse("quay.io/influxdb/influxdb:v2.0.2");
     private static final String INFLUX_SETUP = "influx-setup.sh";
-    private static final String DATA = "bird-migration.txt";
+    private static final String DATA = "adsb-test.txt";
+    public static final int NO_CONTENT_STATUS_CODE = 204;
 
     private final String username;
     private final String password;
@@ -32,14 +33,17 @@ public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>> extends Gen
         this.bucket = "test-bucket";
         this.organization = "HPI";
         this.waitStrategy = (new WaitAllStrategy())
-                .withStrategy(Wait.forHttp("/ping").withBasicCredentials(this.username, this.password).forStatusCode(204))
+                .withStrategy(Wait
+                        .forHttp("/ping").withBasicCredentials(this.username, this.password)
+                        .forStatusCode(NO_CONTENT_STATUS_CODE))
                 .withStrategy(Wait.forListeningPort());
         this.withExposedPorts(INFLUXDB_PORT);
     }
 
     public void startPreIngestedInfluxDB() {
         this.withCopyFileToContainer(MountableFile.forClasspathResource(DATA), String.format("/%s", DATA)).
-                withCopyFileToContainer(MountableFile.forClasspathResource(INFLUX_SETUP), String.format("%s", INFLUX_SETUP));
+                withCopyFileToContainer(MountableFile.forClasspathResource(INFLUX_SETUP),
+                        String.format("%s", INFLUX_SETUP));
 
         this.start();
 
@@ -47,18 +51,23 @@ public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>> extends Gen
     }
 
     public InfluxDB getNewInfluxDB() {
-        InfluxDB influxDB = InfluxDBFactory.connect(this.getUrl(), this.username, this.password);
+        final InfluxDB influxDB = InfluxDBFactory.connect(this.getUrl(), this.username, this.password);
         influxDB.setDatabase(this.bucket);
         return influxDB;
     }
 
     private void writeDataToInfluxDB() {
         try {
-            Container.ExecResult execResult = this.execInContainer("chmod", "-x", "/influx-setup.sh");
+            final Container.ExecResult execResult = this.execInContainer("chmod", "-x", "/influx-setup.sh");
             assertEquals(execResult.getExitCode(), 0);
-            Container.ExecResult writeResult = this.execInContainer("/bin/bash", "/influx-setup.sh", this.username, this.password, this.bucket, this.organization, DATA);
+            final Container.ExecResult writeResult = this.execInContainer("/bin/bash", "/influx-setup.sh",
+                    this.username,
+                    this.password,
+                    this.bucket,
+                    this.organization,
+                    DATA);
             assertEquals(writeResult.getExitCode(), 0);
-        } catch (IOException | InterruptedException e) {
+        } catch (final IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
