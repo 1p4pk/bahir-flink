@@ -1,5 +1,8 @@
 package util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.io.IOException;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
 import org.testcontainers.containers.Container;
@@ -8,10 +11,6 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
-
-import java.io.IOException;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>> extends GenericContainer<SELF> {
     private static final Integer INFLUXDB_PORT = 8086;
