@@ -17,14 +17,13 @@
 */
 package org.apache.flink.streaming.connectors;
 
-import org.apache.flink.api.common.eventtime.Watermark;
-import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.connector.source.Source;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
@@ -82,11 +81,8 @@ public class InfluxDBSourceITCase extends TestLogger {
         CollectSink.VALUES.clear();
 
         Source influxDBSource = new InfluxDBSource<Long>();
-        env.fromSource(
-                influxDBSource,
-                WatermarkStrategy.noWatermarks(),
-                "InfluxDBSource"
-        ).map(new IncrementMapFunction())
+        env.fromSource(influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
+                .map(new IncrementMapFunction())
                 .addSink(new CollectSink());
 
         env.execute();
