@@ -23,10 +23,14 @@ import org.apache.flink.api.connector.source.SourceSplit;
 public class InfluxDBSplit implements SourceSplit {
 
     /** The unique ID of the split. Unique within the scope of this source. */
-    // private final String id;
+    private final String id;
+
+    public InfluxDBSplit(final String id) {
+        this.id = id;
+    }
 
     @Override
     public String splitId() {
-        return "0";
+        return this.id;
     }
 }

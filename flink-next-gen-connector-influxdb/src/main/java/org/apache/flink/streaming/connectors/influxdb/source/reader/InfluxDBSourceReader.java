@@ -17,6 +17,8 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source.reader;
 
+import java.util.Map;
+import java.util.function.Supplier;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
@@ -24,42 +26,39 @@ import org.apache.flink.connector.base.source.reader.RecordEmitter;
 import org.apache.flink.connector.base.source.reader.SingleThreadMultiplexSourceReaderBase;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
 
-import java.util.Map;
-import java.util.function.Supplier;
-
 /** The source reader for the InfluxDB line protocol. */
 public class InfluxDBSourceReader<T>
         extends SingleThreadMultiplexSourceReaderBase<
                 Tuple2<T, Long>, T, InfluxDBSplit, InfluxDBSplit> {
 
     public InfluxDBSourceReader(
-            Supplier<InfluxDBSplitReader<T>> splitReaderSupplier,
-            RecordEmitter<Tuple2<T, Long>, T, InfluxDBSplit> recordEmitter,
-            Configuration config,
-            SourceReaderContext context) {
+            final Supplier<InfluxDBSplitReader<T>> splitReaderSupplier,
+            final RecordEmitter<Tuple2<T, Long>, T, InfluxDBSplit> recordEmitter,
+            final Configuration config,
+            final SourceReaderContext context) {
         super(splitReaderSupplier::get, recordEmitter, config, context);
     }
 
     @Override
     public void start() {
         // we request a split only if we did not get splits during the checkpoint restore
-        if (getNumberOfCurrentlyAssignedSplits() == 0) {
-            context.sendSplitRequest();
+        if (this.getNumberOfCurrentlyAssignedSplits() == 0) {
+            this.context.sendSplitRequest();
         }
     }
 
     @Override
-    protected void onSplitFinished(Map<String, InfluxDBSplit> map) {
-        context.sendSplitRequest();
+    protected void onSplitFinished(final Map<String, InfluxDBSplit> map) {
+        this.context.sendSplitRequest();
     }
 
     @Override
-    protected InfluxDBSplit initializedState(InfluxDBSplit influxDBSplit) {
+    protected InfluxDBSplit initializedState(final InfluxDBSplit influxDBSplit) {
         return influxDBSplit;
     }
 
     @Override
-    protected InfluxDBSplit toSplitType(String s, InfluxDBSplit influxDBSplitState) {
+    protected InfluxDBSplit toSplitType(final String s, final InfluxDBSplit influxDBSplitState) {
         return null;
     }
 }

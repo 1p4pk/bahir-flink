@@ -17,6 +17,7 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source;
 
+import java.util.function.Supplier;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.connector.source.Boundedness;
@@ -36,8 +37,6 @@ import org.apache.flink.streaming.connectors.influxdb.source.reader.InfluxDBSour
 import org.apache.flink.streaming.connectors.influxdb.source.reader.InfluxDBSplitReader;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplitSerializer;
-
-import java.util.function.Supplier;
 
 /**
  * The Source implementation of InfluxDB. Please use a {@link InfluxDBSourceBuilder} to construct a
@@ -61,11 +60,12 @@ public class InfluxDBSource<Long>
     }
 
     @Override
-    public SourceReader<Long, InfluxDBSplit> createReader(SourceReaderContext sourceReaderContext)
-            throws Exception {
-        Supplier<InfluxDBSplitReader<Long>> splitReaderSupplier = () -> new InfluxDBSplitReader<>();
-        InfluxDBRecordEmitter<Long> recordEmitter = new InfluxDBRecordEmitter<>();
-        Configuration config = new Configuration();
+    public SourceReader<Long, InfluxDBSplit> createReader(
+            final SourceReaderContext sourceReaderContext) throws Exception {
+        final Supplier<InfluxDBSplitReader<Long>> splitReaderSupplier =
+                () -> new InfluxDBSplitReader<>();
+        final InfluxDBRecordEmitter<Long> recordEmitter = new InfluxDBRecordEmitter<>();
+        final Configuration config = new Configuration();
         config.setInteger("ELEMENT_QUEUE_CAPACITY", 3);
         return new InfluxDBSourceReader<>(
                 splitReaderSupplier, recordEmitter, config, sourceReaderContext);
@@ -73,14 +73,14 @@ public class InfluxDBSource<Long>
 
     @Override
     public SplitEnumerator<InfluxDBSplit, InfluxDBSourceEnumState> createEnumerator(
-            SplitEnumeratorContext<InfluxDBSplit> splitEnumeratorContext) throws Exception {
+            final SplitEnumeratorContext<InfluxDBSplit> splitEnumeratorContext) throws Exception {
         return new InfluxDBSplitEnumerator(splitEnumeratorContext);
     }
 
     @Override
     public SplitEnumerator<InfluxDBSplit, InfluxDBSourceEnumState> restoreEnumerator(
-            SplitEnumeratorContext<InfluxDBSplit> splitEnumeratorContext,
-            InfluxDBSourceEnumState influxDBSourceEnumState)
+            final SplitEnumeratorContext<InfluxDBSplit> splitEnumeratorContext,
+            final InfluxDBSourceEnumState influxDBSourceEnumState)
             throws Exception {
         return null;
     }

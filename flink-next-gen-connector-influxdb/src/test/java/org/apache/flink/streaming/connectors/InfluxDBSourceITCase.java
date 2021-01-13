@@ -17,6 +17,12 @@
  */
 package org.apache.flink.streaming.connectors;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.connector.source.Source;
@@ -26,27 +32,11 @@ import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSource;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.util.TestLogger;
-import org.influxdb.InfluxDB;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.rules.Timeout;
-import util.InfluxDBContainer;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Integration test for the InfluxDB source for Flink. */
 public class InfluxDBSourceITCase extends TestLogger {
-    private static InfluxDB influxDB;
-
-    @RegisterExtension public static InfluxDBContainer influxDbContainer = new InfluxDBContainer();
-
     @RegisterExtension
     public static final MiniClusterWithClientResource CLUSTER =
             new MiniClusterWithClientResource(
@@ -55,22 +45,11 @@ public class InfluxDBSourceITCase extends TestLogger {
                             .setNumberTaskManagers(1)
                             .build());
 
-    @RegisterExtension public final Timeout timeout = Timeout.millis(300000L);
-
-    @BeforeAll
-    static void setUp() {
-        influxDbContainer.startPreIngestedInfluxDB();
-    }
-
-    @AfterAll
-    static void tearDown() {
-        influxDbContainer.stop();
-    }
-
     /**
      * Test the following topology.
      *
      * <pre>
+     *     1,2,3                +1              2,3,4
      *     (source1/1) -----> (map1/1) -----> (sink1/1)
      * </pre>
      */
@@ -81,7 +60,8 @@ public class InfluxDBSourceITCase extends TestLogger {
 
         CollectSink.VALUES.clear();
 
-        Source influxDBSource = new InfluxDBSource<Long>();
+        final Source influxDBSource = new InfluxDBSource<Long>();
+
         env.fromSource(influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
                 .map(new IncrementMapFunction())
                 .addSink(new CollectSink());
@@ -90,8 +70,8 @@ public class InfluxDBSourceITCase extends TestLogger {
 
         final Collection<Long> results = new ArrayList<>();
         results.add(2L);
-        results.add(22L);
-        results.add(23L);
+        results.add(3L);
+        results.add(4L);
         assertTrue(CollectSink.VALUES.containsAll(results));
     }
 

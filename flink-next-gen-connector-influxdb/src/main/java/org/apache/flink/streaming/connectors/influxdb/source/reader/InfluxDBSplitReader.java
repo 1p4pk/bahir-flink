@@ -17,13 +17,8 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source.reader;
 
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
-import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
-import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
-import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
+import static org.apache.flink.util.Preconditions.checkNotNull;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,8 +27,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-
-import static org.apache.flink.util.Preconditions.checkNotNull;
+import javax.annotation.Nullable;
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
+import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
+import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
+import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
 
 /**
  * A {@link SplitReader} implementation that reads records from InfluxDB splits.
@@ -46,18 +45,18 @@ public class InfluxDBSplitReader<T> implements SplitReader<Tuple2<T, Long>, Infl
 
     @Override
     public RecordsWithSplitIds<Tuple2<T, Long>> fetch() throws IOException {
-        InfluxDBSplitRecords<Tuple2<T, Long>> recordsBySplits = new InfluxDBSplitRecords<>();
-        Collection<Tuple2<T, Long>> recordsForSplit = recordsBySplits.recordsForSplit("0");
+        final InfluxDBSplitRecords<Tuple2<T, Long>> recordsBySplits = new InfluxDBSplitRecords<>();
+        final Collection<Tuple2<T, Long>> recordsForSplit = recordsBySplits.recordsForSplit("0");
         recordsForSplit.add(new Tuple2(1L, 1L));
-        recordsForSplit.add(new Tuple2(21L, 2L));
-        recordsForSplit.add(new Tuple2(22L, 3L));
+        recordsForSplit.add(new Tuple2(2L, 2L));
+        recordsForSplit.add(new Tuple2(3L, 3L));
         recordsBySplits.prepareForRead();
         recordsBySplits.addFinishedSplit("0");
         return recordsBySplits;
     }
 
     @Override
-    public void handleSplitsChanges(SplitsChange<InfluxDBSplit> splitsChange) {}
+    public void handleSplitsChanges(final SplitsChange<InfluxDBSplit> splitsChange) {}
 
     @Override
     public void wakeUp() {}
@@ -79,29 +78,29 @@ public class InfluxDBSplitReader<T> implements SplitReader<Tuple2<T, Long>, Infl
             this.finishedSplits = new HashSet<>();
         }
 
-        private Collection<T> recordsForSplit(String splitId) {
-            return recordsBySplits.computeIfAbsent(splitId, id -> new ArrayList<>());
+        private Collection<T> recordsForSplit(final String splitId) {
+            return this.recordsBySplits.computeIfAbsent(splitId, id -> new ArrayList<>());
         }
 
-        private void addFinishedSplit(String splitId) {
-            finishedSplits.add(splitId);
+        private void addFinishedSplit(final String splitId) {
+            this.finishedSplits.add(splitId);
         }
 
         private void prepareForRead() {
-            splitIterator = recordsBySplits.entrySet().iterator();
+            this.splitIterator = this.recordsBySplits.entrySet().iterator();
         }
 
         @Override
         @Nullable
         public String nextSplit() {
-            if (splitIterator.hasNext()) {
-                Map.Entry<String, Collection<T>> entry = splitIterator.next();
-                currentSplitId = entry.getKey();
-                recordIterator = entry.getValue().iterator();
-                return currentSplitId;
+            if (this.splitIterator.hasNext()) {
+                final Map.Entry<String, Collection<T>> entry = this.splitIterator.next();
+                this.currentSplitId = entry.getKey();
+                this.recordIterator = entry.getValue().iterator();
+                return this.currentSplitId;
             } else {
-                currentSplitId = null;
-                recordIterator = null;
+                this.currentSplitId = null;
+                this.recordIterator = null;
                 return null;
             }
         }
@@ -110,11 +109,11 @@ public class InfluxDBSplitReader<T> implements SplitReader<Tuple2<T, Long>, Infl
         @Nullable
         public T nextRecordFromSplit() {
             checkNotNull(
-                    currentSplitId,
+                    this.currentSplitId,
                     "Make sure nextSplit() did not return null before "
                             + "iterate over the records split.");
-            if (recordIterator.hasNext()) {
-                return recordIterator.next();
+            if (this.recordIterator.hasNext()) {
+                return this.recordIterator.next();
             } else {
                 return null;
             }
@@ -122,7 +121,7 @@ public class InfluxDBSplitReader<T> implements SplitReader<Tuple2<T, Long>, Infl
 
         @Override
         public Set<String> finishedSplits() {
-            return finishedSplits;
+            return this.finishedSplits;
         }
     }
 }

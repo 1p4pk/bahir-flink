@@ -25,7 +25,9 @@ import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit
 public class InfluxDBRecordEmitter<T> implements RecordEmitter<Tuple2<T, Long>, T, InfluxDBSplit> {
     @Override
     public void emitRecord(
-            Tuple2<T, Long> element, SourceOutput<T> output, InfluxDBSplit splitState)
+            final Tuple2<T, Long> element,
+            final SourceOutput<T> output,
+            final InfluxDBSplit splitState)
             throws Exception {
         output.collect(element.f0, element.f1);
     }
