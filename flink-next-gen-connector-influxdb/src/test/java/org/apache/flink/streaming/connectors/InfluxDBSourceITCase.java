@@ -17,12 +17,6 @@
  */
 package org.apache.flink.streaming.connectors;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.connector.source.Source;
@@ -39,6 +33,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.rules.Timeout;
 import util.InfluxDBContainer;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Integration test for the InfluxDB source for Flink. */
 public class InfluxDBSourceITCase extends TestLogger {

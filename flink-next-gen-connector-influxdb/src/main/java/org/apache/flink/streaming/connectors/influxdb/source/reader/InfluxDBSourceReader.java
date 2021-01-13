@@ -17,14 +17,15 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source.reader;
 
-import java.util.Map;
-import java.util.function.Supplier;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
 import org.apache.flink.connector.base.source.reader.SingleThreadMultiplexSourceReaderBase;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
+
+import java.util.Map;
+import java.util.function.Supplier;
 
 /** The source reader for the InfluxDB line protocol. */
 public class InfluxDBSourceReader<T>
@@ -48,11 +49,13 @@ public class InfluxDBSourceReader<T>
     }
 
     @Override
-    protected void onSplitFinished(Map<String, InfluxDBSplit> map) {}
+    protected void onSplitFinished(Map<String, InfluxDBSplit> map) {
+        context.sendSplitRequest();
+    }
 
     @Override
     protected InfluxDBSplit initializedState(InfluxDBSplit influxDBSplit) {
-        return null;
+        return influxDBSplit;
     }
 
     @Override

@@ -17,14 +17,13 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source.split;
 
-import java.io.Serializable;
 import org.apache.flink.api.connector.source.SourceSplit;
 
 /** A {@link SourceSplit} for a InfluxDB split. */
-public class InfluxDBSplit implements SourceSplit, Serializable {
+public class InfluxDBSplit implements SourceSplit {
 
     /** The unique ID of the split. Unique within the scope of this source. */
-    //    private final String id;
+    // private final String id;
 
     @Override
     public String splitId() {

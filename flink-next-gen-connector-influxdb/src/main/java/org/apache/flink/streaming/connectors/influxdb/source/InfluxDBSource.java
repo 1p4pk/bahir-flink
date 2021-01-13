@@ -17,7 +17,6 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source;
 
-import java.util.function.Supplier;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.connector.source.Boundedness;
@@ -37,6 +36,8 @@ import org.apache.flink.streaming.connectors.influxdb.source.reader.InfluxDBSour
 import org.apache.flink.streaming.connectors.influxdb.source.reader.InfluxDBSplitReader;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplitSerializer;
+
+import java.util.function.Supplier;
 
 /**
  * The Source implementation of InfluxDB. Please use a {@link InfluxDBSourceBuilder} to construct a
@@ -65,7 +66,7 @@ public class InfluxDBSource<Long>
         Supplier<InfluxDBSplitReader<Long>> splitReaderSupplier = () -> new InfluxDBSplitReader<>();
         InfluxDBRecordEmitter<Long> recordEmitter = new InfluxDBRecordEmitter<>();
         Configuration config = new Configuration();
-        config.setInteger("ELEMENT_QUEUE_CAPACITY", 1000);
+        config.setInteger("ELEMENT_QUEUE_CAPACITY", 3);
         return new InfluxDBSourceReader<>(
                 splitReaderSupplier, recordEmitter, config, sourceReaderContext);
     }

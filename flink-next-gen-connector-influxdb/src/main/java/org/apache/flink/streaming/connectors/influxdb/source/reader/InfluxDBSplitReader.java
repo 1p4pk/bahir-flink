@@ -17,8 +17,13 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source.reader;
 
-import static org.apache.flink.util.Preconditions.checkNotNull;
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
+import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
+import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
+import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,12 +32,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
-import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
-import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
-import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
+
+import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * A {@link SplitReader} implementation that reads records from InfluxDB splits.
@@ -47,9 +48,11 @@ public class InfluxDBSplitReader<T> implements SplitReader<Tuple2<T, Long>, Infl
     public RecordsWithSplitIds<Tuple2<T, Long>> fetch() throws IOException {
         InfluxDBSplitRecords<Tuple2<T, Long>> recordsBySplits = new InfluxDBSplitRecords<>();
         Collection<Tuple2<T, Long>> recordsForSplit = recordsBySplits.recordsForSplit("0");
-        recordsForSplit.add(new Tuple2(2L, 1L));
-        recordsForSplit.add(new Tuple2(22L, 2L));
-        recordsForSplit.add(new Tuple2(23L, 3L));
+        recordsForSplit.add(new Tuple2(1L, 1L));
+        recordsForSplit.add(new Tuple2(21L, 2L));
+        recordsForSplit.add(new Tuple2(22L, 3L));
+        recordsBySplits.prepareForRead();
+        recordsBySplits.addFinishedSplit("0");
         return recordsBySplits;
     }
 

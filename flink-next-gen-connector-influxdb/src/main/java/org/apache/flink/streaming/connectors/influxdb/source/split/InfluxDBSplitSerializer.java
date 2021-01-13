@@ -17,17 +17,21 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source.split;
 
-import java.io.IOException;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
+
+import java.io.IOException;
 
 /**
  * The {@link org.apache.flink.core.io.SimpleVersionedSerializer serializer} for {@link
  * InfluxDBSplit}.
  */
 public class InfluxDBSplitSerializer implements SimpleVersionedSerializer<InfluxDBSplit> {
+
+    private static final int CURRENT_VERSION = 0;
+
     @Override
     public int getVersion() {
-        return 0;
+        return CURRENT_VERSION;
     }
 
     @Override
