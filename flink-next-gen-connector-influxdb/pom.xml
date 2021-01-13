@@ -128,24 +128,21 @@ under the License.
                 <version>${spotless.version}</version>
                 <configuration>
                     <java>
-                        <!-- These are the defaults, you can override if you want -->
                         <includes>
                             <include>src/main/java/**/*.java</include>
                             <include>src/test/java/**/*.java</include>
                         </includes>
 
-                        <importOrder/> <!-- standard import order -->
-                        <importOrder>  <!-- or a custom ordering -->
+                        <importOrder/>
+                        <importOrder>
                             <order>java,javax,org,com,com.diffplug,
-                            </order>  <!-- or use <file>${basedir}/eclipse.importorder</file> -->
-                            <!-- You probably want an empty string at the end - all of the
-                                 imports you didn't specify explicitly will go there. -->
+                            </order>
                         </importOrder>
 
-                        <removeUnusedImports/> <!-- self-explanatory -->
+                        <removeUnusedImports/>
 
                         <googleJavaFormat>
-                            <style>AOSP</style>  <!-- or AOSP (optional) -->
+                            <style>AOSP</style>
                         </googleJavaFormat>
 
                         <licenseHeader>
@@ -157,5 +154,4 @@ under the License.
             </plugin>
         </plugins>
     </build>
-
 </project>
