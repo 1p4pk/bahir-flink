@@ -24,12 +24,12 @@ import java.util.TreeMap;
 /** InfluxDB data points */
 /* Split Reader (HTTP Server) Line Protocol -> DataPoint -> Deserializer */
 public class DataPoint {
-    private String name;
+    private final String name;
     private final Map<String, String> tags = new TreeMap();
     private final Map<String, Object> fields = new TreeMap();
     private Number time;
 
-    public DataPoint(final String measurementName) {
+    DataPoint(final String measurementName) {
         Arguments.checkNotNull(measurementName, "measurement");
         this.name = measurementName;
     }
@@ -40,12 +40,12 @@ public class DataPoint {
         return this;
     }
 
-    public DataPoint time(final Number time) {
+    DataPoint time(final Number time) {
         this.time = time;
         return this;
     }
 
-    public DataPoint addTag(final String key, final String value) {
+    DataPoint addTag(final String key, final String value) {
         Arguments.checkNotNull(key, "tagName");
         this.tags.put(key, value);
         return this;
