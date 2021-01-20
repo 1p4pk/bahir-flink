@@ -19,7 +19,6 @@ package org.apache.flink.streaming.connectors.influxdb.source;
 
 import java.util.function.Supplier;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.Source;
 import org.apache.flink.api.connector.source.SourceReader;
@@ -35,6 +34,7 @@ import org.apache.flink.streaming.connectors.influxdb.source.enumerator.InfluxDB
 import org.apache.flink.streaming.connectors.influxdb.source.reader.InfluxDBRecordEmitter;
 import org.apache.flink.streaming.connectors.influxdb.source.reader.InfluxDBSourceReader;
 import org.apache.flink.streaming.connectors.influxdb.source.reader.InfluxDBSplitReader;
+import org.apache.flink.streaming.connectors.influxdb.source.reader.deserializer.InfluxDBDataPointDeserializer;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplitSerializer;
 
@@ -52,22 +52,33 @@ import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit
  *
  * @param <OUT> the output type of the source.
  */
-public class InfluxDBSource<Long>
-        implements Source<Long, InfluxDBSplit, InfluxDBSourceEnumState>, ResultTypeQueryable<Long> {
-    @Override
-    public Boundedness getBoundedness() {
-        return Boundedness.BOUNDED;
+public class InfluxDBSource<OUT>
+        implements Source<OUT, InfluxDBSplit, InfluxDBSourceEnumState>, ResultTypeQueryable<OUT> {
+
+    private final Boundedness boundedness;
+    private final InfluxDBDataPointDeserializer<OUT> deserializationSchema;
+
+    public InfluxDBSource(
+            final Boundedness boundedness,
+            final InfluxDBDataPointDeserializer<OUT> deserializationSchema) {
+        this.boundedness = boundedness;
+        this.deserializationSchema = deserializationSchema;
     }
 
     @Override
-    public SourceReader<Long, InfluxDBSplit> createReader(
+    public Boundedness getBoundedness() {
+        return this.boundedness;
+    }
+
+    @Override
+    public SourceReader<OUT, InfluxDBSplit> createReader(
             final SourceReaderContext sourceReaderContext) throws Exception {
-        final Supplier<InfluxDBSplitReader<Long>> splitReaderSupplier =
+        final Supplier<InfluxDBSplitReader<OUT>> splitReaderSupplier =
                 () -> new InfluxDBSplitReader<>();
-        final InfluxDBRecordEmitter<Long> recordEmitter = new InfluxDBRecordEmitter<>();
+        final InfluxDBRecordEmitter<OUT> recordEmitter = new InfluxDBRecordEmitter<>();
         final Configuration config = new Configuration();
         config.setInteger("ELEMENT_QUEUE_CAPACITY", 3);
-        return new InfluxDBSourceReader<>(
+        return new InfluxDBSourceReader<OUT>(
                 splitReaderSupplier, recordEmitter, config, sourceReaderContext);
     }
 
@@ -96,7 +107,7 @@ public class InfluxDBSource<Long>
     }
 
     @Override
-    public TypeInformation<Long> getProducedType() {
-        return (TypeInformation<Long>) Types.LONG;
+    public TypeInformation<OUT> getProducedType() {
+        return deserializationSchema.getProducedType();
     }
 }

@@ -15,13 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package util;
+package org.apache.flink.streaming.connectors.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
-import org.influxdb.InfluxDB;
-import org.influxdb.InfluxDBFactory;
 import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -71,13 +69,13 @@ public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
         this.writeDataToInfluxDB();
     }
 
-    public InfluxDB getNewInfluxDB() {
-        final InfluxDB influxDB =
-                InfluxDBFactory.connect(this.getUrl(), this.username, this.password);
-        influxDB.setDatabase(this.bucket);
-        return influxDB;
-    }
-
+    /*    public InfluxDB getNewInfluxDB() {
+            final InfluxDB influxDB =
+                    InfluxDBFactory.connect(this.getUrl(), this.username, this.password);
+            influxDB.setDatabase(this.bucket);
+            return influxDB;
+        }
+    */
     private void writeDataToInfluxDB() {
         try {
             final Container.ExecResult execResult =
