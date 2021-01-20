@@ -76,6 +76,7 @@ public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
             return influxDB;
         }
     */
+    // TODO: update this with the new client
     private void writeDataToInfluxDB() {
         try {
             final Container.ExecResult execResult =

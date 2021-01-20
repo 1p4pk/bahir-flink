@@ -47,7 +47,7 @@ public class InfluxDBSplitEnumerator
     @Override
     public void handleSplitRequest(final int i, @Nullable final String s) {
         if (this.firstRun) {
-            this.context.assignSplit(new InfluxDBSplit("0"), i);
+            this.context.assignSplit(new InfluxDBSplit(String.valueOf(i)), i);
             this.firstRun = false;
         } else {
             this.context.signalNoMoreSplits(i);
