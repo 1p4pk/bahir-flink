@@ -63,7 +63,7 @@ public class InfluxDBSourceITCase extends TestLogger {
         CollectSink.VALUES.clear();
 
         final Source influxDBSource =
-                new InfluxDBSource<Long>(Boundedness.BOUNDED, new InfluxDBTestDeserializer());
+                new InfluxDBSource<Long>(Boundedness.CONTINUOUS_UNBOUNDED, new InfluxDBTestDeserializer());
 
         env.fromSource(influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
                 .map(new IncrementMapFunction())
