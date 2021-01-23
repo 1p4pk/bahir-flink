@@ -18,6 +18,7 @@
 package org.apache.flink.streaming.connectors.influxdb.sink.commiter;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +28,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.apache.flink.api.connector.sink.Committer;
 
-public class InfluxDBCommitter implements Committer<String> {
+public class InfluxDBCommitter implements Committer<String>, Serializable {
 
     @Nullable private Queue<String> committedData;
 

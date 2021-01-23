@@ -18,6 +18,7 @@
 package org.apache.flink.streaming.connectors.influxdb.sink.writer;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +26,7 @@ import org.apache.flink.api.connector.sink.Sink.ProcessingTimeService;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.api.java.tuple.Tuple3;
 
-public class InfluxDBWriter<IN> implements SinkWriter<IN, String, String> {
+public class InfluxDBWriter<IN> implements SinkWriter<IN, String, String>, Serializable {
 
     protected List<String> elements;
 
