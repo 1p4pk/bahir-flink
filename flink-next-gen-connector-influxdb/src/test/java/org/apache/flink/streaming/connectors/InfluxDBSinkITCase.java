@@ -29,14 +29,15 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.apache.flink.api.common.RuntimeExecutionMode;
-import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
-import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
+import org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBCommittableSerializer;
 import org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSink;
+import org.apache.flink.streaming.connectors.influxdb.sink.commiter.InfluxDBCommitter;
+import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.util.TestLogger;
 import org.junit.Before;
@@ -68,7 +69,7 @@ public class InfluxDBSinkITCase extends TestLogger {
                             .build());
 
     @Before
-    public void init() {
+    void init() {
         COMMIT_QUEUE.clear();
     }
 
@@ -76,18 +77,23 @@ public class InfluxDBSinkITCase extends TestLogger {
      * Test the following topology.
      *
      * <pre>
-     *     1,2,3                +1              2,3,4
-     *     (source1/1) -----> (map1/1) -----> (sink1/1)
+     *     1,2,3               1,2,3
+     *     (source1/1) -----> (sink1/1)
      * </pre>
      */
     @Test
     void testIncrementPipeline() throws Exception {
         final StreamExecutionEnvironment env = this.buildStreamEnv();
 
-        env.setParallelism(1);
-
-        final Sink influxDBSink =
-                new InfluxDBSink<Long>((Supplier<Queue<String>> & Serializable) () -> COMMIT_QUEUE);
+        InfluxDBSink<Long> influxDBSink =
+                InfluxDBSink.<Long>builder()
+                        .writer(new InfluxDBWriter())
+                        .committer(
+                                new InfluxDBCommitter(
+                                        (Supplier<Queue<String>> & Serializable)
+                                                () -> COMMIT_QUEUE))
+                        .committableSerializer(InfluxDBCommittableSerializer.INSTANCE)
+                        .build();
 
         env.addSource(new CollectSource(SOURCE_DATA), BasicTypeInfo.LONG_TYPE_INFO)
                 .sinkTo(influxDBSink);
@@ -118,19 +124,11 @@ public class InfluxDBSinkITCase extends TestLogger {
         public void cancel() {}
     }
 
-    /** Simple incrementation with map. */
-    public static class IncrementMapFunction implements MapFunction<Long, Long> {
-
-        @Override
-        public Long map(final Long record) throws Exception {
-            return record + 1;
-        }
-    }
-
     private StreamExecutionEnvironment buildStreamEnv() {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
-        //        env.enableCheckpointing(100);
+        env.setParallelism(1);
+        env.enableCheckpointing(100);
         return env;
     }
 }

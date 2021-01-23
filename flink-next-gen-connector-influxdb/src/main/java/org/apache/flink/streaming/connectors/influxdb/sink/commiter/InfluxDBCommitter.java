@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.apache.flink.api.connector.sink.Committer;
@@ -35,12 +34,6 @@ public class InfluxDBCommitter implements Committer<String>, Serializable {
     private boolean isClosed;
 
     @Nullable private final Supplier<Queue<String>> queueSupplier;
-
-    public InfluxDBCommitter() {
-        this.committedData = new ConcurrentLinkedQueue<>();
-        this.isClosed = false;
-        this.queueSupplier = null;
-    }
 
     public InfluxDBCommitter(@Nullable Supplier<Queue<String>> queueSupplier) {
         this.queueSupplier = queueSupplier;

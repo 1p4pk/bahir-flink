@@ -20,18 +20,20 @@ package org.apache.flink.streaming.connectors.influxdb.sink;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
-import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import lombok.Builder;
+import lombok.Getter;
 import org.apache.flink.api.connector.sink.Committer;
 import org.apache.flink.api.connector.sink.GlobalCommitter;
 import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
-import org.apache.flink.streaming.connectors.influxdb.sink.commiter.InfluxDBCommitter;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter;
 
-public class InfluxDBSink<Long> implements Sink<Long, String, String, Void> {
+@Getter
+@Builder
+// @AllArgsConstructor
+public class InfluxDBSink<IN> implements Sink<IN, String, String, Void> {
 
     private final InfluxDBWriter writer;
 
@@ -41,15 +43,12 @@ public class InfluxDBSink<Long> implements Sink<Long, String, String, Void> {
 
     @Nullable private final SimpleVersionedSerializer<String> committableSerializer;
 
-    public InfluxDBSink(final Supplier<Queue<String>> commitQueue) {
-        this.writer = new InfluxDBWriter();
-        this.writerStateSerializer = InfluxDBCommittableSerializer.INSTANCE;
-        this.committer = new InfluxDBCommitter(commitQueue);
-        this.committableSerializer = InfluxDBCommittableSerializer.INSTANCE;
-    }
+    @Nullable private final GlobalCommitter<String, String> globalCommitter;
+
+    @Nullable private final SimpleVersionedSerializer<String> globalCommittableSerializer;
 
     @Override
-    public SinkWriter<Long, String, String> createWriter(
+    public SinkWriter<IN, String, String> createWriter(
             final InitContext initContext, final List<String> list) throws IOException {
         this.writer.setProcessingTimerService(initContext.getProcessingTimeService());
         return this.writer;
@@ -57,7 +56,7 @@ public class InfluxDBSink<Long> implements Sink<Long, String, String, Void> {
 
     @Override
     public Optional<Committer<String>> createCommitter() throws IOException {
-        return Optional.of(this.committer);
+        return Optional.ofNullable(this.committer);
     }
 
     @Override
@@ -67,7 +66,7 @@ public class InfluxDBSink<Long> implements Sink<Long, String, String, Void> {
 
     @Override
     public Optional<SimpleVersionedSerializer<String>> getCommittableSerializer() {
-        return Optional.of(this.committableSerializer);
+        return Optional.ofNullable(this.committableSerializer);
     }
 
     @Override
@@ -77,6 +76,6 @@ public class InfluxDBSink<Long> implements Sink<Long, String, String, Void> {
 
     @Override
     public Optional<SimpleVersionedSerializer<String>> getWriterStateSerializer() {
-        return Optional.of(this.committableSerializer);
+        return Optional.ofNullable(this.committableSerializer);
     }
 }

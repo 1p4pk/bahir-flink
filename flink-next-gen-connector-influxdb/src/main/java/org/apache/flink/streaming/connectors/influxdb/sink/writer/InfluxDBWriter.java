@@ -28,9 +28,9 @@ import org.apache.flink.api.java.tuple.Tuple3;
 
 public class InfluxDBWriter<IN> implements SinkWriter<IN, String, String>, Serializable {
 
-    protected List<String> elements;
+    private List<String> elements;
 
-    protected ProcessingTimeService processingTimerService;
+    private ProcessingTimeService processingTimerService;
 
     public InfluxDBWriter() {
         this.elements = new ArrayList<>();
@@ -42,7 +42,7 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, String, String>, Seria
     }
 
     @Override
-    public List<String> prepareCommit(boolean b) throws IOException {
+    public List<String> prepareCommit(boolean flush) throws IOException {
         List<String> result = elements;
         elements = new ArrayList<>();
         return result;
@@ -59,10 +59,4 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, String, String>, Seria
     public void setProcessingTimerService(final ProcessingTimeService processingTimerService) {
         this.processingTimerService = processingTimerService;
     }
-
-    //    void restoredFrom(List<String> states) {}
-    //
-    //    void setProcessingTimerService(ProcessingTimeService processingTimerService) {
-    //        this.processingTimerService = processingTimerService;
-    //    }
 }
