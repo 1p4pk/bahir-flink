@@ -28,6 +28,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.connector.sink.Sink;
@@ -38,6 +39,7 @@ import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSink;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.util.TestLogger;
+import org.junit.Before;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -65,6 +67,11 @@ public class InfluxDBSinkITCase extends TestLogger {
                             .setNumberTaskManagers(1)
                             .build());
 
+    @Before
+    public void init() {
+        COMMIT_QUEUE.clear();
+    }
+
     /**
      * Test the following topology.
      *
@@ -75,7 +82,7 @@ public class InfluxDBSinkITCase extends TestLogger {
      */
     @Test
     void testIncrementPipeline() throws Exception {
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        final StreamExecutionEnvironment env = this.buildStreamEnv();
 
         env.setParallelism(1);
 
@@ -83,7 +90,6 @@ public class InfluxDBSinkITCase extends TestLogger {
                 new InfluxDBSink<Long>((Supplier<Queue<String>> & Serializable) () -> COMMIT_QUEUE);
 
         env.addSource(new CollectSource(SOURCE_DATA), BasicTypeInfo.LONG_TYPE_INFO)
-                .map(new InfluxDBSourceITCase.IncrementMapFunction())
                 .sinkTo(influxDBSink);
 
         env.execute();
@@ -119,5 +125,12 @@ public class InfluxDBSinkITCase extends TestLogger {
         public Long map(final Long record) throws Exception {
             return record + 1;
         }
+    }
+
+    private StreamExecutionEnvironment buildStreamEnv() {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
+        //        env.enableCheckpointing(100);
+        return env;
     }
 }
