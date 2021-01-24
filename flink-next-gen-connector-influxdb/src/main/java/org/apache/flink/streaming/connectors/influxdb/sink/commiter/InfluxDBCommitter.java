@@ -49,6 +49,7 @@ public class InfluxDBCommitter implements Committer<String>, Serializable {
         }
     }
 
+    // This method is called only when a checkpoint is set
     @Override
     public List<String> commit(List<String> committables) throws IOException {
         if (committedData == null) {

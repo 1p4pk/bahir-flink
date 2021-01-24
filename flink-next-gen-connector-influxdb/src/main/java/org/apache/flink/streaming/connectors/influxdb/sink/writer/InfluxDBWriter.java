@@ -37,12 +37,14 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, String, String>, Seria
     }
 
     @Override
-    public void write(IN in, Context context) throws IOException {
-        elements.add(Tuple3.of(in, context.timestamp(), context.currentWatermark()).toString());
+    public void write(final IN in, final Context context) throws IOException {
+        // Here we should convert the incoming data to datapoint
+        this.elements.add(
+                Tuple3.of(in, context.timestamp(), context.currentWatermark()).toString());
     }
 
     @Override
-    public List<String> prepareCommit(boolean flush) throws IOException {
+    public List<String> prepareCommit(final boolean flush) throws IOException {
         List<String> result = elements;
         elements = new ArrayList<>();
         return result;

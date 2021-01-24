@@ -32,7 +32,6 @@ import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter
 
 @Getter
 @Builder
-// @AllArgsConstructor
 public class InfluxDBSink<IN> implements Sink<IN, String, String, Void> {
 
     private final InfluxDBWriter writer;
