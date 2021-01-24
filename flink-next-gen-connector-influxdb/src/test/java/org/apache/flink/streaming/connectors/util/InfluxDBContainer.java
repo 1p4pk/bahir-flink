@@ -23,33 +23,41 @@ import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
 import com.influxdb.client.InfluxDBClientOptions;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import lombok.Getter;
+import lombok.SneakyThrows;
 import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
+import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
 public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
         extends GenericContainer<SELF> {
-    private static final Integer INFLUXDB_PORT = 8086;
+
+    public static final Integer INFLUXDB_PORT = 8086;
+
+    private static final String REGISTRY = "quay.io";
+    private static final String REPOSITORY = "influxdb/influxdb";
+    private static final String TAG = "v2.0.2";
     private static final DockerImageName DEFAULT_IMAGE_NAME =
-            DockerImageName.parse("quay.io/influxdb/influxdb:v2.0.2");
-    private static final String INFLUX_SETUP = "influx-setup.sh";
-    private static final String DATA = "adsb-test.txt";
-    public static final int NO_CONTENT_STATUS_CODE = 204;
+            DockerImageName.parse(String.format("%s/%s:%s", REGISTRY, REPOSITORY, TAG));
+    private static final int NO_CONTENT_STATUS_CODE = 204;
+    private static final String INFLUX_SETUP_SH = "influx-setup.sh";
 
-    private final String username;
-    private final String password;
-    private final String bucket;
-    private final String organization;
+    @Getter private final String username = "test-user";
+    @Getter private final String password = "test-password";
+    @Getter private final String bucket = "test-bucket";
+    @Getter private final String organization = "test-org";
+    private final int retention = 0;
+    private final String retentionUnit = RetentionUnit.NANOSECONDS.label;
 
-    public InfluxDBContainer() {
-        super(DEFAULT_IMAGE_NAME);
-        this.username = "test-username";
-        this.password = "test-password";
-        this.bucket = "test-bucket";
-        this.organization = "test-org";
+    private InfluxDBContainer(final DockerImageName imageName) {
+        super(imageName);
+        imageName.assertCompatibleWith(DEFAULT_IMAGE_NAME);
+        this.setEnv();
         this.waitStrategy =
                 (new WaitAllStrategy())
                         .withStrategy(
@@ -57,19 +65,44 @@ public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
                                         .withBasicCredentials(this.username, this.password)
                                         .forStatusCode(NO_CONTENT_STATUS_CODE))
                         .withStrategy(Wait.forListeningPort());
-        this.withExposedPorts(INFLUXDB_PORT);
+
+        this.addExposedPort(INFLUXDB_PORT);
+        this.start();
     }
 
-    public void startPreIngestedInfluxDB() {
+    public static InfluxDBContainer<?> createWithDefaultTag() {
+        return new InfluxDBContainer<>(DEFAULT_IMAGE_NAME);
+    }
+
+    protected void setEnv() {
+        this.addEnv("INFLUXDB_USER", this.username);
+        this.addEnv("INFLUXDB_PASSWORD", this.password);
+        this.addEnv("INFLUXDB_BUCKET", this.bucket);
+        this.addEnv("INFLUXDB_ORG", this.organization);
+        this.addEnv("INFLUXDB_RETENTION", String.valueOf(this.retention));
+        this.addEnv("INFLUXDB_RETENTION_UNIT", this.retentionUnit);
+    }
+
+    @Override
+    @SneakyThrows({InterruptedException.class, IOException.class, ExecutionException.class})
+    public void start() {
         this.withCopyFileToContainer(
-                        MountableFile.forClasspathResource(DATA), String.format("/%s", DATA))
-                .withCopyFileToContainer(
-                        MountableFile.forClasspathResource(INFLUX_SETUP),
-                        String.format("%s", INFLUX_SETUP));
-
-        this.start();
-
-        this.writeDataToInfluxDB();
+                MountableFile.forClasspathResource(INFLUX_SETUP_SH),
+                String.format("%s", INFLUX_SETUP_SH));
+        if (this.getContainerId() != null) {
+            return;
+        }
+        Startables.deepStart(this.dependencies).get();
+        // trigger LazyDockerClient's resolve so that we fail fast here and not in
+        // getDockerImageName()
+        this.dockerClient.authConfig();
+        this.doStart();
+        final Container.ExecResult execResult =
+                this.execInContainer("chmod", "-x", String.format("/%s", INFLUX_SETUP_SH));
+        assertEquals(execResult.getExitCode(), 0);
+        final Container.ExecResult writeResult =
+                this.execInContainer("/bin/bash", String.format("/%s", INFLUX_SETUP_SH));
+        assertEquals(writeResult.getExitCode(), 0);
     }
 
     /** @return a influxDb client */
@@ -84,27 +117,7 @@ public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
         return InfluxDBClientFactory.create(influxDBClientOptions);
     }
 
-    private void writeDataToInfluxDB() {
-        try {
-            final Container.ExecResult execResult =
-                    this.execInContainer("chmod", "-x", "/influx-setup.sh");
-            assertEquals(execResult.getExitCode(), 0);
-            final Container.ExecResult writeResult =
-                    this.execInContainer(
-                            "/bin/bash",
-                            "/influx-setup.sh",
-                            this.username,
-                            this.password,
-                            this.bucket,
-                            this.organization,
-                            DATA);
-            assertEquals(writeResult.getExitCode(), 0);
-        } catch (final IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private String getUrl() {
+    public String getUrl() {
         return "http://" + this.getHost() + ":" + this.getMappedPort(INFLUXDB_PORT);
     }
 }

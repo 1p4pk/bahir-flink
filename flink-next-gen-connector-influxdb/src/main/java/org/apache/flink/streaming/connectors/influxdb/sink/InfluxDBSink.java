@@ -32,39 +32,55 @@ import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter
 
 @Getter
 @Builder
-public class InfluxDBSink<IN> implements Sink<IN, String, String, Void> {
+public class InfluxDBSink<IN> implements Sink<IN, Void, IN, Void> {
 
-    private final InfluxDBWriter writer;
+    private final InfluxDBWriter<IN> writer;
 
-    @Nullable private final SimpleVersionedSerializer<String> writerStateSerializer;
+    @Nullable private final SimpleVersionedSerializer<IN> writerStateSerializer;
 
-    @Nullable private final Committer<String> committer;
+    @Nullable private final Committer<Void> committer;
 
-    @Nullable private final SimpleVersionedSerializer<String> committableSerializer;
+    @Nullable private final SimpleVersionedSerializer<Void> committableSerializer;
 
-    @Nullable private final GlobalCommitter<String, String> globalCommitter;
+    @Nullable private final GlobalCommitter<Void, Void> globalCommitter;
 
-    @Nullable private final SimpleVersionedSerializer<String> globalCommittableSerializer;
+    @Nullable private final SimpleVersionedSerializer<Void> globalCommittableSerializer;
+
+    // TODO: Make private and use builder
+    public InfluxDBSink(
+            final InfluxDBWriter<IN> writer,
+            @Nullable final SimpleVersionedSerializer<IN> writerStateSerializer,
+            @Nullable final Committer<Void> committer,
+            @Nullable final SimpleVersionedSerializer<Void> committableSerializer,
+            @Nullable final GlobalCommitter<Void, Void> globalCommitter,
+            @Nullable final SimpleVersionedSerializer<Void> globalCommittableSerializer) {
+        this.writer = writer;
+        this.writerStateSerializer = writerStateSerializer;
+        this.committer = committer;
+        this.committableSerializer = committableSerializer;
+        this.globalCommitter = globalCommitter;
+        this.globalCommittableSerializer = globalCommittableSerializer;
+    }
 
     @Override
-    public SinkWriter<IN, String, String> createWriter(
-            final InitContext initContext, final List<String> list) throws IOException {
+    public SinkWriter<IN, Void, IN> createWriter(final InitContext initContext, final List<IN> list)
+            throws IOException {
         this.writer.setProcessingTimerService(initContext.getProcessingTimeService());
         return this.writer;
     }
 
     @Override
-    public Optional<Committer<String>> createCommitter() throws IOException {
+    public Optional<Committer<Void>> createCommitter() throws IOException {
         return Optional.ofNullable(this.committer);
     }
 
     @Override
-    public Optional<GlobalCommitter<String, Void>> createGlobalCommitter() throws IOException {
+    public Optional<GlobalCommitter<Void, Void>> createGlobalCommitter() throws IOException {
         return Optional.empty();
     }
 
     @Override
-    public Optional<SimpleVersionedSerializer<String>> getCommittableSerializer() {
+    public Optional<SimpleVersionedSerializer<Void>> getCommittableSerializer() {
         return Optional.ofNullable(this.committableSerializer);
     }
 
@@ -74,7 +90,7 @@ public class InfluxDBSink<IN> implements Sink<IN, String, String, Void> {
     }
 
     @Override
-    public Optional<SimpleVersionedSerializer<String>> getWriterStateSerializer() {
-        return Optional.ofNullable(this.committableSerializer);
+    public Optional<SimpleVersionedSerializer<IN>> getWriterStateSerializer() {
+        return Optional.ofNullable(this.writerStateSerializer);
     }
 }
