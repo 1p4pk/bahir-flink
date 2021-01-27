@@ -24,11 +24,10 @@ import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.write.Point;
 import com.influxdb.query.FluxRecord;
 import com.influxdb.query.FluxTable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
@@ -81,7 +80,7 @@ public class InfluxDBSinkITCase extends TestLogger {
 
         final InfluxDBSink<Long> influxDBSink =
                 InfluxDBSink.<Long>builder()
-                        .inInfluxDBSchemaSerializer(new InfluxDBTestSerializer())
+                        .influxDBSchemaSerializer(new InfluxDBTestSerializer())
                         .influxDBConfig(influxDBConfig)
                         .committer(new InfluxDBCommitter())
                         .build();
@@ -104,19 +103,19 @@ public class InfluxDBSinkITCase extends TestLogger {
         return env;
     }
 
-    private static Queue<String> queryWrittenData(final InfluxDBConfig influxDBConfig) {
+    private static List<String> queryWrittenData(final InfluxDBConfig influxDBConfig) {
         final String query =
                 String.format(
                         "from(bucket: \"%s\") |> range(start: -1h)", InfluxDBContainer.getBucket());
-        final Queue<String> dataPointQueue = new ConcurrentLinkedQueue<>();
+        final List<String> dataPoints = new ArrayList<>();
         final InfluxDBClient influxDBClient = influxDBConfig.getClient();
         final List<FluxTable> tables = influxDBClient.getQueryApi().query(query);
         for (final FluxTable table : tables) {
             for (final FluxRecord record : table.getRecords()) {
-                dataPointQueue.add(recordToDataPoint(record).toLineProtocol());
+                dataPoints.add(recordToDataPoint(record).toLineProtocol());
             }
         }
-        return dataPointQueue;
+        return dataPoints;
     }
 
     private static Point recordToDataPoint(final FluxRecord record) {

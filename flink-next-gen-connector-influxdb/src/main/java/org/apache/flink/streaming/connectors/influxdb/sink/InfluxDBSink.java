@@ -34,7 +34,7 @@ import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter
 @Builder
 public class InfluxDBSink<IN> implements Sink<IN, Void, IN, Void> {
 
-    private final InfluxDBSchemaSerializer<IN> inInfluxDBSchemaSerializer;
+    private final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer;
 
     private final InfluxDBConfig influxDBConfig;
 
@@ -58,7 +58,7 @@ public class InfluxDBSink<IN> implements Sink<IN, Void, IN, Void> {
             @Nullable final SimpleVersionedSerializer<Void> committableSerializer,
             @Nullable final GlobalCommitter<Void, Void> globalCommitter,
             @Nullable final SimpleVersionedSerializer<Void> globalCommittableSerializer) {
-        this.inInfluxDBSchemaSerializer = influxDBSchemaSerializer;
+        this.influxDBSchemaSerializer = influxDBSchemaSerializer;
         this.influxDBConfig = influxDBConfig;
         this.writerStateSerializer = writerStateSerializer;
         this.committer = committer;
@@ -71,7 +71,7 @@ public class InfluxDBSink<IN> implements Sink<IN, Void, IN, Void> {
     public SinkWriter<IN, Void, IN> createWriter(final InitContext initContext, final List<IN> list)
             throws IOException {
         final InfluxDBWriter<IN> writer =
-                new InfluxDBWriter<>(this.inInfluxDBSchemaSerializer, this.influxDBConfig);
+                new InfluxDBWriter<>(this.influxDBSchemaSerializer, this.influxDBConfig);
         writer.setProcessingTimerService(initContext.getProcessingTimeService());
         return writer;
     }
