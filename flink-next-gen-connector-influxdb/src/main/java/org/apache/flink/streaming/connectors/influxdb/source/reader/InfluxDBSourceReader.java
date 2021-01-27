@@ -27,12 +27,13 @@ import org.apache.flink.streaming.connectors.influxdb.source.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
 
 /** The source reader for the InfluxDB line protocol. */
-public class InfluxDBSourceReader<T>
-        extends SingleThreadMultiplexSourceReaderBase<DataPoint, T, InfluxDBSplit, InfluxDBSplit> {
+public class InfluxDBSourceReader<OUT>
+        extends SingleThreadMultiplexSourceReaderBase<
+                DataPoint, OUT, InfluxDBSplit, InfluxDBSplit> {
 
     public InfluxDBSourceReader(
             final Supplier<InfluxDBSplitReader> splitReaderSupplier,
-            final RecordEmitter<DataPoint, T, InfluxDBSplit> recordEmitter,
+            final RecordEmitter<DataPoint, OUT, InfluxDBSplit> recordEmitter,
             final Configuration config,
             final SourceReaderContext context) {
         super(splitReaderSupplier::get, recordEmitter, config, context);
