@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import lombok.Builder;
-import lombok.Getter;
 import org.apache.flink.api.connector.sink.Committer;
 import org.apache.flink.api.connector.sink.GlobalCommitter;
 import org.apache.flink.api.connector.sink.Sink;
@@ -32,7 +31,6 @@ import org.apache.flink.streaming.connectors.influxdb.InfluxDBConfig;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter;
 
-@Getter
 @Builder
 public class InfluxDBSink<IN> implements Sink<IN, Void, IN, Void> {
 
@@ -44,7 +42,9 @@ public class InfluxDBSink<IN> implements Sink<IN, Void, IN, Void> {
 
     @Nullable private final Committer<Void> committer;
 
-    @Nullable private final SimpleVersionedSerializer<Void> committableSerializer;
+    @Builder.Default
+    private SimpleVersionedSerializer<Void> committableSerializer =
+            InfluxDBCommittableSerializer.INSTANCE;
 
     @Nullable private final GlobalCommitter<Void, Void> globalCommitter;
 

@@ -34,7 +34,6 @@ import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.influxdb.InfluxDBConfig;
-import org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBCommittableSerializer;
 import org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSink;
 import org.apache.flink.streaming.connectors.influxdb.sink.commiter.InfluxDBCommitter;
 import org.apache.flink.streaming.connectors.util.InfluxDBContainer;
@@ -85,7 +84,6 @@ public class InfluxDBSinkITCase extends TestLogger {
                         .inInfluxDBSchemaSerializer(new InfluxDBTestSerializer())
                         .influxDBConfig(influxDBConfig)
                         .committer(new InfluxDBCommitter())
-                        .committableSerializer(InfluxDBCommittableSerializer.INSTANCE)
                         .build();
 
         env.addSource(new FiniteTestSource(SOURCE_DATA), BasicTypeInfo.LONG_TYPE_INFO)
