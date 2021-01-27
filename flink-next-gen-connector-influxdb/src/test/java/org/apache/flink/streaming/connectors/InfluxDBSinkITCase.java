@@ -61,8 +61,8 @@ public class InfluxDBSinkITCase extends TestLogger {
      *
      * <pre>
      *     1L,2L,3L           "Test,LongValue=1 fieldKey="fieldValue"",
-     *                        "Test,LongValue=1 fieldKey="fieldValue"",
-     *                        "Test,LongValue=1 fieldKey="fieldValue"",
+     *                        "Test,LongValue=2 fieldKey="fieldValue"",
+     *                        "Test,LongValue=3 fieldKey="fieldValue"",
      *     (source1/1) -----> (sink1/1)
      * </pre>
      */
