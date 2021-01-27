@@ -19,4 +19,4 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       - name: Run the Maven verify phase
-        run: mvn clean verify --batch-mode --update-snapshots --pl flink-next-gen-connector-influxdb -Drat.kskip=true
+        run: mvn clean verify --batch-mode --update-snapshots --pl flink-next-gen-connector-influxdb -Drat.skip=true
