@@ -39,7 +39,6 @@ public class InfluxDBCommittableSerializer
 
     @Override
     public Void deserialize(final int version, final byte[] serialized) throws IOException {
-        // return SimpleVersionedStringSerializer.INSTANCE.deserialize(version, serialized);
         return null;
     }
 }
