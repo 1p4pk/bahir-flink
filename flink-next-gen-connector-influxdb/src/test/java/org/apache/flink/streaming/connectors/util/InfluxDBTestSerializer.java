@@ -23,7 +23,7 @@ import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchema
 public class InfluxDBTestSerializer implements InfluxDBSchemaSerializer<Long> {
 
     @Override
-    public Point serialize(final Long element) throws Exception {
+    public Point serialize(final Long element) {
         final Point dataPoint = new Point("Test");
         dataPoint.addTag("LongValue", String.valueOf(element));
         dataPoint.addField("fieldKey", "fieldValue");

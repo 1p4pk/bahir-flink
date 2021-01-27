@@ -28,13 +28,17 @@ import org.apache.flink.api.connector.sink.GlobalCommitter;
 import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
+import org.apache.flink.streaming.connectors.influxdb.InfluxDBConfig;
+import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter;
 
 @Getter
 @Builder
 public class InfluxDBSink<IN> implements Sink<IN, Void, IN, Void> {
 
-    private final InfluxDBWriter<IN> writer;
+    private final InfluxDBSchemaSerializer<IN> inInfluxDBSchemaSerializer;
+
+    private final InfluxDBConfig influxDBConfig;
 
     @Nullable private final SimpleVersionedSerializer<IN> writerStateSerializer;
 
@@ -46,15 +50,16 @@ public class InfluxDBSink<IN> implements Sink<IN, Void, IN, Void> {
 
     @Nullable private final SimpleVersionedSerializer<Void> globalCommittableSerializer;
 
-    // TODO: Make private and use builder
-    public InfluxDBSink(
-            final InfluxDBWriter<IN> writer,
+    private InfluxDBSink(
+            final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer,
+            final InfluxDBConfig influxDBConfig,
             @Nullable final SimpleVersionedSerializer<IN> writerStateSerializer,
             @Nullable final Committer<Void> committer,
             @Nullable final SimpleVersionedSerializer<Void> committableSerializer,
             @Nullable final GlobalCommitter<Void, Void> globalCommitter,
             @Nullable final SimpleVersionedSerializer<Void> globalCommittableSerializer) {
-        this.writer = writer;
+        this.inInfluxDBSchemaSerializer = influxDBSchemaSerializer;
+        this.influxDBConfig = influxDBConfig;
         this.writerStateSerializer = writerStateSerializer;
         this.committer = committer;
         this.committableSerializer = committableSerializer;
@@ -65,8 +70,10 @@ public class InfluxDBSink<IN> implements Sink<IN, Void, IN, Void> {
     @Override
     public SinkWriter<IN, Void, IN> createWriter(final InitContext initContext, final List<IN> list)
             throws IOException {
-        this.writer.setProcessingTimerService(initContext.getProcessingTimeService());
-        return this.writer;
+        InfluxDBWriter<IN> writer =
+                new InfluxDBWriter<>(this.inInfluxDBSchemaSerializer, this.influxDBConfig);
+        writer.setProcessingTimerService(initContext.getProcessingTimeService());
+        return writer;
     }
 
     @Override

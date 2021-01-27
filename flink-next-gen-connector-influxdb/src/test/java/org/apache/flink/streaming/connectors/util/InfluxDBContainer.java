@@ -19,9 +19,6 @@ package org.apache.flink.streaming.connectors.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.influxdb.client.InfluxDBClient;
-import com.influxdb.client.InfluxDBClientFactory;
-import com.influxdb.client.InfluxDBClientOptions;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import lombok.Getter;
@@ -103,18 +100,6 @@ public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
         final Container.ExecResult writeResult =
                 this.execInContainer("/bin/bash", String.format("/%s", INFLUX_SETUP_SH));
         assertEquals(writeResult.getExitCode(), 0);
-    }
-
-    /** @return a influxDb client */
-    public InfluxDBClient getNewInfluxDB() {
-        final InfluxDBClientOptions influxDBClientOptions =
-                InfluxDBClientOptions.builder()
-                        .url(this.getUrl())
-                        .authenticate(this.username, this.password.toCharArray())
-                        .bucket(this.bucket)
-                        .org(this.organization)
-                        .build();
-        return InfluxDBClientFactory.create(influxDBClientOptions);
     }
 
     public String getUrl() {
