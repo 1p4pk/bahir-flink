@@ -22,6 +22,7 @@ import java.io.Serializable;
 
 public interface InfluxDBSchemaSerializer<IN> extends Serializable {
 
+
     /**
      * Serializes input into a InfluxDB point.
      *
