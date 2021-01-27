@@ -22,7 +22,6 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.flink.streaming.connectors.influxdb.source.DataPoint;
-import org.apache.flink.util.Collector;
 
 /** An interface for the deserialization of InfluxDB data points. */
 public interface InfluxDBDataPointDeserializer<T> extends Serializable, ResultTypeQueryable<T> {
@@ -33,7 +32,7 @@ public interface InfluxDBDataPointDeserializer<T> extends Serializable, ResultTy
      * @param dataPoint the {@code DataPoint} to deserialize.
      * @throws Exception if the deserialization failed.
      */
-    void deserialize(DataPoint dataPoint, Collector<T> collector) throws Exception;
+    T deserialize(DataPoint dataPoint) throws Exception;
 
     // static function for single data point
 
