@@ -20,18 +20,15 @@ package org.apache.flink.streaming.connectors.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
-import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
-public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
+public final class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
         extends GenericContainer<SELF> {
 
     public static final Integer INFLUXDB_PORT = 8086;
@@ -44,11 +41,11 @@ public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
     private static final int NO_CONTENT_STATUS_CODE = 204;
     private static final String INFLUX_SETUP_SH = "influx-setup.sh";
 
-    @Getter private final String username = "test-user";
-    @Getter private final String password = "test-password";
-    @Getter private final String bucket = "test-bucket";
-    @Getter private final String organization = "test-org";
-    private final int retention = 0;
+    @Getter private static final String username = "test-user";
+    @Getter private static final String password = "test-password";
+    @Getter private static final String bucket = "test-bucket";
+    @Getter private static final String organization = "test-org";
+    private static final int retention = 0;
     private final String retentionUnit = RetentionUnit.NANOSECONDS.label;
 
     private InfluxDBContainer(final DockerImageName imageName) {
@@ -59,45 +56,41 @@ public class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
                 (new WaitAllStrategy())
                         .withStrategy(
                                 Wait.forHttp("/ping")
-                                        .withBasicCredentials(this.username, this.password)
+                                        .withBasicCredentials(username, password)
                                         .forStatusCode(NO_CONTENT_STATUS_CODE))
                         .withStrategy(Wait.forListeningPort());
 
         this.addExposedPort(INFLUXDB_PORT);
-        this.start();
+        this.startContainer();
     }
 
     public static InfluxDBContainer<?> createWithDefaultTag() {
         return new InfluxDBContainer<>(DEFAULT_IMAGE_NAME);
     }
 
-    protected void setEnv() {
-        this.addEnv("INFLUXDB_USER", this.username);
-        this.addEnv("INFLUXDB_PASSWORD", this.password);
-        this.addEnv("INFLUXDB_BUCKET", this.bucket);
-        this.addEnv("INFLUXDB_ORG", this.organization);
-        this.addEnv("INFLUXDB_RETENTION", String.valueOf(this.retention));
+    private void setEnv() {
+        this.addEnv("INFLUXDB_USER", username);
+        this.addEnv("INFLUXDB_PASSWORD", password);
+        this.addEnv("INFLUXDB_BUCKET", bucket);
+        this.addEnv("INFLUXDB_ORG", organization);
+        this.addEnv("INFLUXDB_RETENTION", String.valueOf(retention));
         this.addEnv("INFLUXDB_RETENTION_UNIT", this.retentionUnit);
     }
 
-    @Override
-    @SneakyThrows({InterruptedException.class, IOException.class, ExecutionException.class})
-    public void start() {
+    private void startContainer() {
         this.withCopyFileToContainer(
                 MountableFile.forClasspathResource(INFLUX_SETUP_SH),
                 String.format("%s", INFLUX_SETUP_SH));
-        if (this.getContainerId() != null) {
-            return;
-        }
-        Startables.deepStart(this.dependencies).get();
-        // trigger LazyDockerClient's resolve so that we fail fast here and not in
-        // getDockerImageName()
-        this.dockerClient.authConfig();
-        this.doStart();
-        final Container.ExecResult execResult =
+        this.start();
+        this.setUpInfluxDB();
+    }
+
+    @SneakyThrows({InterruptedException.class, IOException.class})
+    private void setUpInfluxDB() {
+        final ExecResult execResult =
                 this.execInContainer("chmod", "-x", String.format("/%s", INFLUX_SETUP_SH));
         assertEquals(execResult.getExitCode(), 0);
-        final Container.ExecResult writeResult =
+        final ExecResult writeResult =
                 this.execInContainer("/bin/bash", String.format("/%s", INFLUX_SETUP_SH));
         assertEquals(writeResult.getExitCode(), 0);
     }

@@ -74,10 +74,10 @@ public class InfluxDBSinkITCase extends TestLogger {
         final InfluxDBConfig influxDBConfig =
                 InfluxDBConfig.builder()
                         .url(influxDBContainer.getUrl())
-                        .username(influxDBContainer.getUsername())
-                        .password(influxDBContainer.getPassword())
-                        .bucket(influxDBContainer.getBucket())
-                        .organization(influxDBContainer.getOrganization())
+                        .username(InfluxDBContainer.getUsername())
+                        .password(InfluxDBContainer.getPassword())
+                        .bucket(InfluxDBContainer.getBucket())
+                        .organization(InfluxDBContainer.getOrganization())
                         .build();
 
         final InfluxDBSink<Long> influxDBSink =
@@ -109,7 +109,7 @@ public class InfluxDBSinkITCase extends TestLogger {
     private static Queue<String> queryWrittenData(final InfluxDBConfig influxDBConfig) {
         final String query =
                 String.format(
-                        "from(bucket: \"%s\") |> range(start: -1h)", influxDBContainer.getBucket());
+                        "from(bucket: \"%s\") |> range(start: -1h)", InfluxDBContainer.getBucket());
         final Queue<String> dataPointQueue = new ConcurrentLinkedQueue<>();
         final InfluxDBClient influxDBClient = influxDBConfig.getClient();
         final List<FluxTable> tables = influxDBClient.getQueryApi().query(query);
