@@ -70,7 +70,7 @@ public class InfluxDBSink<IN> implements Sink<IN, Void, IN, Void> {
     @Override
     public SinkWriter<IN, Void, IN> createWriter(final InitContext initContext, final List<IN> list)
             throws IOException {
-        InfluxDBWriter<IN> writer =
+        final InfluxDBWriter<IN> writer =
                 new InfluxDBWriter<>(this.inInfluxDBSchemaSerializer, this.influxDBConfig);
         writer.setProcessingTimerService(initContext.getProcessingTimeService());
         return writer;
