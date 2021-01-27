@@ -17,7 +17,6 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.sink;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -28,6 +27,7 @@ import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.streaming.connectors.influxdb.InfluxDBConfig;
+import org.apache.flink.streaming.connectors.influxdb.sink.commiter.InfluxDBCommitter;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter;
 
@@ -39,8 +39,6 @@ public class InfluxDBSink<IN> implements Sink<IN, Void, IN, Void> {
     private final InfluxDBConfig influxDBConfig;
 
     @Nullable private final SimpleVersionedSerializer<IN> writerStateSerializer;
-
-    @Nullable private final Committer<Void> committer;
 
     @Builder.Default
     private SimpleVersionedSerializer<Void> committableSerializer =
@@ -54,22 +52,20 @@ public class InfluxDBSink<IN> implements Sink<IN, Void, IN, Void> {
             final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer,
             final InfluxDBConfig influxDBConfig,
             @Nullable final SimpleVersionedSerializer<IN> writerStateSerializer,
-            @Nullable final Committer<Void> committer,
-            @Nullable final SimpleVersionedSerializer<Void> committableSerializer,
+            final SimpleVersionedSerializer<Void> committableSerializer,
             @Nullable final GlobalCommitter<Void, Void> globalCommitter,
             @Nullable final SimpleVersionedSerializer<Void> globalCommittableSerializer) {
         this.influxDBSchemaSerializer = influxDBSchemaSerializer;
         this.influxDBConfig = influxDBConfig;
         this.writerStateSerializer = writerStateSerializer;
-        this.committer = committer;
         this.committableSerializer = committableSerializer;
         this.globalCommitter = globalCommitter;
         this.globalCommittableSerializer = globalCommittableSerializer;
     }
 
     @Override
-    public SinkWriter<IN, Void, IN> createWriter(final InitContext initContext, final List<IN> list)
-            throws IOException {
+    public SinkWriter<IN, Void, IN> createWriter(
+            final InitContext initContext, final List<IN> list) {
         final InfluxDBWriter<IN> writer =
                 new InfluxDBWriter<>(this.influxDBSchemaSerializer, this.influxDBConfig);
         writer.setProcessingTimerService(initContext.getProcessingTimeService());
@@ -77,12 +73,12 @@ public class InfluxDBSink<IN> implements Sink<IN, Void, IN, Void> {
     }
 
     @Override
-    public Optional<Committer<Void>> createCommitter() throws IOException {
-        return Optional.ofNullable(this.committer);
+    public Optional<Committer<Void>> createCommitter() {
+        return Optional.of(new InfluxDBCommitter(this.influxDBConfig));
     }
 
     @Override
-    public Optional<GlobalCommitter<Void, Void>> createGlobalCommitter() throws IOException {
+    public Optional<GlobalCommitter<Void, Void>> createGlobalCommitter() {
         return Optional.empty();
     }
 
