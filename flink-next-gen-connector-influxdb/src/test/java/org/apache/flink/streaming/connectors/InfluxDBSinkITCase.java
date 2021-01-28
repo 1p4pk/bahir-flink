@@ -75,6 +75,9 @@ public class InfluxDBSinkITCase extends TestLogger {
      *                        "Test,LongValue=3 fieldKey="fieldValue"",
      *     (source2/2) -----> (sink1/1)
      * </pre>
+     *
+     * Source collects twice and calls each time 2 checkpoint. In total 4 checkpoints are set. At
+     * the end of the source another checkpoint is called. This makes it a total of 5 checkpoints.
      */
     @Test
     void shouldWriteDataToInfluxDB() throws Exception {
@@ -99,53 +102,14 @@ public class InfluxDBSinkITCase extends TestLogger {
 
         env.execute();
 
-        final List<String> actual = queryWrittenData(influxDBConfig);
+        final List<String> actualWrittenPoints = queryWrittenData(influxDBConfig);
 
-        assertThat(actual.size(), is(EXPECTED_COMMITTED_DATA_IN_STREAMING_MODE.size()));
-    }
+        assertThat(
+                actualWrittenPoints.size(), is(EXPECTED_COMMITTED_DATA_IN_STREAMING_MODE.size()));
 
-    /**
-     * Test the following topology.
-     *
-     * <pre>
-     *     1L,2L,3L           "Test,LongValue=1 fieldKey="fieldValue"",
-     *                        "Test,LongValue=2 fieldKey="fieldValue"",
-     *                        "Test,LongValue=3 fieldKey="fieldValue"",
-     *                        "Test,LongValue=1 fieldKey="fieldValue"",
-     *                        "Test,LongValue=2 fieldKey="fieldValue"",
-     *                        "Test,LongValue=3 fieldKey="fieldValue"",
-     *     (source2/2) -----> (sink1/1)
-     * </pre>
-     *
-     * Source collects twice and calls each time 2 checkpoint. In total 4 checkpoints are set. At
-     * the end of the source another checkpoint is called. This makes it a total of 5 checkpoints.
-     */
-    @Test
-    public void shouldCommitFiveTimes() throws Exception {
-        final StreamExecutionEnvironment env = buildStreamEnv();
-        final InfluxDBConfig influxDBConfig =
-                InfluxDBConfig.builder()
-                        .url(influxDBContainer.getUrl())
-                        .username(InfluxDBContainer.getUsername())
-                        .password(InfluxDBContainer.getPassword())
-                        .bucket(InfluxDBContainer.getBucket())
-                        .organization(InfluxDBContainer.getOrganization())
-                        .build();
+        final List<String> actualCheckpoints = queryCheckpoints(influxDBConfig);
 
-        final InfluxDBSink<Long> influxDBSink =
-                InfluxDBSink.<Long>builder()
-                        .influxDBSchemaSerializer(new InfluxDBTestSerializer())
-                        .influxDBConfig(influxDBConfig)
-                        .build();
-
-        env.addSource(new FiniteTestSource(SOURCE_DATA), BasicTypeInfo.LONG_TYPE_INFO)
-                .sinkTo(influxDBSink);
-
-        env.execute();
-
-        final List<String> actual = queryCommitData(influxDBConfig);
-
-        assertThat(actual.size(), is(5));
+        assertThat(actualCheckpoints.size(), is(5));
     }
 
     private StreamExecutionEnvironment buildStreamEnv() {
@@ -155,6 +119,8 @@ public class InfluxDBSinkITCase extends TestLogger {
         env.enableCheckpointing(100);
         return env;
     }
+
+    // TODO: Find a clean way to query and test expected data points
 
     private static List<String> queryWrittenData(final InfluxDBConfig influxDBConfig) {
         final List<String> dataPoints = new ArrayList<>();
@@ -175,7 +141,7 @@ public class InfluxDBSinkITCase extends TestLogger {
         return dataPoints;
     }
 
-    private static List<String> queryCommitData(final InfluxDBConfig influxDBConfig) {
+    private static List<String> queryCheckpoints(final InfluxDBConfig influxDBConfig) {
         final List<String> commitDataPoints = new ArrayList<>();
 
         final String query =
