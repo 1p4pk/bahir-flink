@@ -18,49 +18,54 @@
 package org.apache.flink.streaming.connectors.influxdb.source;
 
 import com.influxdb.Arguments;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
+import javax.annotation.Nullable;
+import lombok.Getter;
+import lombok.Setter;
 
 /** InfluxDB data points */
 /* Split Reader (HTTP Server) Line Protocol -> DataPoint -> Deserializer */
 public class DataPoint {
-    private final String name;
-    private final Map<String, String> tags = new TreeMap();
-    private final Map<String, Object> fields = new TreeMap();
-    private Number time;
+    @Getter private final String name;
+    private final Map<String, Object> data = new HashMap();
+    @Getter @Setter private Number timestamp;
 
-    public DataPoint(final String measurementName) {
+    DataPoint(
+            final String measurementName,
+            @Nullable final Map<String, Object> data,
+            @Nullable final Number timestamp) {
         Arguments.checkNotNull(measurementName, "measurement");
         this.name = measurementName;
+        this.data.putAll(data);
+        this.timestamp = timestamp;
     }
 
-    public String getMeasurement() {
-        return this.name;
+    public static DataPoint valueOf(final Map<String, Object> data) {
+        return new DataPoint(
+                String.valueOf(data.remove("measurement")), data, (Number) data.remove("__ts"));
     }
 
     public DataPoint putField(final String field, final Object value) {
         Arguments.checkNonEmpty(field, "fieldName");
-        this.fields.put(field, value);
+        this.data.put(field, value);
         return this;
     }
 
     public Object getField(final String field) {
         Arguments.checkNonEmpty(field, "fieldName");
-        return this.fields.getOrDefault(field, null);
-    }
-
-    public DataPoint time(final Number time) {
-        this.time = time;
-        return this;
-    }
-
-    public Number getTime() {
-        return this.time;
+        return this.data.getOrDefault(field, null);
     }
 
     public DataPoint addTag(final String key, final String value) {
         Arguments.checkNotNull(key, "tagName");
-        this.tags.put(key, value);
+        this.data.put(key, value);
+        return this;
+    }
+
+    public DataPoint getTag(final String key) {
+        Arguments.checkNotNull(key, "tagName");
+        this.data.getOrDefault(key, null);
         return this;
     }
 }

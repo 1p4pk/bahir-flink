@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import javax.annotation.Nullable;
+import org.apache.druid.data.input.influx.InfluxParser;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
@@ -54,6 +55,11 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
             new ArrayBlockingQueue<>(INGEST_QUEUE_CAPACITY);
     private final ArrayBlockingQueue<InfluxDBSplit> splitQueue =
             new ArrayBlockingQueue<>(INGEST_QUEUE_CAPACITY);
+    private final InfluxParser parser;
+
+    public InfluxDBSplitReader(final Set<String> measurementWhiteList) {
+        this.parser = new InfluxParser(measurementWhiteList);
+    }
 
     @Override
     public RecordsWithSplitIds<DataPoint> fetch() throws IOException {
@@ -122,32 +128,15 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
             String line;
             try {
                 while ((line = in.readLine()) != null) {
-                    final DataPoint dataPoint = LineProtocolParser.parse(line);
-                    if (dataPoint != null) {
-                        InfluxDBSplitReader.this.ingestionQueue.put(dataPoint);
-                    }
+                    final DataPoint dataPoint =
+                            DataPoint.valueOf(InfluxDBSplitReader.this.parser.parseToMap(line));
+                    InfluxDBSplitReader.this.ingestionQueue.put(dataPoint);
                 }
             } catch (final InterruptedException e) {
                 // TODO: check what to do with failing put to queue
                 e.printStackTrace();
             }
             t.sendResponseHeaders(204, -1);
-        }
-    }
-
-    private static class LineProtocolParser {
-        private static final Long[] tuples = {1L, 2L, 3L};
-        private static int currentTuple = 0;
-
-        public static DataPoint parse(final String line) {
-            if (currentTuple < 3) {
-                final DataPoint result = new DataPoint("test");
-                result.time(tuples[currentTuple]);
-                result.putField("LongValue", tuples[currentTuple]);
-                currentTuple++;
-                return result;
-            }
-            return null;
         }
     }
 

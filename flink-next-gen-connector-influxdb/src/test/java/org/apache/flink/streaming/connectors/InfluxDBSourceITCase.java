@@ -25,7 +25,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -43,6 +45,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 /** Integration test for the InfluxDB source for Flink. */
 public class InfluxDBSourceITCase extends TestLogger {
+
     @RegisterExtension
     public static final MiniClusterWithClientResource CLUSTER =
             new MiniClusterWithClientResource(
@@ -66,9 +69,14 @@ public class InfluxDBSourceITCase extends TestLogger {
 
         CollectSink.VALUES.clear();
 
+        final Set<String> whiteList = new HashSet();
+        whiteList.add("test");
+
         final Source influxDBSource =
                 new InfluxDBSource<Long>(
-                        Boundedness.CONTINUOUS_UNBOUNDED, new InfluxDBTestDeserializer());
+                        Boundedness.CONTINUOUS_UNBOUNDED,
+                        new InfluxDBTestDeserializer(),
+                        whiteList);
 
         env.fromSource(influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
                 .map(new IncrementMapFunction())
@@ -82,7 +90,9 @@ public class InfluxDBSourceITCase extends TestLogger {
         conn.setDoOutput(true);
         // TODO set Content-Type (look at Influx API docs)
         final OutputStream os = conn.getOutputStream();
-        final String line = "LINE_PROTOCOL_HERE"; // TODO replace
+        // TODO: setup more than one line
+        final String line = "test longValue=1i 1";
+        // final String line = "test longValue=1i 1\ntest longValue=2i 2\ntest longValue=3i 3";
         os.write(line.getBytes("utf-8"));
 
         final int code = conn.getResponseCode();
