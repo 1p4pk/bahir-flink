@@ -44,23 +44,15 @@ public class InfluxDBSink<IN> implements Sink<IN, Void, IN, Void> {
     private SimpleVersionedSerializer<Void> committableSerializer =
             InfluxDBCommittableSerializer.INSTANCE;
 
-    @Nullable private final GlobalCommitter<Void, Void> globalCommitter;
-
-    @Nullable private final SimpleVersionedSerializer<Void> globalCommittableSerializer;
-
     private InfluxDBSink(
             final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer,
             final InfluxDBConfig influxDBConfig,
             @Nullable final SimpleVersionedSerializer<IN> writerStateSerializer,
-            final SimpleVersionedSerializer<Void> committableSerializer,
-            @Nullable final GlobalCommitter<Void, Void> globalCommitter,
-            @Nullable final SimpleVersionedSerializer<Void> globalCommittableSerializer) {
+            final SimpleVersionedSerializer<Void> committableSerializer) {
         this.influxDBSchemaSerializer = influxDBSchemaSerializer;
         this.influxDBConfig = influxDBConfig;
         this.writerStateSerializer = writerStateSerializer;
         this.committableSerializer = committableSerializer;
-        this.globalCommitter = globalCommitter;
-        this.globalCommittableSerializer = globalCommittableSerializer;
     }
 
     @Override
@@ -78,22 +70,22 @@ public class InfluxDBSink<IN> implements Sink<IN, Void, IN, Void> {
     }
 
     @Override
-    public Optional<GlobalCommitter<Void, Void>> createGlobalCommitter() {
-        return Optional.empty();
-    }
-
-    @Override
     public Optional<SimpleVersionedSerializer<Void>> getCommittableSerializer() {
         return Optional.ofNullable(this.committableSerializer);
     }
 
     @Override
-    public Optional<SimpleVersionedSerializer<Void>> getGlobalCommittableSerializer() {
+    public Optional<SimpleVersionedSerializer<IN>> getWriterStateSerializer() {
+        return Optional.ofNullable(this.writerStateSerializer);
+    }
+
+    @Override
+    public Optional<GlobalCommitter<Void, Void>> createGlobalCommitter() {
         return Optional.empty();
     }
 
     @Override
-    public Optional<SimpleVersionedSerializer<IN>> getWriterStateSerializer() {
-        return Optional.ofNullable(this.writerStateSerializer);
+    public Optional<SimpleVersionedSerializer<Void>> getGlobalCommittableSerializer() {
+        return Optional.empty();
     }
 }
