@@ -22,7 +22,6 @@ import com.influxdb.client.WriteApi;
 import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
 import java.io.IOException;
-import java.io.Serializable;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -30,20 +29,19 @@ import lombok.SneakyThrows;
 import org.apache.flink.api.connector.sink.Committer;
 import org.apache.flink.streaming.connectors.influxdb.InfluxDBConfig;
 
-public class InfluxDBCommitter implements Committer<Void>, Serializable {
+public class InfluxDBCommitter implements Committer<Void> {
 
-    private final InfluxDBConfig config;
-    private transient InfluxDBClient influxDBClient = null;
+    private final InfluxDBClient influxDBClient;
 
     public InfluxDBCommitter(final InfluxDBConfig config) {
-        this.config = config;
+        this.influxDBClient = config.getClient();
     }
 
     // This method is called only when a checkpoint is set
     @SneakyThrows
     @Override
     public List<Void> commit(final List<Void> committables) throws IOException {
-        this.writeCommitDataPoint();
+        this.writeCheckpointDataPoint();
         return Collections.emptyList();
     }
 
@@ -52,10 +50,7 @@ public class InfluxDBCommitter implements Committer<Void>, Serializable {
         this.influxDBClient.close();
     }
 
-    private void writeCommitDataPoint() throws Exception {
-        if (this.influxDBClient == null) {
-            this.influxDBClient = this.config.getClient();
-        }
+    private void writeCheckpointDataPoint() throws Exception {
         try (final WriteApi writeApi = this.influxDBClient.getWriteApi()) {
             final Point point = new Point("checkpoint");
             point.addField("checkpoint", "flink");
