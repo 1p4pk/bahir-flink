@@ -73,12 +73,12 @@ public class InfluxDBSource<OUT>
     @Override
     public SourceReader<OUT, InfluxDBSplit> createReader(
             final SourceReaderContext sourceReaderContext) throws Exception {
-        final Supplier<InfluxDBSplitReader> splitReaderSupplier = () -> new InfluxDBSplitReader();
+        final Supplier<InfluxDBSplitReader> splitReaderSupplier = InfluxDBSplitReader::new;
         final InfluxDBRecordEmitter<OUT> recordEmitter =
                 new InfluxDBRecordEmitter<>(this.deserializationSchema);
         final Configuration config = new Configuration();
         config.setInteger("ELEMENT_QUEUE_CAPACITY", 3);
-        return new InfluxDBSourceReader<OUT>(
+        return new InfluxDBSourceReader<>(
                 splitReaderSupplier, recordEmitter, config, sourceReaderContext);
     }
 

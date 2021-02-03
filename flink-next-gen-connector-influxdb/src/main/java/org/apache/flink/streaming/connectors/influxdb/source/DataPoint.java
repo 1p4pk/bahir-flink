@@ -22,14 +22,13 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 import lombok.Getter;
-import lombok.Setter;
 
 /** InfluxDB data points */
 public class DataPoint {
     @Getter private final String name;
     private final Map<String, String> tags = new HashMap();
     private final Map<String, Object> fields = new HashMap();
-    @Getter @Setter private Number timestamp;
+    @Getter private final Number timestamp;
 
     DataPoint(final String measurementName, @Nullable final Number timestamp) {
         Arguments.checkNotNull(measurementName, "measurement");

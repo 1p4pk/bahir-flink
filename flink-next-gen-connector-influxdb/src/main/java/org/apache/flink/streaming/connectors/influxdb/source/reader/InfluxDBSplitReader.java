@@ -65,7 +65,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
 
     @Override
     public RecordsWithSplitIds<DataPoint> fetch() throws IOException {
-        if (split == null) {
+        if (this.split == null) {
             return null;
         }
         // Queue
@@ -73,13 +73,13 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
         try {
             // TODO blocking call -> handle wakeUp signal
             final Collection<DataPoint> recordsForSplit =
-                    recordsBySplits.recordsForSplit(split.splitId());
+                    recordsBySplits.recordsForSplit(this.split.splitId());
 
             // TODO blocking call -> handle wakeUp signal
-            List<List<DataPoint>> requests = new ArrayList<>();
+            final List<List<DataPoint>> requests = new ArrayList<>();
             requests.add(this.ingestionQueue.take());
             this.ingestionQueue.drainTo(requests);
-            for (List<DataPoint> request : requests) {
+            for (final List<DataPoint> request : requests) {
                 recordsForSplit.addAll(request);
             }
 
@@ -160,14 +160,14 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
                 final byte[] response = e.getMessage().getBytes();
                 // 400 Bad Request
                 t.sendResponseHeaders(400, response.length);
-                OutputStream os = t.getResponseBody();
+                final OutputStream os = t.getResponseBody();
                 os.write(response);
                 os.close();
             } catch (final RequestTooLargeException e) {
                 final byte[] response = e.getMessage().getBytes();
                 // 413 Payload Too Large
                 t.sendResponseHeaders(413, response.length);
-                OutputStream os = t.getResponseBody();
+                final OutputStream os = t.getResponseBody();
                 os.write(response);
                 os.close();
             } catch (
@@ -176,7 +176,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
                 final byte[] response = "Server overloaded".getBytes();
                 // 429 Too Many Requests
                 t.sendResponseHeaders(429, response.length);
-                OutputStream os = t.getResponseBody();
+                final OutputStream os = t.getResponseBody();
                 os.write(response);
                 os.close();
 
@@ -187,7 +187,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
     }
 
     private static class RequestTooLargeException extends RuntimeException {
-        RequestTooLargeException(String message) {
+        RequestTooLargeException(final String message) {
             super(message);
         }
     }
