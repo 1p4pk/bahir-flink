@@ -19,7 +19,6 @@ package org.apache.flink.streaming.connectors.influxdb.source;
 
 import java.text.ParseException;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -34,12 +33,6 @@ import org.apache.druid.data.input.influx.InfluxLineProtocolParser.TimestampCont
 public class InfluxParser {
     private static final Pattern BACKSLASH_PATTERN = Pattern.compile("\\\\\"");
     private static final Pattern IDENTIFIER_PATTERN = Pattern.compile("\\\\([,= ])");
-
-    private final Set<String> measurementWhitelist;
-
-    public InfluxParser(final Set<String> measurementWhitelist) {
-        this.measurementWhitelist = measurementWhitelist;
-    }
 
     @Nullable
     public DataPoint parseToDataPoint(final String input) throws ParseException {
@@ -59,10 +52,6 @@ public class InfluxParser {
 
         final InfluxLineProtocolParser.LineContext line = lines.get(0);
         final String measurement = this.parseIdentifier(line.identifier());
-
-        //        if (!checkWhitelist(measurement)) {
-        //            throw new ParseException("Metric not whitelisted.");
-        //        }
 
         final Number timestamp = this.parseTimestamp(line.timestamp());
 
@@ -125,10 +114,6 @@ public class InfluxParser {
         }
 
         return IDENTIFIER_PATTERN.matcher(ctx.IDENTIFIER_STRING().getText()).replaceAll("$1");
-    }
-
-    private boolean checkWhitelist(final String m) {
-        return (this.measurementWhitelist == null) || this.measurementWhitelist.contains(m);
     }
 
     private Number parseTimestamp(@Nullable final TimestampContext timestamp) {

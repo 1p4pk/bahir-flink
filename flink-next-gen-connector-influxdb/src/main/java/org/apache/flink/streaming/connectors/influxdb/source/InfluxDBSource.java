@@ -17,7 +17,6 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source;
 
-import java.util.Set;
 import java.util.function.Supplier;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.Boundedness;
@@ -58,15 +57,12 @@ public class InfluxDBSource<OUT>
 
     private final Boundedness boundedness;
     private final InfluxDBDataPointDeserializer<OUT> deserializationSchema;
-    private final Set<String> measurementWhiteList;
 
     public InfluxDBSource(
             final Boundedness boundedness,
-            final InfluxDBDataPointDeserializer<OUT> deserializationSchema,
-            final Set<String> measurementWhiteList) {
+            final InfluxDBDataPointDeserializer<OUT> deserializationSchema) {
         this.boundedness = boundedness;
         this.deserializationSchema = deserializationSchema;
-        this.measurementWhiteList = measurementWhiteList;
     }
 
     @Override
@@ -77,8 +73,7 @@ public class InfluxDBSource<OUT>
     @Override
     public SourceReader<OUT, InfluxDBSplit> createReader(
             final SourceReaderContext sourceReaderContext) throws Exception {
-        final Supplier<InfluxDBSplitReader> splitReaderSupplier =
-                () -> new InfluxDBSplitReader(this.measurementWhiteList);
+        final Supplier<InfluxDBSplitReader> splitReaderSupplier = () -> new InfluxDBSplitReader();
         final InfluxDBRecordEmitter<OUT> recordEmitter =
                 new InfluxDBRecordEmitter<>(this.deserializationSchema);
         final Configuration config = new Configuration();

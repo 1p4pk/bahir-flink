@@ -25,9 +25,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -69,14 +67,9 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
 
         CollectSink.VALUES.clear();
 
-        final Set<String> whiteList = new HashSet();
-        whiteList.add("test");
-
         final Source influxDBSource =
                 new InfluxDBSource<Long>(
-                        Boundedness.CONTINUOUS_UNBOUNDED,
-                        new InfluxDBTestDeserializer(),
-                        whiteList);
+                        Boundedness.CONTINUOUS_UNBOUNDED, new InfluxDBTestDeserializer());
 
         env.fromSource(influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
                 .map(new IncrementMapFunction())

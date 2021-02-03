@@ -60,12 +60,8 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
 
     private final ArrayBlockingQueue<List<DataPoint>> ingestionQueue =
             new ArrayBlockingQueue<>(INGEST_QUEUE_CAPACITY);
+    private final InfluxParser parser = new InfluxParser();
     private InfluxDBSplit split;
-    private final InfluxParser parser;
-
-    public InfluxDBSplitReader(final Set<String> measurementWhiteList) {
-        this.parser = new InfluxParser(measurementWhiteList);
-    }
 
     @Override
     public RecordsWithSplitIds<DataPoint> fetch() throws IOException {
