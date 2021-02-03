@@ -157,32 +157,28 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
 
                 t.sendResponseHeaders(204, -1);
             } catch (final ParseException e) {
-                final byte[] response = e.getMessage().getBytes();
                 // 400 Bad Request
-                t.sendResponseHeaders(400, response.length);
-                final OutputStream os = t.getResponseBody();
-                os.write(response);
-                os.close();
+                this.sendResponse(t, 400, e.getMessage());
             } catch (final RequestTooLargeException e) {
-                final byte[] response = e.getMessage().getBytes();
                 // 413 Payload Too Large
-                t.sendResponseHeaders(413, response.length);
-                final OutputStream os = t.getResponseBody();
-                os.write(response);
-                os.close();
-            } catch (
-                    final InterruptedException
-                            e) { // TODO InterruptedException may not be the right type
-                final byte[] response = "Server overloaded".getBytes();
+                this.sendResponse(t, 413, e.getMessage());
+            } catch (final InterruptedException e) {
+                // TODO: InterruptedException may not be the right type
                 // 429 Too Many Requests
-                t.sendResponseHeaders(429, response.length);
-                final OutputStream os = t.getResponseBody();
-                os.write(response);
-                os.close();
-
+                this.sendResponse(t, 429, "Server overloaded.");
                 // TODO rethrow/forward exception so that Flink knows the ingestion queue was full
                 e.printStackTrace();
             }
+        }
+
+        private void sendResponse(
+                final HttpExchange t, final int responseCode, final String message)
+                throws IOException {
+            final byte[] response = message.getBytes();
+            t.sendResponseHeaders(responseCode, response.length);
+            final OutputStream os = t.getResponseBody();
+            os.write(response);
+            os.close();
         }
     }
 
