@@ -19,14 +19,11 @@ package org.apache.flink.streaming.connectors.influxdb.sink.writer;
 
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.WriteApi;
-import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.connector.sink.Sink.ProcessingTimeService;
 import org.apache.flink.api.connector.sink.SinkWriter;
@@ -37,7 +34,7 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Void, IN> {
 
     private static final int BUFFER_SIZE = 1000;
 
-    private final Map<IN, Long> elements;
+    private final List<Point> elements;
     private ProcessingTimeService processingTimerService;
     private final InfluxDBSchemaSerializer<IN> schemaSerializer;
     private final InfluxDBClient influxDBClient;
@@ -45,7 +42,7 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Void, IN> {
     public InfluxDBWriter(
             final InfluxDBSchemaSerializer<IN> schemaSerializer, final InfluxDBConfig config) {
         this.schemaSerializer = schemaSerializer;
-        this.elements = new HashMap<>(BUFFER_SIZE);
+        this.elements = new ArrayList<>(BUFFER_SIZE);
         this.influxDBClient = config.getClient();
     }
 
@@ -58,7 +55,7 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Void, IN> {
                 this.elements.clear();
             } else {
                 log.debug("Adding elements to buffer. Buffer size: {}", this.elements.size());
-                this.elements.put(in, context.timestamp());
+                this.elements.add(this.schemaSerializer.serialize(in, context));
             }
         } catch (final Exception e) {
             e.printStackTrace();
@@ -89,15 +86,8 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Void, IN> {
 
     private void writeCurrentElements() throws Exception {
         try (final WriteApi writeApi = this.influxDBClient.getWriteApi()) {
-            final List<Point> points = new ArrayList<>(this.elements.size());
-            for (Map.Entry<IN, Long> element : elements.entrySet()) {
-                final Point point = this.schemaSerializer.serialize(element.getKey());
-                point.time(element.getValue(), WritePrecision.NS);
-                points.add(point);
-                log.debug("Adding Data point {}", point.toLineProtocol());
-            }
-            writeApi.writePoints(points);
-            log.debug("Wrote {} data points", points.size());
+            writeApi.writePoints(elements);
+            log.debug("Wrote {} data points", elements.size());
         }
     }
 }
