@@ -27,7 +27,6 @@ import com.influxdb.query.FluxRecord;
 import com.influxdb.query.FluxTable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -55,14 +54,7 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
 
     private static final List<String> EXPECTED_COMMITTED_DATA_IN_STREAMING_MODE =
             SOURCE_DATA.stream()
-                    .flatMap(
-                            x ->
-                                    Collections.nCopies(
-                                            2,
-                                            new InfluxDBTestSerializer()
-                                                    .serialize(x)
-                                                    .toLineProtocol())
-                                            .stream())
+                    .map(x -> new InfluxDBTestSerializer().serialize(x).toLineProtocol())
                     .collect(Collectors.toList());
 
     /**
@@ -112,7 +104,7 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
 
         final List<String> actualCheckpoints = queryCheckpoints(influxDBConfig);
 
-        assertThat(actualCheckpoints.size(), is(5));
+        assertThat(actualCheckpoints.size(), is(4));
     }
 
     private StreamExecutionEnvironment buildStreamEnv() {
