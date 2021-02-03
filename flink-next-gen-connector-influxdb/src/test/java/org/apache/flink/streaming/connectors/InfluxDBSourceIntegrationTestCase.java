@@ -33,6 +33,7 @@ import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.Source;
+import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
@@ -80,29 +81,21 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
         env.fromSource(influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
                 .map(new IncrementMapFunction())
                 .addSink(new CollectSink());
-        final Thread runner = new Thread(new ExecutionRunner(env));
-        runner.start();
+
+        JobClient jobClient = env.executeAsync();
+        // Wait for HTTPServer to start
         Thread.sleep(5000);
-        final URL u = new URL("http://localhost:8000/api/v2/write");
-        final HttpURLConnection conn = (HttpURLConnection) u.openConnection();
-        conn.setRequestMethod("POST");
-        conn.setDoOutput(true);
-        // TODO set Content-Type (look at Influx API docs)
-        final OutputStream os = conn.getOutputStream();
-        // TODO: setup more than one line
-        final String line = "test longValue=1i 1";
-        // final String line = "test longValue=1i 1\ntest longValue=2i 2\ntest longValue=3i 3";
-        os.write(line.getBytes("utf-8"));
 
-        final int code = conn.getResponseCode();
-        assertTrue(code == 204);
-
+        HTTPRequestRunner request = new HTTPRequestRunner();
+        final Thread runner = new Thread(request);
+        runner.start();
         runner.join();
+
+        assertTrue(request.getCode() == 204);
+        jobClient.cancel();
 
         final Collection<Long> results = new ArrayList<>();
         results.add(2L);
-        // results.add(3L);
-        // results.add(4L);
         assertTrue(CollectSink.VALUES.containsAll(results));
     }
 
@@ -127,17 +120,29 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
         }
     }
 
-    private static class ExecutionRunner implements Runnable {
-        private final StreamExecutionEnvironment streamExecutionEnvironment;
+    private static class HTTPRequestRunner implements Runnable {
+        int code;
 
-        ExecutionRunner(final StreamExecutionEnvironment streamExecutionEnvironment) {
-            this.streamExecutionEnvironment = streamExecutionEnvironment;
-        }
+        HTTPRequestRunner() {}
 
         @SneakyThrows
         @Override
         public void run() {
-            this.streamExecutionEnvironment.execute();
+            final URL u = new URL("http://localhost:8000/api/v2/write");
+            final HttpURLConnection conn = (HttpURLConnection) u.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setDoOutput(true);
+            final OutputStream os = conn.getOutputStream();
+            // TODO set Content-Type (look at Influx API docs)
+            // TODO: setup more than one line
+            final String line = "test longValue=1i 1";
+            os.write(line.getBytes("utf-8"));
+            os.close();
+            code = conn.getResponseCode();
+        }
+
+        public int getCode() {
+            return code;
         }
     }
 }
