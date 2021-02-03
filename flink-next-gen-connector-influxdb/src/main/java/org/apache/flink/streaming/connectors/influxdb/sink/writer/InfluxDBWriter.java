@@ -69,7 +69,7 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Void, IN> {
 
     @Override
     public List<IN> snapshotState() throws IOException {
-        return Collections.emptyList();
+        return this.elements;
     }
 
     @Override
