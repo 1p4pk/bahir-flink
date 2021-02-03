@@ -30,7 +30,7 @@ import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.streaming.connectors.influxdb.InfluxDBConfig;
 
 @Slf4j
-public class InfluxDBWriter<IN> implements SinkWriter<IN, Void, IN> {
+public class InfluxDBWriter<IN> implements SinkWriter<IN, Void, Point> {
 
     private static final int BUFFER_SIZE = 1000;
 
@@ -68,8 +68,8 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Void, IN> {
     }
 
     @Override
-    public List<IN> snapshotState() throws IOException {
-        return Collections.emptyList();
+    public List<Point> snapshotState() throws IOException {
+        return this.elements;
     }
 
     @Override
