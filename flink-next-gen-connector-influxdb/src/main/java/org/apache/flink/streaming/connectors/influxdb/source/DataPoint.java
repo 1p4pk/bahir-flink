@@ -25,47 +25,36 @@ import lombok.Getter;
 import lombok.Setter;
 
 /** InfluxDB data points */
-/* Split Reader (HTTP Server) Line Protocol -> DataPoint -> Deserializer */
 public class DataPoint {
     @Getter private final String name;
-    private final Map<String, Object> data = new HashMap();
+    private final Map<String, String> tags = new HashMap();
+    private final Map<String, Object> fields = new HashMap();
     @Getter @Setter private Number timestamp;
 
-    DataPoint(
-            final String measurementName,
-            @Nullable final Map<String, Object> data,
-            @Nullable final Number timestamp) {
+    DataPoint(final String measurementName, @Nullable final Number timestamp) {
         Arguments.checkNotNull(measurementName, "measurement");
         this.name = measurementName;
-        this.data.putAll(data);
         this.timestamp = timestamp;
     }
 
-    public static DataPoint valueOf(final Map<String, Object> data) {
-        return new DataPoint(
-                String.valueOf(data.remove("measurement")), data, (Number) data.remove("__ts"));
-    }
-
-    public DataPoint putField(final String field, final Object value) {
+    public void addField(final String field, final Object value) {
         Arguments.checkNonEmpty(field, "fieldName");
-        this.data.put(field, value);
-        return this;
+        this.fields.put(field, value);
     }
 
     public Object getField(final String field) {
         Arguments.checkNonEmpty(field, "fieldName");
-        return this.data.getOrDefault(field, null);
+        return this.fields.getOrDefault(field, null);
     }
 
-    public DataPoint addTag(final String key, final String value) {
+    public void addTag(final String key, final String value) {
         Arguments.checkNotNull(key, "tagName");
-        this.data.put(key, value);
-        return this;
+        this.tags.put(key, value);
     }
 
     public DataPoint getTag(final String key) {
         Arguments.checkNotNull(key, "tagName");
-        this.data.getOrDefault(key, null);
+        this.tags.getOrDefault(key, null);
         return this;
     }
 }
