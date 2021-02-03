@@ -130,7 +130,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
             try {
                 while ((line = in.readLine()) != null) {
                     final DataPoint dataPoint =
-                            DataPoint.valueOf(InfluxDBSplitReader.this.parser.parseToMap(line));
+                            InfluxDBSplitReader.this.parser.parseToDataPoint(line);
                     InfluxDBSplitReader.this.ingestionQueue.put(dataPoint);
                 }
             } catch (final InterruptedException | ParseException e) {

@@ -18,9 +18,7 @@
 package org.apache.flink.streaming.connectors.influxdb.source;
 
 import java.text.ParseException;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -33,26 +31,23 @@ import org.apache.druid.data.input.influx.InfluxLineProtocolParser;
 
 // https://github.com/apache/druid/blob/master/extensions-contrib/influx-extensions/src/main/java/org/apache/druid/data/input/influx/InfluxParser.java
 public class InfluxParser {
-    public static final String TIMESTAMP_KEY = "__ts";
-    private static final String MEASUREMENT_KEY = "measurement";
-
     private static final Pattern BACKSLASH_PATTERN = Pattern.compile("\\\\\"");
     private static final Pattern IDENTIFIER_PATTERN = Pattern.compile("\\\\([,= ])");
 
     private final Set<String> measurementWhitelist;
 
-    public InfluxParser(Set<String> measurementWhitelist) {
+    public InfluxParser(final Set<String> measurementWhitelist) {
         this.measurementWhitelist = measurementWhitelist;
     }
 
     @Nullable
-    public Map<String, Object> parseToMap(String input) throws ParseException {
-        CharStream charStream = new ANTLRInputStream(input);
-        InfluxLineProtocolLexer lexer = new InfluxLineProtocolLexer(charStream);
-        TokenStream tokenStream = new CommonTokenStream(lexer);
-        InfluxLineProtocolParser parser = new InfluxLineProtocolParser(tokenStream);
+    public DataPoint parseToDataPoint(final String input) throws ParseException {
+        final CharStream charStream = new ANTLRInputStream(input);
+        final InfluxLineProtocolLexer lexer = new InfluxLineProtocolLexer(charStream);
+        final TokenStream tokenStream = new CommonTokenStream(lexer);
+        final InfluxLineProtocolParser parser = new InfluxLineProtocolParser(tokenStream);
 
-        List<InfluxLineProtocolParser.LineContext> lines = parser.lines().line();
+        final List<InfluxLineProtocolParser.LineContext> lines = parser.lines().line();
         if (parser.getNumberOfSyntaxErrors() != 0) {
             throw new ParseException("Unable to parse line.", 0);
         }
@@ -61,55 +56,61 @@ public class InfluxParser {
                     "Multiple lines present; unable to parse more than one per record.", 0);
         }
 
-        Map<String, Object> out = new LinkedHashMap<>();
-
-        InfluxLineProtocolParser.LineContext line = lines.get(0);
-        String measurement = parseIdentifier(line.identifier());
+        final InfluxLineProtocolParser.LineContext line = lines.get(0);
+        final String measurement = this.parseIdentifier(line.identifier());
 
         //        if (!checkWhitelist(measurement)) {
         //            throw new ParseException("Metric not whitelisted.");
         //        }
 
-        out.put(MEASUREMENT_KEY, measurement);
-        if (line.tag_set() != null) {
-            line.tag_set().tag_pair().forEach(t -> parseTag(t, out));
-        }
-
-        line.field_set().field_pair().forEach(t -> parseField(t, out));
-
+        Number timestamp = null;
         if (line.timestamp() != null) {
-            String timestamp = line.timestamp().getText();
-            parseTimestamp(timestamp, out);
+            final String strTimestamp = line.timestamp().getText();
+            // Influx timestamps come in nanoseconds; treat anything less than 1 ms as 0
+            if (strTimestamp.length() < 7) {
+                timestamp = 0L;
+            } else {
+                timestamp = Long.valueOf(strTimestamp.substring(0, strTimestamp.length() - 6));
+            }
         }
+
+        final DataPoint out = new DataPoint(measurement, timestamp);
+
+        if (line.tag_set() != null) {
+            line.tag_set().tag_pair().forEach(t -> this.parseTag(t, out));
+        }
+
+        line.field_set().field_pair().forEach(t -> this.parseField(t, out));
+
         return out;
     }
 
-    private void parseTag(InfluxLineProtocolParser.Tag_pairContext tag, Map<String, Object> out) {
-        String key = parseIdentifier(tag.identifier(0));
-        String value = parseIdentifier(tag.identifier(1));
-        out.put(key, value);
+    private void parseTag(final InfluxLineProtocolParser.Tag_pairContext tag, final DataPoint out) {
+        final String key = this.parseIdentifier(tag.identifier(0));
+        final String value = this.parseIdentifier(tag.identifier(1));
+        out.addTag(key, value);
     }
 
     private void parseField(
-            InfluxLineProtocolParser.Field_pairContext field, Map<String, Object> out) {
-        String key = parseIdentifier(field.identifier());
-        InfluxLineProtocolParser.Field_valueContext valueContext = field.field_value();
-        Object value;
+            final InfluxLineProtocolParser.Field_pairContext field, final DataPoint out) {
+        final String key = this.parseIdentifier(field.identifier());
+        final InfluxLineProtocolParser.Field_valueContext valueContext = field.field_value();
+        final Object value;
         if (valueContext.NUMBER() != null) {
-            value = parseNumber(valueContext.NUMBER().getText());
+            value = this.parseNumber(valueContext.NUMBER().getText());
         } else if (valueContext.BOOLEAN() != null) {
-            value = parseBool(valueContext.BOOLEAN().getText());
+            value = this.parseBool(valueContext.BOOLEAN().getText());
         } else {
-            value = parseQuotedString(valueContext.QUOTED_STRING().getText());
+            value = this.parseQuotedString(valueContext.QUOTED_STRING().getText());
         }
-        out.put(key, value);
+        out.addField(key, value);
     }
 
-    private Object parseQuotedString(String text) {
+    private Object parseQuotedString(final String text) {
         return BACKSLASH_PATTERN.matcher(text.substring(1, text.length() - 1)).replaceAll("\"");
     }
 
-    private Object parseNumber(String raw) {
+    private Object parseNumber(final String raw) {
         if (raw.endsWith("i")) {
             return Long.valueOf(raw.substring(0, raw.length() - 1));
         }
@@ -117,8 +118,8 @@ public class InfluxParser {
         return new Double(raw);
     }
 
-    private Object parseBool(String raw) {
-        char first = raw.charAt(0);
+    private Object parseBool(final String raw) {
+        final char first = raw.charAt(0);
         if (first == 't' || first == 'T') {
             return "true";
         } else {
@@ -126,7 +127,7 @@ public class InfluxParser {
         }
     }
 
-    private String parseIdentifier(InfluxLineProtocolParser.IdentifierContext ctx) {
+    private String parseIdentifier(final InfluxLineProtocolParser.IdentifierContext ctx) {
         if (ctx.BOOLEAN() != null || ctx.NUMBER() != null) {
             return ctx.getText();
         }
@@ -134,18 +135,7 @@ public class InfluxParser {
         return IDENTIFIER_PATTERN.matcher(ctx.IDENTIFIER_STRING().getText()).replaceAll("$1");
     }
 
-    private boolean checkWhitelist(String m) {
-        return (measurementWhitelist == null) || measurementWhitelist.contains(m);
-    }
-
-    private void parseTimestamp(String timestamp, Map<String, Object> dest) {
-        // Influx timestamps come in nanoseconds; treat anything less than 1 ms as 0
-        if (timestamp.length() < 7) {
-            dest.put(TIMESTAMP_KEY, 0L);
-        } else {
-            timestamp = timestamp.substring(0, timestamp.length() - 6);
-            final long timestampMillis = Long.valueOf(timestamp);
-            dest.put(TIMESTAMP_KEY, timestampMillis);
-        }
+    private boolean checkWhitelist(final String m) {
+        return (this.measurementWhitelist == null) || this.measurementWhitelist.contains(m);
     }
 }
