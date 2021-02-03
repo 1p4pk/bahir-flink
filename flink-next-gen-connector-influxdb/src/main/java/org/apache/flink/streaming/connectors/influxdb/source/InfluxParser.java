@@ -28,6 +28,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
 import org.apache.druid.data.input.influx.InfluxLineProtocolLexer;
 import org.apache.druid.data.input.influx.InfluxLineProtocolParser;
+import org.apache.druid.data.input.influx.InfluxLineProtocolParser.TimestampContext;
 
 // https://github.com/apache/druid/blob/master/extensions-contrib/influx-extensions/src/main/java/org/apache/druid/data/input/influx/InfluxParser.java
 public class InfluxParser {
@@ -63,16 +64,7 @@ public class InfluxParser {
         //            throw new ParseException("Metric not whitelisted.");
         //        }
 
-        Number timestamp = null;
-        if (line.timestamp() != null) {
-            final String strTimestamp = line.timestamp().getText();
-            // Influx timestamps come in nanoseconds; treat anything less than 1 ms as 0
-            if (strTimestamp.length() < 7) {
-                timestamp = 0L;
-            } else {
-                timestamp = Long.valueOf(strTimestamp.substring(0, strTimestamp.length() - 6));
-            }
-        }
+        final Number timestamp = this.parseTimestamp(line.timestamp());
 
         final DataPoint out = new DataPoint(measurement, timestamp);
 
@@ -137,5 +129,18 @@ public class InfluxParser {
 
     private boolean checkWhitelist(final String m) {
         return (this.measurementWhitelist == null) || this.measurementWhitelist.contains(m);
+    }
+
+    private Number parseTimestamp(@Nullable final TimestampContext timestamp) {
+        if (timestamp != null) {
+            final String strTimestamp = timestamp.getText();
+            // Influx timestamps come in nanoseconds; treat anything less than 1 ms as 0
+            if (strTimestamp.length() < 7) {
+                return 0L;
+            } else {
+                return Long.valueOf(strTimestamp.substring(0, strTimestamp.length() - 6));
+            }
+        }
+        return null;
     }
 }
