@@ -83,12 +83,6 @@ under the License.
       <version>${druid.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.apache.druid</groupId>
-      <artifactId>druid-common</artifactId>
-      <version>${druid.version}</version>
-    </dependency>
-
 
     <!-- Flink Test Utils -->
 

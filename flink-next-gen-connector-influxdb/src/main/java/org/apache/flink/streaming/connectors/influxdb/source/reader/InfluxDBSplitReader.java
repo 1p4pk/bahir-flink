@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -35,11 +36,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import javax.annotation.Nullable;
-import org.apache.druid.data.input.influx.InfluxParser;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
 import org.apache.flink.streaming.connectors.influxdb.source.DataPoint;
+import org.apache.flink.streaming.connectors.influxdb.source.InfluxParser;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
 
 /**
@@ -132,7 +133,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
                             DataPoint.valueOf(InfluxDBSplitReader.this.parser.parseToMap(line));
                     InfluxDBSplitReader.this.ingestionQueue.put(dataPoint);
                 }
-            } catch (final InterruptedException e) {
+            } catch (final InterruptedException | ParseException e) {
                 // TODO: check what to do with failing put to queue
                 e.printStackTrace();
             }
