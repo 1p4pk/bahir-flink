@@ -45,7 +45,7 @@ import org.junit.ClassRule;
 import org.junit.jupiter.api.Test;
 
 @Slf4j
-public class InfluxDBSinkITCase extends TestLogger {
+public class InfluxDBSinkIntegrationTestCase extends TestLogger {
 
     @ClassRule
     public static final InfluxDBContainer<?> influxDBContainer =
@@ -84,7 +84,7 @@ public class InfluxDBSinkITCase extends TestLogger {
     @Test
     void shouldWriteDataToInfluxDB() throws Exception {
         log.info("Starting test");
-        final StreamExecutionEnvironment env = buildStreamEnv();
+        final StreamExecutionEnvironment env = this.buildStreamEnv();
         final InfluxDBConfig influxDBConfig =
                 InfluxDBConfig.builder()
                         .url(influxDBContainer.getUrl())
