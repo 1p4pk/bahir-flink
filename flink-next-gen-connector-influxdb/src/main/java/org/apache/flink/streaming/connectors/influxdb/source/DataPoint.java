@@ -51,9 +51,8 @@ public class DataPoint {
         this.tags.put(key, value);
     }
 
-    public DataPoint getTag(final String key) {
+    public String getTag(final String key) {
         Arguments.checkNotNull(key, "tagName");
-        this.tags.getOrDefault(key, null);
-        return this;
+        return this.tags.getOrDefault(key, null);
     }
 }
