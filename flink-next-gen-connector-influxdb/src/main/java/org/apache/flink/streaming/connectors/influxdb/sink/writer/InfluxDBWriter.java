@@ -54,7 +54,7 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Void, IN> {
                 this.writeCurrentElements();
                 this.elements.clear();
             } else {
-                log.debug("Adding elements to buffer");
+                log.debug("Adding elements to buffer. Buffer size: {}", this.elements.size());
                 this.elements.add(in);
             }
         } catch (final Exception e) {
@@ -74,9 +74,9 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Void, IN> {
 
     @Override
     public void close() throws Exception {
-        log.debug("Preparing to write the elements in close");
+        log.debug("Preparing to write the elements in close.");
         this.writeCurrentElements();
-        log.debug("Closing the writer...");
+        log.debug("Closing the writer.");
         this.elements.clear();
     }
 

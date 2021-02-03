@@ -43,7 +43,7 @@ public class InfluxDBCommitter implements Committer<Void> {
     @SneakyThrows
     @Override
     public List<Void> commit(final List<Void> committables) throws IOException {
-        log.info("A checkpoint is set");
+        log.info("A checkpoint is set.");
         this.writeCheckpointDataPoint();
         return Collections.emptyList();
     }
@@ -51,7 +51,7 @@ public class InfluxDBCommitter implements Committer<Void> {
     @Override
     public void close() throws Exception {
         this.influxDBClient.close();
-        log.debug("Closing the committer");
+        log.debug("Closing the committer.");
     }
 
     private void writeCheckpointDataPoint() throws Exception {
