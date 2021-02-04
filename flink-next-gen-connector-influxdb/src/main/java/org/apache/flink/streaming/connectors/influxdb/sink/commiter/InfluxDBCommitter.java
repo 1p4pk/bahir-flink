@@ -27,7 +27,7 @@ import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.connector.sink.Committer;
-import org.apache.flink.streaming.connectors.influxdb.InfluxDBConfig;
+import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBConfig;
 
 @Slf4j
 public class InfluxDBCommitter implements Committer<Long> {

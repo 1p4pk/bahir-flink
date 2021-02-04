@@ -20,34 +20,29 @@ package org.apache.flink.streaming.connectors.influxdb.sink;
 import com.influxdb.client.write.Point;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import lombok.Builder;
 import org.apache.flink.api.connector.sink.Committer;
 import org.apache.flink.api.connector.sink.GlobalCommitter;
 import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
-import org.apache.flink.streaming.connectors.influxdb.InfluxDBConfig;
+import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBConfig;
 import org.apache.flink.streaming.connectors.influxdb.sink.commiter.InfluxDBCommitter;
+import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBPointSerializer;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter;
 
 @Builder
 public class InfluxDBSink<IN> implements Sink<IN, Long, Point, Void> {
 
+    private final InfluxDBConfig influxDBConfig;
     private final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer;
 
-    private final InfluxDBConfig influxDBConfig;
-
-    @Nullable private final SimpleVersionedSerializer<Point> writerStateSerializer;
-
     private InfluxDBSink(
-            final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer,
             final InfluxDBConfig influxDBConfig,
-            @Nullable final SimpleVersionedSerializer<Point> writerStateSerializer) {
-        this.influxDBSchemaSerializer = influxDBSchemaSerializer;
+            final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer) {
         this.influxDBConfig = influxDBConfig;
-        this.writerStateSerializer = writerStateSerializer;
+        this.influxDBSchemaSerializer = influxDBSchemaSerializer;
     }
 
     @Override
@@ -71,7 +66,7 @@ public class InfluxDBSink<IN> implements Sink<IN, Long, Point, Void> {
 
     @Override
     public Optional<SimpleVersionedSerializer<Point>> getWriterStateSerializer() {
-        return Optional.ofNullable(this.writerStateSerializer);
+        return Optional.of(new InfluxDBPointSerializer());
     }
 
     @Override

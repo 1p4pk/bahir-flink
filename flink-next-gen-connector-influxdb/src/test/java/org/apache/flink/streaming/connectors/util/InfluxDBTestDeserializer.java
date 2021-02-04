@@ -17,7 +17,7 @@
  */
 package org.apache.flink.streaming.connectors.util;
 
-import org.apache.flink.streaming.connectors.influxdb.source.DataPoint;
+import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.source.reader.deserializer.InfluxDBDataPointDeserializer;
 
 public class InfluxDBTestDeserializer implements InfluxDBDataPointDeserializer<Long> {

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.streaming.connectors.influxdb.source;
+package org.apache.flink.streaming.connectors.influxdb.common;
 
 import java.text.ParseException;
 import java.util.List;
