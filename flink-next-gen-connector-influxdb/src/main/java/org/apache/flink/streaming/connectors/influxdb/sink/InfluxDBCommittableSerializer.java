@@ -17,17 +17,10 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.sink;
 
-import java.io.Serializable;
 import java.nio.ByteBuffer;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
-public class InfluxDBCommittableSerializer
-        implements SimpleVersionedSerializer<Long>, Serializable {
-
-    public static final InfluxDBCommittableSerializer INSTANCE =
-            new InfluxDBCommittableSerializer();
-
-    private static final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+public class InfluxDBCommittableSerializer implements SimpleVersionedSerializer<Long> {
 
     @Override
     public int getVersion() {
@@ -36,12 +29,14 @@ public class InfluxDBCommittableSerializer
 
     @Override
     public byte[] serialize(final Long value) {
+        final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
         buffer.putLong(0, value);
         return buffer.array();
     }
 
     @Override
     public Long deserialize(final int version, final byte[] serialized) {
+        final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
         buffer.put(serialized, 0, serialized.length);
         buffer.flip();
         return buffer.getLong();

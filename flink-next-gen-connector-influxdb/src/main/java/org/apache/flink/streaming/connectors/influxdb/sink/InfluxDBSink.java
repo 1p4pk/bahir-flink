@@ -41,19 +41,13 @@ public class InfluxDBSink<IN> implements Sink<IN, Long, Point, Void> {
 
     @Nullable private final SimpleVersionedSerializer<Point> writerStateSerializer;
 
-    @Builder.Default
-    private SimpleVersionedSerializer<Long> committableSerializer =
-            InfluxDBCommittableSerializer.INSTANCE;
-
     private InfluxDBSink(
             final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer,
             final InfluxDBConfig influxDBConfig,
-            @Nullable final SimpleVersionedSerializer<Point> writerStateSerializer,
-            final SimpleVersionedSerializer<Long> committableSerializer) {
+            @Nullable final SimpleVersionedSerializer<Point> writerStateSerializer) {
         this.influxDBSchemaSerializer = influxDBSchemaSerializer;
         this.influxDBConfig = influxDBConfig;
         this.writerStateSerializer = writerStateSerializer;
-        this.committableSerializer = committableSerializer;
     }
 
     @Override
@@ -72,7 +66,7 @@ public class InfluxDBSink<IN> implements Sink<IN, Long, Point, Void> {
 
     @Override
     public Optional<SimpleVersionedSerializer<Long>> getCommittableSerializer() {
-        return Optional.ofNullable(this.committableSerializer);
+        return Optional.of(new InfluxDBCommittableSerializer());
     }
 
     @Override
