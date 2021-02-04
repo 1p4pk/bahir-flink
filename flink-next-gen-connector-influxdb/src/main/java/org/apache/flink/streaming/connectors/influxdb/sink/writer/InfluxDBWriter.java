@@ -20,9 +20,7 @@ package org.apache.flink.streaming.connectors.influxdb.sink.writer;
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.WriteApi;
 import com.influxdb.client.write.Point;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.connector.sink.Sink.ProcessingTimeService;
@@ -30,10 +28,11 @@ import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.streaming.connectors.influxdb.InfluxDBConfig;
 
 @Slf4j
-public class InfluxDBWriter<IN> implements SinkWriter<IN, Void, Point> {
+public class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
 
     private static final int BUFFER_SIZE = 1000;
 
+    private long lastTimestamp = 0;
     private final List<Point> elements;
     private ProcessingTimeService processingTimerService;
     private final InfluxDBSchemaSerializer<IN> schemaSerializer;
@@ -47,7 +46,7 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Void, Point> {
     }
 
     @Override
-    public void write(final IN in, final Context context) throws IOException {
+    public void write(final IN in, final Context context) {
         try {
             if (this.elements.size() == BUFFER_SIZE) {
                 log.info("Buffer size reached preparing to write the elements.");
@@ -56,6 +55,8 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Void, Point> {
             } else {
                 log.debug("Adding elements to buffer. Buffer size: {}", this.elements.size());
                 this.elements.add(this.schemaSerializer.serialize(in, context));
+                if (context.timestamp() != null)
+                    this.lastTimestamp = Math.max(this.lastTimestamp, context.timestamp());
             }
         } catch (final Exception e) {
             e.printStackTrace();
@@ -63,12 +64,14 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Void, Point> {
     }
 
     @Override
-    public List<Void> prepareCommit(final boolean flush) throws IOException {
-        return Collections.emptyList();
+    public List<Long> prepareCommit(final boolean flush) {
+        final List<Long> lastTimestamp = new ArrayList<>();
+        lastTimestamp.add(this.lastTimestamp);
+        return lastTimestamp;
     }
 
     @Override
-    public List<Point> snapshotState() throws IOException {
+    public List<Point> snapshotState() {
         return this.elements;
     }
 
@@ -86,8 +89,8 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Void, Point> {
 
     private void writeCurrentElements() throws Exception {
         try (final WriteApi writeApi = this.influxDBClient.getWriteApi()) {
-            writeApi.writePoints(elements);
-            log.debug("Wrote {} data points", elements.size());
+            writeApi.writePoints(this.elements);
+            log.debug("Wrote {} data points", this.elements.size());
         }
     }
 }
