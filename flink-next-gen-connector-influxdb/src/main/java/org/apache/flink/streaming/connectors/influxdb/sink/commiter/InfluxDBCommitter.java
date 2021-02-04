@@ -21,8 +21,6 @@ import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.WriteApi;
 import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
-import java.io.IOException;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import lombok.SneakyThrows;
@@ -31,7 +29,7 @@ import org.apache.flink.api.connector.sink.Committer;
 import org.apache.flink.streaming.connectors.influxdb.InfluxDBConfig;
 
 @Slf4j
-public class InfluxDBCommitter implements Committer<Void> {
+public class InfluxDBCommitter implements Committer<Long> {
 
     private final InfluxDBClient influxDBClient;
 
@@ -42,23 +40,30 @@ public class InfluxDBCommitter implements Committer<Void> {
     // This method is called only when a checkpoint is set
     @SneakyThrows
     @Override
-    public List<Void> commit(final List<Void> committables) throws IOException {
+    public List<Long> commit(final List<Long> committables) {
         log.info("A checkpoint is set.");
-        this.writeCheckpointDataPoint();
+        long lastTimestamp = 0;
+        if (committables.size() >= 1) {
+            lastTimestamp = committables.get(committables.size() - 1);
+        }
+
+        this.writeCheckpointDataPoint(lastTimestamp);
         return Collections.emptyList();
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         this.influxDBClient.close();
         log.debug("Closing the committer.");
     }
 
-    private void writeCheckpointDataPoint() throws Exception {
+    private void writeCheckpointDataPoint(final long timestamp) {
         try (final WriteApi writeApi = this.influxDBClient.getWriteApi()) {
             final Point point = new Point("checkpoint");
             point.addField("checkpoint", "flink");
-            point.time(Instant.now(), WritePrecision.NS);
+            if (timestamp != 0) {
+                point.time(timestamp, WritePrecision.NS);
+            }
             writeApi.writePoint(point);
             log.debug("Checkpoint data point write at {}", point.toLineProtocol());
         }

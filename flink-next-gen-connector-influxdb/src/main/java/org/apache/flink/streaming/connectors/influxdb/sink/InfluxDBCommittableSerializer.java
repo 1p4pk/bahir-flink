@@ -22,7 +22,7 @@ import java.io.Serializable;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 public class InfluxDBCommittableSerializer
-        implements SimpleVersionedSerializer<Void>, Serializable {
+        implements SimpleVersionedSerializer<Long>, Serializable {
 
     public static final InfluxDBCommittableSerializer INSTANCE =
             new InfluxDBCommittableSerializer();
@@ -33,12 +33,13 @@ public class InfluxDBCommittableSerializer
     }
 
     @Override
-    public byte[] serialize(final Void obj) throws IOException {
+    public byte[] serialize(final Long obj) {
         return SimpleVersionedStringSerializer.INSTANCE.serialize(String.valueOf(obj));
     }
 
     @Override
-    public Void deserialize(final int version, final byte[] serialized) throws IOException {
-        return null;
+    public Long deserialize(final int version, final byte[] serialized) throws IOException {
+        return Long.valueOf(
+                SimpleVersionedStringSerializer.INSTANCE.deserialize(version, serialized));
     }
 }

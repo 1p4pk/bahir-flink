@@ -33,7 +33,7 @@ import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchema
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter;
 
 @Builder
-public class InfluxDBSink<IN> implements Sink<IN, Void, Point, Void> {
+public class InfluxDBSink<IN> implements Sink<IN, Long, Point, Void> {
 
     private final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer;
 
@@ -42,14 +42,14 @@ public class InfluxDBSink<IN> implements Sink<IN, Void, Point, Void> {
     @Nullable private final SimpleVersionedSerializer<Point> writerStateSerializer;
 
     @Builder.Default
-    private SimpleVersionedSerializer<Void> committableSerializer =
+    private SimpleVersionedSerializer<Long> committableSerializer =
             InfluxDBCommittableSerializer.INSTANCE;
 
     private InfluxDBSink(
             final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer,
             final InfluxDBConfig influxDBConfig,
             @Nullable final SimpleVersionedSerializer<Point> writerStateSerializer,
-            final SimpleVersionedSerializer<Void> committableSerializer) {
+            final SimpleVersionedSerializer<Long> committableSerializer) {
         this.influxDBSchemaSerializer = influxDBSchemaSerializer;
         this.influxDBConfig = influxDBConfig;
         this.writerStateSerializer = writerStateSerializer;
@@ -57,7 +57,7 @@ public class InfluxDBSink<IN> implements Sink<IN, Void, Point, Void> {
     }
 
     @Override
-    public SinkWriter<IN, Void, Point> createWriter(
+    public SinkWriter<IN, Long, Point> createWriter(
             final InitContext initContext, final List<Point> list) {
         final InfluxDBWriter<IN> writer =
                 new InfluxDBWriter<>(this.influxDBSchemaSerializer, this.influxDBConfig);
@@ -66,12 +66,12 @@ public class InfluxDBSink<IN> implements Sink<IN, Void, Point, Void> {
     }
 
     @Override
-    public Optional<Committer<Void>> createCommitter() {
+    public Optional<Committer<Long>> createCommitter() {
         return Optional.of(new InfluxDBCommitter(this.influxDBConfig));
     }
 
     @Override
-    public Optional<SimpleVersionedSerializer<Void>> getCommittableSerializer() {
+    public Optional<SimpleVersionedSerializer<Long>> getCommittableSerializer() {
         return Optional.ofNullable(this.committableSerializer);
     }
 
@@ -81,7 +81,7 @@ public class InfluxDBSink<IN> implements Sink<IN, Void, Point, Void> {
     }
 
     @Override
-    public Optional<GlobalCommitter<Void, Void>> createGlobalCommitter() {
+    public Optional<GlobalCommitter<Long, Void>> createGlobalCommitter() {
         return Optional.empty();
     }
 
