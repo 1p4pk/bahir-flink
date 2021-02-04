@@ -17,8 +17,8 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.sink;
 
-import java.io.IOException;
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 public class InfluxDBCommittableSerializer
@@ -27,19 +27,23 @@ public class InfluxDBCommittableSerializer
     public static final InfluxDBCommittableSerializer INSTANCE =
             new InfluxDBCommittableSerializer();
 
+    private static final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+
     @Override
     public int getVersion() {
-        return SimpleVersionedStringSerializer.INSTANCE.getVersion();
+        return 1;
     }
 
     @Override
-    public byte[] serialize(final Long obj) {
-        return SimpleVersionedStringSerializer.INSTANCE.serialize(String.valueOf(obj));
+    public byte[] serialize(final Long value) {
+        buffer.putLong(0, value);
+        return buffer.array();
     }
 
     @Override
-    public Long deserialize(final int version, final byte[] serialized) throws IOException {
-        return Long.valueOf(
-                SimpleVersionedStringSerializer.INSTANCE.deserialize(version, serialized));
+    public Long deserialize(final int version, final byte[] serialized) {
+        buffer.put(serialized, 0, serialized.length);
+        buffer.flip();
+        return buffer.getLong();
     }
 }
