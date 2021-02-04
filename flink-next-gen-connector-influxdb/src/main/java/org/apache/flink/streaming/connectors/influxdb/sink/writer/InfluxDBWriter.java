@@ -21,6 +21,7 @@ import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.WriteApi;
 import com.influxdb.client.write.Point;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.connector.sink.Sink.ProcessingTimeService;
@@ -55,8 +56,9 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
             } else {
                 log.debug("Adding elements to buffer. Buffer size: {}", this.elements.size());
                 this.elements.add(this.schemaSerializer.serialize(in, context));
-                if (context.timestamp() != null)
+                if (context.timestamp() != null) {
                     this.lastTimestamp = Math.max(this.lastTimestamp, context.timestamp());
+                }
             }
         } catch (final Exception e) {
             e.printStackTrace();
@@ -65,6 +67,9 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
 
     @Override
     public List<Long> prepareCommit(final boolean flush) {
+        if (this.lastTimestamp == 0) {
+            return Collections.emptyList();
+        }
         final List<Long> lastTimestamp = new ArrayList<>();
         lastTimestamp.add(this.lastTimestamp);
         return lastTimestamp;

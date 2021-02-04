@@ -23,6 +23,7 @@ import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.connector.sink.Committer;
@@ -42,11 +43,10 @@ public class InfluxDBCommitter implements Committer<Long> {
     @Override
     public List<Long> commit(final List<Long> committables) {
         log.info("A checkpoint is set.");
-        long lastTimestamp = 0;
+        Optional<Long> lastTimestamp = Optional.empty();
         if (committables.size() >= 1) {
-            lastTimestamp = committables.get(committables.size() - 1);
+            lastTimestamp = Optional.ofNullable(committables.get(committables.size() - 1));
         }
-
         this.writeCheckpointDataPoint(lastTimestamp);
         return Collections.emptyList();
     }
@@ -57,13 +57,11 @@ public class InfluxDBCommitter implements Committer<Long> {
         log.debug("Closing the committer.");
     }
 
-    private void writeCheckpointDataPoint(final long timestamp) {
+    private void writeCheckpointDataPoint(final Optional<Long> timestamp) {
         try (final WriteApi writeApi = this.influxDBClient.getWriteApi()) {
             final Point point = new Point("checkpoint");
             point.addField("checkpoint", "flink");
-            if (timestamp != 0) {
-                point.time(timestamp, WritePrecision.NS);
-            }
+            timestamp.ifPresent(aTime -> point.time(aTime, WritePrecision.NS));
             writeApi.writePoint(point);
             log.debug("Checkpoint data point write at {}", point.toLineProtocol());
         }
