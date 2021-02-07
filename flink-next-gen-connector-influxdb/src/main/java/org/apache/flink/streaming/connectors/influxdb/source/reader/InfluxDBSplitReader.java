@@ -59,10 +59,9 @@ import org.jetbrains.annotations.NotNull;
 @Slf4j
 public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit> {
 
-    private final long ENQUEUE_WAIT_TIME;
-    private final int INGEST_QUEUE_CAPACITY;
-    private final int MAXIMUM_LINES_PER_REQUEST;
-    private final int DEFAULT_PORT;
+    private final long enqueueWaitTime;
+    private final int maximumLinesPerRequest;
+    private final int defaultPort;
 
     private HttpServer server = null;
 
@@ -72,21 +71,11 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
     private InfluxDBSplit split;
 
     public InfluxDBSplitReader(final Properties properties) {
-        this.ENQUEUE_WAIT_TIME =
-                InfluxDBSourceOptions.getOption(
-                        properties, InfluxDBSourceOptions.ENQUEUE_WAIT_TIME, Long::parseLong);
-        this.INGEST_QUEUE_CAPACITY =
-                InfluxDBSourceOptions.getOption(
-                        properties, InfluxDBSourceOptions.INGEST_QUEUE_CAPACITY, Integer::parseInt);
-        this.MAXIMUM_LINES_PER_REQUEST =
-                InfluxDBSourceOptions.getOption(
-                        properties,
-                        InfluxDBSourceOptions.MAXIMUM_LINES_PER_REQUEST,
-                        Integer::parseInt);
-        this.DEFAULT_PORT =
-                InfluxDBSourceOptions.getOption(
-                        properties, InfluxDBSourceOptions.PORT, Integer::parseInt);
-        this.ingestionQueue = new FutureCompletingBlockingQueue<>(this.INGEST_QUEUE_CAPACITY);
+        this.enqueueWaitTime = InfluxDBSourceOptions.getEnqueueWaitTime(properties);
+        this.maximumLinesPerRequest = InfluxDBSourceOptions.getMaximumLinesPerRequest(properties);
+        this.defaultPort = InfluxDBSourceOptions.getPort(properties);
+        final int capacity = InfluxDBSourceOptions.getIngestQueueCapacity(properties);
+        this.ingestionQueue = new FutureCompletingBlockingQueue<>(capacity);
     }
 
     @SneakyThrows
@@ -119,11 +108,11 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
             return;
         }
         try {
-            this.server = HttpServer.create(new InetSocketAddress(this.DEFAULT_PORT), 0);
+            this.server = HttpServer.create(new InetSocketAddress(this.defaultPort), 0);
         } catch (final IOException e) {
             throw new RuntimeException(
                     "Unable to start HTTP Server on Port "
-                            + this.DEFAULT_PORT
+                            + this.defaultPort
                             + ": "
                             + e.getMessage());
         }
@@ -163,10 +152,10 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
                             InfluxDBSplitReader.this.parser.parseToDataPoint(line);
                     points.add(dataPoint);
                     n++;
-                    if (n > InfluxDBSplitReader.this.MAXIMUM_LINES_PER_REQUEST) {
+                    if (n > InfluxDBSplitReader.this.maximumLinesPerRequest) {
                         throw new RequestTooLargeException(
                                 "Payload too large. Maximum number of lines per request is "
-                                        + InfluxDBSplitReader.this.MAXIMUM_LINES_PER_REQUEST
+                                        + InfluxDBSplitReader.this.maximumLinesPerRequest
                                         + ".");
                     }
                 }
@@ -185,7 +174,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
                                                 return false;
                                             }
                                         })
-                                .get(InfluxDBSplitReader.this.ENQUEUE_WAIT_TIME, TimeUnit.SECONDS);
+                                .get(InfluxDBSplitReader.this.enqueueWaitTime, TimeUnit.SECONDS);
 
                 if (!result) {
                     throw new TimeoutException("Failed to enqueue");

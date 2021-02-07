@@ -26,7 +26,7 @@ public class InfluxDBSourceBuilder<OUT> {
 
     private InfluxDBDataPointDeserializer<OUT> deserializationSchema;
     // Configurations
-    protected Properties properties;
+    private final Properties properties;
 
     InfluxDBSourceBuilder() {
         this.deserializationSchema = null;
@@ -83,7 +83,7 @@ public class InfluxDBSourceBuilder<OUT> {
     }
 
     /**
-     * Sets the TCP port on which the splitreader's HTTP server of this InfluxDBSource is running
+     * Sets the TCP port on which the split reader's HTTP server of this InfluxDBSource is running
      * on.
      *
      * @param port the port to use for this InfluxDBSource.

@@ -25,21 +25,23 @@ import org.apache.flink.configuration.ConfigOptions;
 /* Configurations for a InfluxDBSource. */
 public class InfluxDBSourceOptions {
 
+    InfluxDBSourceOptions() {}
+
     public static final ConfigOption<Long> ENQUEUE_WAIT_TIME =
-            ConfigOptions.key("enqueue.wait.time")
+            ConfigOptions.key("timeout.enqueue")
                     .longType()
                     .defaultValue(5L)
                     .withDescription("The time out for enqueuing an HTTP request to the queue.");
 
     public static final ConfigOption<Integer> INGEST_QUEUE_CAPACITY =
-            ConfigOptions.key("ingest.queue.capacity")
+            ConfigOptions.key("queue_capacity.ingest")
                     .intType()
                     .defaultValue(1000)
                     .withDescription(
                             "Size of queue that buffers HTTP requests data points before fetching.");
 
     public static final ConfigOption<Integer> MAXIMUM_LINES_PER_REQUEST =
-            ConfigOptions.key("maximum.lines.per.request")
+            ConfigOptions.key("limit.lines_per_request")
                     .intType()
                     .defaultValue(1000)
                     .withDescription(
@@ -49,7 +51,25 @@ public class InfluxDBSourceOptions {
                     .intType()
                     .defaultValue(8000)
                     .withDescription(
-                            "TCP port on which the splitreader's HTTP server is running on.");
+                            "TCP port on which the split reader's HTTP server is running on.");
+
+    public static long getEnqueueWaitTime(final Properties properties) {
+        return getOption(properties, InfluxDBSourceOptions.ENQUEUE_WAIT_TIME, Long::parseLong);
+    }
+
+    public static int getIngestQueueCapacity(final Properties properties) {
+        return getOption(
+                properties, InfluxDBSourceOptions.INGEST_QUEUE_CAPACITY, Integer::parseInt);
+    }
+
+    public static int getMaximumLinesPerRequest(final Properties properties) {
+        return getOption(
+                properties, InfluxDBSourceOptions.MAXIMUM_LINES_PER_REQUEST, Integer::parseInt);
+    }
+
+    public static int getPort(final Properties properties) {
+        return getOption(properties, InfluxDBSourceOptions.PORT, Integer::parseInt);
+    }
 
     @SuppressWarnings("unchecked")
     public static <T> T getOption(
