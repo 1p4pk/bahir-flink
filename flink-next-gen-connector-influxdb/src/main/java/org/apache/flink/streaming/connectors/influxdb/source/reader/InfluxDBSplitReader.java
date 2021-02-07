@@ -162,6 +162,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
                                                                         .hashCode(),
                                                                 points);
                                             } catch (InterruptedException e) {
+                                                success = false;
                                             }
                                             return success;
                                         })
