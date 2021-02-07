@@ -76,8 +76,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
         if (this.split == null) {
             return null;
         }
-        final InfluxDBSplitRecords<DataPoint> recordsBySplits =
-                new InfluxDBSplitRecords<>(this.split.splitId());
+        final InfluxDBSplitRecords recordsBySplits = new InfluxDBSplitRecords(this.split.splitId());
 
         this.ingestionQueue.getAvailabilityFuture().get();
         final List<DataPoint> requests = this.ingestionQueue.poll();
@@ -205,9 +204,9 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
         }
     }
 
-    private static class InfluxDBSplitRecords<T> implements RecordsWithSplitIds<T> {
-        private final List<T> records;
-        private Iterator<T> recordIterator;
+    private static class InfluxDBSplitRecords implements RecordsWithSplitIds<DataPoint> {
+        private final List<DataPoint> records;
+        private Iterator<DataPoint> recordIterator;
         private final String splitId;
 
         private InfluxDBSplitRecords(final String splitId) {
@@ -215,7 +214,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
             this.records = new ArrayList<>();
         }
 
-        private boolean addAll(final List<T> records) {
+        private boolean addAll(final List<DataPoint> records) {
             return this.records.addAll(records);
         }
 
@@ -234,7 +233,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
 
         @Override
         @Nullable
-        public T nextRecordFromSplit() {
+        public DataPoint nextRecordFromSplit() {
             if (this.recordIterator.hasNext()) {
                 return this.recordIterator.next();
             } else {
