@@ -24,7 +24,7 @@ import java.io.Serializable;
 import lombok.Builder;
 import lombok.NonNull;
 
-/** Configuration for InfluxDB. */
+/** A Configuration wrapper for InfluxDB Java Client. */
 @Builder
 public class InfluxDBConfig implements Serializable {
     private static final long serialVersionUID = 1L;

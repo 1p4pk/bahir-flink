@@ -15,11 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.streaming.connectors.influxdb.sink;
+package org.apache.flink.streaming.connectors.influxdb.sink.commiter;
 
 import java.nio.ByteBuffer;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
+/**
+ * This class Serialize and deserializes the commit values. Since we are sending the timestamp value
+ * as a commitabel the Long object is (de)serialized.
+ */
 public class InfluxDBCommittableSerializer implements SimpleVersionedSerializer<Long> {
 
     @Override

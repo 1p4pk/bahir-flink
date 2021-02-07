@@ -28,6 +28,17 @@ import org.apache.flink.api.connector.sink.Sink.ProcessingTimeService;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBConfig;
 
+/**
+ * This Class implements the {@link SinkWriter} and it is responsible to write incoming inputs to
+ * InfluxDB. It uses the {@link InfluxDBSchemaSerializer} to serialize the input into a {@link
+ * Point} object. Each serialized object is stored in the {@link #elements} list. Whenever the size
+ * of the list reaches the {@link #BUFFER_SIZE}, the influxDB write API is called and all the items
+ * all written. The {@link #lastTimestamp} keeps track of the biggest timestamp of the incoming
+ * elements.
+ *
+ * @param <IN> Type of the input
+ * @see WriteApi
+ */
 @Slf4j
 public class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
 
@@ -46,6 +57,15 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
         this.influxDBClient = config.getClient();
     }
 
+    /**
+     * This method calls the InfluxDB write API whenever the element list reaches the {@link
+     * #BUFFER_SIZE}. It keeps track of the latest timestamp of each element. It compares the latest
+     * timestamp with the context.timestamp() and takes the bigger (latest) timestamp.
+     *
+     * @param in incoming data
+     * @param context current Flink context
+     * @see org.apache.flink.api.connector.sink.SinkWriter.Context
+     */
     @Override
     public void write(final IN in, final Context context) {
         try {
@@ -65,6 +85,13 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
         }
     }
 
+    /**
+     * This method is called whenever a checkpoint is set by Flink. It creates a list and feels it
+     * up with the latest timestamp.
+     *
+     * @param flush
+     * @return A list containing 0 or 1 element
+     */
     @Override
     public List<Long> prepareCommit(final boolean flush) {
         if (this.lastTimestamp == 0) {

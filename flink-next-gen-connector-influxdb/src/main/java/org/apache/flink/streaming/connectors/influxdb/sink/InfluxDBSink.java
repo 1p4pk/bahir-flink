@@ -27,6 +27,7 @@ import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBConfig;
+import org.apache.flink.streaming.connectors.influxdb.sink.commiter.InfluxDBCommittableSerializer;
 import org.apache.flink.streaming.connectors.influxdb.sink.commiter.InfluxDBCommitter;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBPointSerializer;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;

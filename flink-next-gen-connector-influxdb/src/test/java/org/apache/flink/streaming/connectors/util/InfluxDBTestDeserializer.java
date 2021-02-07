@@ -23,7 +23,7 @@ import org.apache.flink.streaming.connectors.influxdb.source.reader.deserializer
 public class InfluxDBTestDeserializer implements InfluxDBDataPointDeserializer<Long> {
 
     @Override
-    public Long deserialize(final DataPoint dataPoint) throws Exception {
+    public Long deserialize(final DataPoint dataPoint) {
         return (Long) dataPoint.getField("longValue");
     }
 }
