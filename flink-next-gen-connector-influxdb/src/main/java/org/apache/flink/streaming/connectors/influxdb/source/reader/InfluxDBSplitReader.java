@@ -92,7 +92,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
 
     @Override
     public void handleSplitsChanges(final SplitsChange<InfluxDBSplit> splitsChange) {
-        if (splitsChange.splits().size() == 0) {
+        if (splitsChange.splits().isEmpty()) {
             return;
         }
         this.split = splitsChange.splits().get(0);
@@ -150,22 +150,19 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
                     }
                 }
 
-                boolean result =
+                final boolean result =
                         CompletableFuture.supplyAsync(
                                         () -> {
-                                            boolean success = false;
                                             try {
-                                                success =
-                                                        InfluxDBSplitReader.this.ingestionQueue.put(
-                                                                InfluxDBSplitReader.this
-                                                                        .split
-                                                                        .splitId()
-                                                                        .hashCode(),
-                                                                points);
-                                            } catch (InterruptedException e) {
-                                                success = false;
+                                                return InfluxDBSplitReader.this.ingestionQueue.put(
+                                                        InfluxDBSplitReader.this
+                                                                .split
+                                                                .splitId()
+                                                                .hashCode(),
+                                                        points);
+                                            } catch (final InterruptedException e) {
+                                                return false;
                                             }
-                                            return success;
                                         })
                                 .get(ENQUEUE_WAIT_TIME, TimeUnit.SECONDS);
 
@@ -183,7 +180,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
                 final int HTTP_TOO_MANY_REQUESTS = 429;
                 this.sendResponse(t, HTTP_TOO_MANY_REQUESTS, "Server overloaded");
                 log.error(e.getMessage());
-            } catch (ExecutionException | InterruptedException e) {
+            } catch (final ExecutionException | InterruptedException e) {
                 this.sendResponse(t, HttpURLConnection.HTTP_INTERNAL_ERROR, "Server Error");
                 log.error(e.getMessage());
             }
