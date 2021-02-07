@@ -24,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
@@ -172,20 +173,18 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
                     throw new TimeoutException("Failed to enqueue");
                 }
 
-                t.sendResponseHeaders(204, -1);
+                t.sendResponseHeaders(HttpURLConnection.HTTP_NO_CONTENT, -1);
                 InfluxDBSplitReader.this.ingestionQueue.notifyAvailable();
             } catch (final ParseException e) {
-                // 400 Bad Request
-                this.sendResponse(t, 400, e.getMessage());
+                this.sendResponse(t, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
             } catch (final RequestTooLargeException e) {
-                // 413 Payload Too Large
-                this.sendResponse(t, 413, e.getMessage());
+                this.sendResponse(t, HttpURLConnection.HTTP_ENTITY_TOO_LARGE, e.getMessage());
             } catch (final TimeoutException e) {
-                // 429 Too Many Requests
-                this.sendResponse(t, 429, "Server overloaded");
+                final int HTTP_TOO_MANY_REQUESTS = 429;
+                this.sendResponse(t, HTTP_TOO_MANY_REQUESTS, "Server overloaded");
                 log.error(e.getMessage());
             } catch (ExecutionException | InterruptedException e) {
-                this.sendResponse(t, 500, "Server Error");
+                this.sendResponse(t, HttpURLConnection.HTTP_INTERNAL_ERROR, "Server Error");
                 log.error(e.getMessage());
             }
         }
