@@ -72,7 +72,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
 
     @SneakyThrows
     @Override
-    public RecordsWithSplitIds<DataPoint> fetch() throws IOException {
+    public RecordsWithSplitIds<DataPoint> fetch() {
         if (this.split == null) {
             return null;
         }
@@ -117,7 +117,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (this.server != null) {
             this.server.stop(1); // waits max 1 second for pending requests to finish
         }
