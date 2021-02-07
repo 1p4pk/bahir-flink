@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -46,6 +47,7 @@ import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.common.InfluxParser;
+import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSourceOptions;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,18 +59,35 @@ import org.jetbrains.annotations.NotNull;
 @Slf4j
 public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit> {
 
-    private static final int INGEST_QUEUE_CAPACITY = 1000;
-    private static final int MAXIMUM_LINES_PER_REQUEST = 1000;
-    private static final long ENQUEUE_WAIT_TIME = 5;
+    private final long ENQUEUE_WAIT_TIME;
+    private final int INGEST_QUEUE_CAPACITY;
+    private final int MAXIMUM_LINES_PER_REQUEST;
+    private final int DEFAULT_PORT;
 
-    private static final int DEFAULT_PORT = 8000;
     private HttpServer server = null;
 
-    private final FutureCompletingBlockingQueue<List<DataPoint>> ingestionQueue =
-            new FutureCompletingBlockingQueue<>(INGEST_QUEUE_CAPACITY);
+    private final FutureCompletingBlockingQueue<List<DataPoint>> ingestionQueue;
 
     private final InfluxParser parser = new InfluxParser();
     private InfluxDBSplit split;
+
+    public InfluxDBSplitReader(final Properties properties) {
+        this.ENQUEUE_WAIT_TIME =
+                InfluxDBSourceOptions.getOption(
+                        properties, InfluxDBSourceOptions.ENQUEUE_WAIT_TIME, Long::parseLong);
+        this.INGEST_QUEUE_CAPACITY =
+                InfluxDBSourceOptions.getOption(
+                        properties, InfluxDBSourceOptions.INGEST_QUEUE_CAPACITY, Integer::parseInt);
+        this.MAXIMUM_LINES_PER_REQUEST =
+                InfluxDBSourceOptions.getOption(
+                        properties,
+                        InfluxDBSourceOptions.MAXIMUM_LINES_PER_REQUEST,
+                        Integer::parseInt);
+        this.DEFAULT_PORT =
+                InfluxDBSourceOptions.getOption(
+                        properties, InfluxDBSourceOptions.PORT, Integer::parseInt);
+        this.ingestionQueue = new FutureCompletingBlockingQueue<>(this.INGEST_QUEUE_CAPACITY);
+    }
 
     @SneakyThrows
     @Override
@@ -100,10 +119,13 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
             return;
         }
         try {
-            this.server = HttpServer.create(new InetSocketAddress(DEFAULT_PORT), 0);
+            this.server = HttpServer.create(new InetSocketAddress(this.DEFAULT_PORT), 0);
         } catch (final IOException e) {
             throw new RuntimeException(
-                    "Unable to start HTTP Server on Port " + DEFAULT_PORT + ": " + e.getMessage());
+                    "Unable to start HTTP Server on Port "
+                            + this.DEFAULT_PORT
+                            + ": "
+                            + e.getMessage());
         }
 
         this.server.createContext("/api/v2/write", new InfluxDBAPIHandler());
@@ -141,10 +163,10 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
                             InfluxDBSplitReader.this.parser.parseToDataPoint(line);
                     points.add(dataPoint);
                     n++;
-                    if (n > MAXIMUM_LINES_PER_REQUEST) {
+                    if (n > InfluxDBSplitReader.this.MAXIMUM_LINES_PER_REQUEST) {
                         throw new RequestTooLargeException(
                                 "Payload too large. Maximum number of lines per request is "
-                                        + MAXIMUM_LINES_PER_REQUEST
+                                        + InfluxDBSplitReader.this.MAXIMUM_LINES_PER_REQUEST
                                         + ".");
                     }
                 }
@@ -163,7 +185,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
                                                 return false;
                                             }
                                         })
-                                .get(ENQUEUE_WAIT_TIME, TimeUnit.SECONDS);
+                                .get(InfluxDBSplitReader.this.ENQUEUE_WAIT_TIME, TimeUnit.SECONDS);
 
                 if (!result) {
                     throw new TimeoutException("Failed to enqueue");
