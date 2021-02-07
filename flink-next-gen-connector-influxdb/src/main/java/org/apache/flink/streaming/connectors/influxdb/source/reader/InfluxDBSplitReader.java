@@ -43,8 +43,8 @@ import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
-import org.apache.flink.streaming.connectors.influxdb.source.DataPoint;
-import org.apache.flink.streaming.connectors.influxdb.source.InfluxParser;
+import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
+import org.apache.flink.streaming.connectors.influxdb.common.InfluxParser;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
 import org.jetbrains.annotations.NotNull;
 
