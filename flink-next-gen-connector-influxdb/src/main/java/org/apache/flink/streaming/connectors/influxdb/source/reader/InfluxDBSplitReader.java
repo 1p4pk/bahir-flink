@@ -117,7 +117,8 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
                             + e.getMessage());
         }
 
-        this.server.createContext("/api/v2/write", new InfluxDBAPIHandler());
+        this.server.createContext("/api/v2/write", new InfluxDBWriteAPIHandler());
+        this.server.createContext("/health", new InfluxDBHealthCheckHandler());
         this.server.setExecutor(null); // creates a default executor
         this.server.start();
     }
@@ -136,7 +137,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
 
     // ---------------- private helper class --------------------
 
-    private class InfluxDBAPIHandler implements HttpHandler {
+    private class InfluxDBWriteAPIHandler implements HttpHandler {
         @Override
         public void handle(final HttpExchange t) throws IOException {
             final BufferedReader in =
@@ -194,6 +195,25 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
                 this.sendResponse(t, HttpURLConnection.HTTP_INTERNAL_ERROR, "Server Error");
                 log.error(e.getMessage());
             }
+        }
+
+        private void sendResponse(
+                @NotNull final HttpExchange t,
+                final int responseCode,
+                @NotNull final String message)
+                throws IOException {
+            final byte[] response = message.getBytes();
+            t.sendResponseHeaders(responseCode, response.length);
+            final OutputStream os = t.getResponseBody();
+            os.write(response);
+            os.close();
+        }
+    }
+
+    private class InfluxDBHealthCheckHandler implements HttpHandler {
+        @Override
+        public void handle(final HttpExchange t) throws IOException {
+            sendResponse(t, 200, "ready for writes");
         }
 
         private void sendResponse(
