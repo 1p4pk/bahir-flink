@@ -17,27 +17,15 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source.reader;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -46,10 +34,10 @@ import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
-import org.apache.flink.streaming.connectors.influxdb.common.InfluxParser;
 import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSourceOptions;
+import org.apache.flink.streaming.connectors.influxdb.source.http.HealthCheckHandler;
+import org.apache.flink.streaming.connectors.influxdb.source.http.WriteAPIHandler;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * A {@link SplitReader} implementation that reads records from InfluxDB splits.
@@ -67,7 +55,6 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
 
     private final FutureCompletingBlockingQueue<List<DataPoint>> ingestionQueue;
 
-    private final InfluxParser parser = new InfluxParser();
     private InfluxDBSplit split;
 
     public InfluxDBSplitReader(final Properties properties) {
@@ -117,7 +104,14 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
                             + e.getMessage());
         }
 
-        this.server.createContext("/api/v2/write", new InfluxDBAPIHandler());
+        this.server.createContext(
+                "/api/v2/write",
+                new WriteAPIHandler(
+                        maximumLinesPerRequest,
+                        ingestionQueue,
+                        split.splitId().hashCode(),
+                        enqueueWaitTime));
+        this.server.createContext("/health", new HealthCheckHandler());
         this.server.setExecutor(null); // creates a default executor
         this.server.start();
     }
@@ -135,85 +129,6 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
     }
 
     // ---------------- private helper class --------------------
-
-    private class InfluxDBAPIHandler implements HttpHandler {
-        @Override
-        public void handle(final HttpExchange t) throws IOException {
-            final BufferedReader in =
-                    new BufferedReader(
-                            new InputStreamReader(t.getRequestBody(), StandardCharsets.UTF_8));
-
-            try {
-                String line;
-                final List<DataPoint> points = new ArrayList<>();
-                int n = 0;
-                while ((line = in.readLine()) != null) {
-                    final DataPoint dataPoint =
-                            InfluxDBSplitReader.this.parser.parseToDataPoint(line);
-                    points.add(dataPoint);
-                    n++;
-                    if (n > InfluxDBSplitReader.this.maximumLinesPerRequest) {
-                        throw new RequestTooLargeException(
-                                "Payload too large. Maximum number of lines per request is "
-                                        + InfluxDBSplitReader.this.maximumLinesPerRequest
-                                        + ".");
-                    }
-                }
-
-                final boolean result =
-                        CompletableFuture.supplyAsync(
-                                        () -> {
-                                            try {
-                                                return InfluxDBSplitReader.this.ingestionQueue.put(
-                                                        InfluxDBSplitReader.this
-                                                                .split
-                                                                .splitId()
-                                                                .hashCode(),
-                                                        points);
-                                            } catch (final InterruptedException e) {
-                                                return false;
-                                            }
-                                        })
-                                .get(InfluxDBSplitReader.this.enqueueWaitTime, TimeUnit.SECONDS);
-
-                if (!result) {
-                    throw new TimeoutException("Failed to enqueue");
-                }
-
-                t.sendResponseHeaders(HttpURLConnection.HTTP_NO_CONTENT, -1);
-                InfluxDBSplitReader.this.ingestionQueue.notifyAvailable();
-            } catch (final ParseException e) {
-                this.sendResponse(t, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
-            } catch (final RequestTooLargeException e) {
-                this.sendResponse(t, HttpURLConnection.HTTP_ENTITY_TOO_LARGE, e.getMessage());
-            } catch (final TimeoutException e) {
-                final int HTTP_TOO_MANY_REQUESTS = 429;
-                this.sendResponse(t, HTTP_TOO_MANY_REQUESTS, "Server overloaded");
-                log.error(e.getMessage());
-            } catch (final ExecutionException | InterruptedException e) {
-                this.sendResponse(t, HttpURLConnection.HTTP_INTERNAL_ERROR, "Server Error");
-                log.error(e.getMessage());
-            }
-        }
-
-        private void sendResponse(
-                @NotNull final HttpExchange t,
-                final int responseCode,
-                @NotNull final String message)
-                throws IOException {
-            final byte[] response = message.getBytes();
-            t.sendResponseHeaders(responseCode, response.length);
-            final OutputStream os = t.getResponseBody();
-            os.write(response);
-            os.close();
-        }
-    }
-
-    private static class RequestTooLargeException extends RuntimeException {
-        RequestTooLargeException(final String message) {
-            super(message);
-        }
-    }
 
     private static class InfluxDBSplitRecords implements RecordsWithSplitIds<DataPoint> {
         private final List<DataPoint> records;
