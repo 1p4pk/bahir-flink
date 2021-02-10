@@ -73,9 +73,6 @@ public class BlockingOffer {
     private int lastSecond = 0;
 
     @SneakyThrows
-    public static void main(final String[] args) {}
-
-    @SneakyThrows
     public BlockingOffer(
             final String host,
             final int port,
