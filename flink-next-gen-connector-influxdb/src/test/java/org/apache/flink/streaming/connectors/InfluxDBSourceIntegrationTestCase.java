@@ -17,8 +17,9 @@
  */
 package org.apache.flink.streaming.connectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.GenericUrl;
@@ -27,8 +28,10 @@ import com.google.api.client.http.HttpBackOffUnsuccessfulResponseHandler;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.util.ExponentialBackOff;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,25 +40,20 @@ import lombok.SneakyThrows;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.core.execution.JobClient;
-import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSource;
 import org.apache.flink.streaming.connectors.util.InfluxDBTestDeserializer;
-import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.util.TestLogger;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 /** Integration test for the InfluxDB source for Flink. */
 public class InfluxDBSourceIntegrationTestCase extends TestLogger {
-    @RegisterExtension
-    public static final MiniClusterWithClientResource CLUSTER =
-            new MiniClusterWithClientResource(
-                    new MiniClusterResourceConfiguration.Builder()
-                            .setNumberSlotsPerTaskManager(2)
-                            .setNumberTaskManagers(1)
-                            .build());
+
+    @Rule public ExpectedException exceptionRule = ExpectedException.none();
 
     private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
             new NetHttpTransport().createRequestFactory();
@@ -68,6 +66,21 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
                     .setRandomizationFactor(0.5)
                     .build();
 
+    private StreamExecutionEnvironment env = null;
+    private InfluxDBSource<Long> influxDBSource = null;
+
+    @Before
+    public void setUp() {
+        CollectSink.VALUES.clear();
+
+        this.influxDBSource =
+                InfluxDBSource.<Long>builder()
+                        .setDeserializer(new InfluxDBTestDeserializer())
+                        .build();
+        this.env = StreamExecutionEnvironment.getExecutionEnvironment();
+        this.env.setParallelism(1);
+    }
+
     /**
      * Test the following topology.
      *
@@ -77,59 +90,69 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
      * </pre>
      */
     @Test
-    void testIncrementPipeline() throws Exception {
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(1);
-
-        CollectSink.VALUES.clear();
-
-        final InfluxDBSource<Long> influxDBSource =
-                InfluxDBSource.<Long>builder()
-                        .setDeserializer(new InfluxDBTestDeserializer())
-                        .build();
-
-        env.fromSource(influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
+    public void testIncrementPipeline() throws Exception {
+        this.env
+                .fromSource(this.influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
                 .map(new IncrementMapFunction())
                 .addSink(new CollectSink());
 
-        final JobClient jobClient = env.executeAsync();
+        final JobClient jobClient = this.env.executeAsync();
+        assertThat(checkHealthCheckAvailable(), is(true));
 
-        assertTrue(checkHealthCheckAvailable());
-        int writeResponseCode = writeToInfluxDB("test longValue=1i 1");
-        assertEquals(204, writeResponseCode);
+        final int writeResponseCode = writeToInfluxDB("test longValue=1i 1");
+
+        assertThat(writeResponseCode, equalTo(HttpURLConnection.HTTP_NO_CONTENT));
 
         jobClient.cancel();
 
         final Collection<Long> results = new ArrayList<>();
         results.add(2L);
-        assertTrue(CollectSink.VALUES.containsAll(results));
+        assertThat(CollectSink.VALUES.containsAll(results), is(true));
     }
 
-    /** Simple incrementation with map. */
-    public static class IncrementMapFunction implements MapFunction<Long, Long> {
+    @Test
+    public void testBadRequestException() throws Exception {
+        this.exceptionRule.expect(HttpResponseException.class);
+        this.exceptionRule.expectMessage("Unable to parse line.");
+        this.env
+                .fromSource(this.influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
+                .map(new IncrementMapFunction())
+                .addSink(new CollectSink());
 
-        @Override
-        public Long map(final Long record) throws Exception {
-            return record + 1;
-        }
+        final JobClient jobClient = this.env.executeAsync();
+        assertThat(checkHealthCheckAvailable(), is(true));
+
+        writeToInfluxDB("malformedLineProtocol_test");
+        jobClient.cancel();
     }
 
-    // create a testing sink
-    private static class CollectSink implements SinkFunction<Long> {
+    @Test
+    public void testRequestTooLargeException() throws Exception {
+        this.exceptionRule.expect(HttpResponseException.class);
+        this.exceptionRule.expectMessage(
+                "Payload too large. Maximum number of lines per request is 2.");
+        final InfluxDBSource<Long> influxDBSource =
+                InfluxDBSource.<Long>builder()
+                        .setDeserializer(new InfluxDBTestDeserializer())
+                        .setMaximumLinesPerRequest(2)
+                        .build();
+        this.env
+                .fromSource(influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
+                .map(new IncrementMapFunction())
+                .addSink(new CollectSink());
 
-        // must be static
-        public static final List<Long> VALUES = Collections.synchronizedList(new ArrayList<>());
+        final JobClient jobClient = this.env.executeAsync();
+        assertThat(checkHealthCheckAvailable(), is(true));
 
-        @Override
-        public void invoke(final Long value) throws Exception {
-            VALUES.add(value);
-        }
+        final String lines = "test longValue=1i 1\ntest longValue=1i 1\ntest longValue=1i 1";
+        writeToInfluxDB(lines);
+        jobClient.cancel();
     }
 
     @SneakyThrows
-    private static int writeToInfluxDB(String line) {
-        HttpContent content = ByteArrayContent.fromString("text/plain; charset=utf-8", line);
-        HttpRequest request =
+    private static int writeToInfluxDB(final String line) {
+        final HttpContent content = ByteArrayContent.fromString("text/plain; charset=utf-8", line);
+        final HttpRequest request =
                 HTTP_REQUEST_FACTORY.buildPostRequest(
                         new GenericUrl("http://localhost:8000/api/v2/write"), content);
         return request.execute().getStatusCode();
@@ -137,7 +160,7 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
 
     @SneakyThrows
     private static boolean checkHealthCheckAvailable() {
-        HttpRequest request =
+        final HttpRequest request =
                 HTTP_REQUEST_FACTORY.buildGetRequest(
                         new GenericUrl("http://localhost:8000/health"));
 
@@ -145,7 +168,30 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
                 new HttpBackOffUnsuccessfulResponseHandler(HTTP_BACKOFF));
         request.setIOExceptionHandler(new HttpBackOffIOExceptionHandler(HTTP_BACKOFF));
 
-        int statusCode = request.execute().getStatusCode();
-        return statusCode == 200;
+        final int statusCode = request.execute().getStatusCode();
+        return statusCode == HttpURLConnection.HTTP_OK;
+    }
+
+    // ---------------- private helper class --------------------
+
+    /** Simple incrementation with map. */
+    private static class IncrementMapFunction implements MapFunction<Long, Long> {
+
+        @Override
+        public Long map(final Long record) {
+            return record + 1;
+        }
+    }
+
+    /** create a simple testing sink */
+    private static class CollectSink implements SinkFunction<Long> {
+
+        // must be static
+        public static final List<Long> VALUES = Collections.synchronizedList(new ArrayList<>());
+
+        @Override
+        public void invoke(final Long value) {
+            VALUES.add(value);
+        }
     }
 }

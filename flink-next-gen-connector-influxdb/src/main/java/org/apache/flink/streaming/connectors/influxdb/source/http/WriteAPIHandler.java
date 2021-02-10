@@ -18,7 +18,6 @@
 package org.apache.flink.streaming.connectors.influxdb.source.http;
 
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -37,7 +36,7 @@ import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.common.InfluxParser;
 
 @Slf4j
-public class WriteAPIHandler extends Handler implements HttpHandler {
+public class WriteAPIHandler extends Handler {
     private final InfluxParser parser = new InfluxParser();
     private final int maximumLinesPerRequest;
     private final FutureCompletingBlockingQueue ingestionQueue;
@@ -64,16 +63,16 @@ public class WriteAPIHandler extends Handler implements HttpHandler {
         try {
             String line;
             final List<DataPoint> points = new ArrayList<>();
-            int n = 0;
+            int numberOfLinesParsed = 0;
             while ((line = in.readLine()) != null) {
-                final DataPoint dataPoint = parser.parseToDataPoint(line);
+                final DataPoint dataPoint = this.parser.parseToDataPoint(line);
                 points.add(dataPoint);
-                n++;
-                if (n > this.maximumLinesPerRequest) {
+                numberOfLinesParsed++;
+                if (numberOfLinesParsed > this.maximumLinesPerRequest) {
                     throw new RequestTooLargeException(
-                            "Payload too large. Maximum number of lines per request is "
-                                    + maximumLinesPerRequest
-                                    + ".");
+                            String.format(
+                                    "Payload too large. Maximum number of lines per request is %d.",
+                                    this.maximumLinesPerRequest));
                 }
             }
 
@@ -81,19 +80,20 @@ public class WriteAPIHandler extends Handler implements HttpHandler {
                     CompletableFuture.supplyAsync(
                                     () -> {
                                         try {
-                                            return ingestionQueue.put(threadIndex, points);
+                                            return this.ingestionQueue.put(
+                                                    this.threadIndex, points);
                                         } catch (final InterruptedException e) {
                                             return false;
                                         }
                                     })
-                            .get(enqueueWaitTime, TimeUnit.SECONDS);
+                            .get(this.enqueueWaitTime, TimeUnit.SECONDS);
 
             if (!result) {
                 throw new TimeoutException("Failed to enqueue");
             }
 
             t.sendResponseHeaders(HttpURLConnection.HTTP_NO_CONTENT, -1);
-            ingestionQueue.notifyAvailable();
+            this.ingestionQueue.notifyAvailable();
         } catch (final ParseException e) {
             this.sendResponse(t, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
         } catch (final RequestTooLargeException e) {
