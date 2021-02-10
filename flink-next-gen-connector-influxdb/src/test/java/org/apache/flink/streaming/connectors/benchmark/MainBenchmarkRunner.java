@@ -15,7 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.streaming.connectors.influxdb.benchmark;
+package org.apache.flink.streaming.connectors.benchmark;
+
+// import picocli.CommandLine.Option;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,8 +29,8 @@ import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
-import org.apache.flink.streaming.connectors.influxdb.benchmark.generator.BlockingOffer;
-import org.apache.flink.streaming.connectors.influxdb.benchmark.generator.SimpleLineProtocolGenerator;
+import org.apache.flink.streaming.connectors.benchmark.generator.BlockingOffer;
+import org.apache.flink.streaming.connectors.benchmark.generator.SimpleLineProtocolGenerator;
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSource;
 import org.apache.flink.test.util.MiniClusterWithClientResource;

@@ -20,9 +20,7 @@ package org.apache.flink.streaming.connectors.influxdb;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Representation of a InfluxDB database Point.
- */
+/** Representation of a InfluxDB database Point. */
 public class InfluxDBPoint {
 
     private String measurement;
@@ -30,14 +28,18 @@ public class InfluxDBPoint {
     private Map<String, String> tags;
     private Map<String, Object> fields;
 
-    public InfluxDBPoint(String measurement, long timestamp) {
+    public InfluxDBPoint(final String measurement, final long timestamp) {
         this.measurement = measurement;
         this.timestamp = timestamp;
         this.fields = new HashMap<>();
         this.tags = new HashMap<>();
     }
 
-    public InfluxDBPoint(String measurement, long timestamp, Map<String, String> tags, Map<String, Object> fields) {
+    public InfluxDBPoint(
+            final String measurement,
+            final long timestamp,
+            final Map<String, String> tags,
+            final Map<String, Object> fields) {
         this.measurement = measurement;
         this.timestamp = timestamp;
         this.tags = tags;
@@ -45,34 +47,34 @@ public class InfluxDBPoint {
     }
 
     public String getMeasurement() {
-        return measurement;
+        return this.measurement;
     }
 
-    public void setMeasurement(String measurement) {
+    public void setMeasurement(final String measurement) {
         this.measurement = measurement;
     }
 
     public long getTimestamp() {
-        return timestamp;
+        return this.timestamp;
     }
 
-    public void setTimestamp(long timestamp) {
+    public void setTimestamp(final long timestamp) {
         this.timestamp = timestamp;
     }
 
     public Map<String, String> getTags() {
-        return tags;
+        return this.tags;
     }
 
-    public void setTags(Map<String, String> tags) {
+    public void setTags(final Map<String, String> tags) {
         this.tags = tags;
     }
 
     public Map<String, Object> getFields() {
-        return fields;
+        return this.fields;
     }
 
-    public void setFields(Map<String, Object> fields) {
+    public void setFields(final Map<String, Object> fields) {
         this.fields = fields;
     }
 }
