@@ -15,3 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.flink.streaming.connectors.influxdb.benchmark;
+
+import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
+import org.apache.flink.streaming.connectors.influxdb.source.reader.deserializer.InfluxDBDataPointDeserializer;
+
+public class InfluxDBBenchmarkDeserializer implements InfluxDBDataPointDeserializer<DataPoint> {
+
+    @Override
+    public DataPoint deserialize(final DataPoint dataPoint) {
+        dataPoint.addField("deserializeTimestamp", System.currentTimeMillis() / 1000L);
+        return dataPoint;
+    }
+}

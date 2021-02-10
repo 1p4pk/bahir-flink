@@ -104,21 +104,21 @@ under the License.
       <version>${log4j2.version}</version>
     </dependency>
 
-    <!-- Flink Test Utils -->
+    <!-- Benchmarking needs this - Flink Test Utils -->
 
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-test-utils_${scala.binary.new.version}</artifactId>
       <version>${flink.new.version}</version>
-      <scope>test</scope>
+      <!--<scope>test</scope>-->
     </dependency>
 
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-streaming-java_${scala.binary.new.version}</artifactId>
       <version>${flink.new.version}</version>
-      <scope>test</scope>
-      <classifier>tests</classifier>
+      <!--scope>test</scope>
+      <classifier>tests</classifier>-->
     </dependency>
 
     <!-- Test container -->
@@ -155,7 +155,15 @@ under the License.
       <groupId>com.google.http-client</groupId>
       <artifactId>google-http-client</artifactId>
       <version>${google.http.client.version}</version>
-      <scope>test</scope>
+      <!--<scope>test</scope> Benchmarking -->
+    </dependency>
+
+    <!-- Benchmarking -->
+
+    <dependency>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli</artifactId>
+      <version>4.0.4</version>
     </dependency>
 
   </dependencies>
