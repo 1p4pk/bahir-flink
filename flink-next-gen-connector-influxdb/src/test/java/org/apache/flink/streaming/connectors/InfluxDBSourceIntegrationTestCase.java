@@ -18,8 +18,8 @@
 package org.apache.flink.streaming.connectors;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.GenericUrl;
@@ -28,17 +28,10 @@ import com.google.api.client.http.HttpBackOffUnsuccessfulResponseHandler;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.util.ExponentialBackOff;
-import com.google.api.client.http.ByteArrayContent;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.util.ExponentialBackOff;
 import java.net.HttpURLConnection;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,7 +45,6 @@ import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSource;
 import org.apache.flink.streaming.connectors.util.InfluxDBTestDeserializer;
 import org.apache.flink.util.TestLogger;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -60,30 +52,8 @@ import org.junit.rules.ExpectedException;
 
 /** Integration test for the InfluxDB source for Flink. */
 public class InfluxDBSourceIntegrationTestCase extends TestLogger {
+
     @Rule public ExpectedException exceptionRule = ExpectedException.none();
-
-    private static final int WAIT_MILLIS = 5000;
-
-    private StreamExecutionEnvironment env = null;
-    private InfluxDBSource<Long> influxDBSource = null;
-    private HttpRequestFactory requestFactory = null;
-
-    @Before
-    public void setUp() {
-        CollectSink.VALUES.clear();
-
-        this.influxDBSource =
-                InfluxDBSource.<Long>builder()
-                        .setDeserializer(new InfluxDBTestDeserializer())
-                        .build();
-        this.env = StreamExecutionEnvironment.getExecutionEnvironment();
-        this.env.setParallelism(1);
-        this.requestFactory = new NetHttpTransport().createRequestFactory();
-    }
-
-    @SneakyThrows
-    @After
-    public void tearDown() {}
 
     private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
             new NetHttpTransport().createRequestFactory();
@@ -95,6 +65,21 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
                     .setMultiplier(1.3)
                     .setRandomizationFactor(0.5)
                     .build();
+
+    private StreamExecutionEnvironment env = null;
+    private InfluxDBSource<Long> influxDBSource = null;
+
+    @Before
+    public void setUp() {
+        CollectSink.VALUES.clear();
+
+        this.influxDBSource =
+                InfluxDBSource.<Long>builder()
+                        .setDeserializer(new InfluxDBTestDeserializer())
+                        .build();
+        this.env = StreamExecutionEnvironment.getExecutionEnvironment();
+        this.env.setParallelism(1);
+    }
 
     /**
      * Test the following topology.
@@ -112,18 +97,17 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
                 .addSink(new CollectSink());
 
         final JobClient jobClient = this.env.executeAsync();
-        Thread.sleep(WAIT_MILLIS);
+        assertThat(checkHealthCheckAvailable(), is(true));
 
-        final HttpRequest request = this.createPostRequest("test longValue=1i 1");
-        final HttpResponse response = request.execute();
+        final int writeResponseCode = writeToInfluxDB("test longValue=1i 1");
 
-        assertThat(response.getStatusCode(), equalTo(HttpURLConnection.HTTP_NO_CONTENT));
+        assertThat(writeResponseCode, equalTo(HttpURLConnection.HTTP_NO_CONTENT));
 
         jobClient.cancel();
 
         final Collection<Long> results = new ArrayList<>();
         results.add(2L);
-        assertTrue(CollectSink.VALUES.containsAll(results));
+        assertThat(CollectSink.VALUES.containsAll(results), is(true));
     }
 
     @Test
@@ -136,12 +120,9 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
                 .addSink(new CollectSink());
 
         final JobClient jobClient = this.env.executeAsync();
-        Thread.sleep(WAIT_MILLIS);
+        assertThat(checkHealthCheckAvailable(), is(true));
 
-        final HttpRequest request = this.createPostRequest("malformedLineProtocol_test");
-
-        request.execute();
-
+        writeToInfluxDB("malformedLineProtocol_test");
         jobClient.cancel();
     }
 
@@ -161,26 +142,34 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
                 .addSink(new CollectSink());
 
         final JobClient jobClient = this.env.executeAsync();
-        Thread.sleep(WAIT_MILLIS);
+        assertThat(checkHealthCheckAvailable(), is(true));
 
         final String lines = "test longValue=1i 1\ntest longValue=1i 1\ntest longValue=1i 1";
-
-        final HttpRequest request = this.createPostRequest(lines);
-        assertTrue(checkHealthCheckAvailable());
-        int writeResponseCode = writeToInfluxDB("test longValue=1i 1");
-        assertEquals(204, writeResponseCode);
-
-        request.execute();
-
+        writeToInfluxDB(lines);
         jobClient.cancel();
     }
 
     @SneakyThrows
-    private HttpRequest createPostRequest(final String body) {
-        return this.requestFactory.buildPostRequest(
-                new GenericUrl("http://localhost:8000/api/v2/write"),
-                new ByteArrayContent(
-                        "text/plain; charset=utf-8", body.getBytes(StandardCharsets.UTF_8)));
+    private static int writeToInfluxDB(final String line) {
+        final HttpContent content = ByteArrayContent.fromString("text/plain; charset=utf-8", line);
+        final HttpRequest request =
+                HTTP_REQUEST_FACTORY.buildPostRequest(
+                        new GenericUrl("http://localhost:8000/api/v2/write"), content);
+        return request.execute().getStatusCode();
+    }
+
+    @SneakyThrows
+    private static boolean checkHealthCheckAvailable() {
+        final HttpRequest request =
+                HTTP_REQUEST_FACTORY.buildGetRequest(
+                        new GenericUrl("http://localhost:8000/health"));
+
+        request.setUnsuccessfulResponseHandler(
+                new HttpBackOffUnsuccessfulResponseHandler(HTTP_BACKOFF));
+        request.setIOExceptionHandler(new HttpBackOffIOExceptionHandler(HTTP_BACKOFF));
+
+        final int statusCode = request.execute().getStatusCode();
+        return statusCode == HttpURLConnection.HTTP_OK;
     }
 
     // ---------------- private helper class --------------------
@@ -204,28 +193,5 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
         public void invoke(final Long value) {
             VALUES.add(value);
         }
-    }
-
-    @SneakyThrows
-    private static int writeToInfluxDB(String line) {
-        HttpContent content = ByteArrayContent.fromString("text/plain; charset=utf-8", line);
-        HttpRequest request =
-                HTTP_REQUEST_FACTORY.buildPostRequest(
-                        new GenericUrl("http://localhost:8000/api/v2/write"), content);
-        return request.execute().getStatusCode();
-    }
-
-    @SneakyThrows
-    private static boolean checkHealthCheckAvailable() {
-        HttpRequest request =
-                HTTP_REQUEST_FACTORY.buildGetRequest(
-                        new GenericUrl("http://localhost:8000/health"));
-
-        request.setUnsuccessfulResponseHandler(
-                new HttpBackOffUnsuccessfulResponseHandler(HTTP_BACKOFF));
-        request.setIOExceptionHandler(new HttpBackOffIOExceptionHandler(HTTP_BACKOFF));
-
-        int statusCode = request.execute().getStatusCode();
-        return statusCode == 200;
     }
 }

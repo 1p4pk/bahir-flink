@@ -98,19 +98,18 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
             this.server = HttpServer.create(new InetSocketAddress(this.defaultPort), 0);
         } catch (final IOException e) {
             throw new RuntimeException(
-                    "Unable to start HTTP Server on Port "
-                            + this.defaultPort
-                            + ": "
-                            + e.getMessage());
+                    String.format(
+                            "Unable to start HTTP Server on Port %d: %s",
+                            this.defaultPort, e.getMessage()));
         }
 
         this.server.createContext(
                 "/api/v2/write",
                 new WriteAPIHandler(
-                        maximumLinesPerRequest,
-                        ingestionQueue,
-                        split.splitId().hashCode(),
-                        enqueueWaitTime));
+                        this.maximumLinesPerRequest,
+                        this.ingestionQueue,
+                        this.split.splitId().hashCode(),
+                        this.enqueueWaitTime));
         this.server.createContext("/health", new HealthCheckHandler());
         this.server.setExecutor(null); // creates a default executor
         this.server.start();
