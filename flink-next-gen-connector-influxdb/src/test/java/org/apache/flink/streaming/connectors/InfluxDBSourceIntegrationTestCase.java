@@ -20,9 +20,15 @@ package org.apache.flink.streaming.connectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import com.google.api.client.http.ByteArrayContent;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpBackOffIOExceptionHandler;
+import com.google.api.client.http.HttpBackOffUnsuccessfulResponseHandler;
+import com.google.api.client.http.HttpContent;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.util.ExponentialBackOff;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,6 +57,17 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
                             .setNumberTaskManagers(1)
                             .build());
 
+    private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
+            new NetHttpTransport().createRequestFactory();
+    private static final ExponentialBackOff HTTP_BACKOFF =
+            new ExponentialBackOff.Builder()
+                    .setInitialIntervalMillis(250)
+                    .setMaxElapsedTimeMillis(10000)
+                    .setMaxIntervalMillis(1000)
+                    .setMultiplier(1.3)
+                    .setRandomizationFactor(0.5)
+                    .build();
+
     /**
      * Test the following topology.
      *
@@ -77,12 +94,10 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
 
         final JobClient jobClient = env.executeAsync();
 
-        final HTTPRequestRunner request = new HTTPRequestRunner();
-        final Thread runner = new Thread(request);
-        runner.start();
-        runner.join();
+        assertTrue(checkHealthCheckAvailable());
+        int writeResponseCode = writeToInfluxDB("test longValue=1i 1");
+        assertEquals(204, writeResponseCode);
 
-        assertEquals(204, request.getCode());
         jobClient.cancel();
 
         final Collection<Long> results = new ArrayList<>();
@@ -111,31 +126,26 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
         }
     }
 
-    private static class HTTPRequestRunner implements Runnable {
-        int code;
+    @SneakyThrows
+    private static int writeToInfluxDB(String line) {
+        HttpContent content = ByteArrayContent.fromString("text/plain; charset=utf-8", line);
+        HttpRequest request =
+                HTTP_REQUEST_FACTORY.buildPostRequest(
+                        new GenericUrl("http://localhost:8000/api/v2/write"), content);
+        return request.execute().getStatusCode();
+    }
 
-        HTTPRequestRunner() {}
+    @SneakyThrows
+    private static boolean checkHealthCheckAvailable() {
+        HttpRequest request =
+                HTTP_REQUEST_FACTORY.buildGetRequest(
+                        new GenericUrl("http://localhost:8000/health"));
 
-        @SneakyThrows
-        @Override
-        public void run() {
-            // Wait for HTTPServer to start
-            Thread.sleep(5000);
-            final URL u = new URL("http://localhost:8000/api/v2/write");
-            final HttpURLConnection conn = (HttpURLConnection) u.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setDoOutput(true);
-            final OutputStream os = conn.getOutputStream();
-            // TODO set Content-Type (look at Influx API docs)
-            // TODO: setup more than one line
-            final String line = "test longValue=1i 1";
-            os.write(line.getBytes("utf-8"));
-            os.close();
-            this.code = conn.getResponseCode();
-        }
+        request.setUnsuccessfulResponseHandler(
+                new HttpBackOffUnsuccessfulResponseHandler(HTTP_BACKOFF));
+        request.setIOExceptionHandler(new HttpBackOffIOExceptionHandler(HTTP_BACKOFF));
 
-        public int getCode() {
-            return this.code;
-        }
+        int statusCode = request.execute().getStatusCode();
+        return statusCode == 200;
     }
 }
