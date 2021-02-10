@@ -23,6 +23,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpBackOffIOExceptionHandler;
+import com.google.api.client.http.HttpBackOffUnsuccessfulResponseHandler;
+import com.google.api.client.http.HttpContent;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.client.http.ByteArrayContent;
+import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
@@ -75,6 +84,17 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
     @SneakyThrows
     @After
     public void tearDown() {}
+
+    private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
+            new NetHttpTransport().createRequestFactory();
+    private static final ExponentialBackOff HTTP_BACKOFF =
+            new ExponentialBackOff.Builder()
+                    .setInitialIntervalMillis(250)
+                    .setMaxElapsedTimeMillis(10000)
+                    .setMaxIntervalMillis(1000)
+                    .setMultiplier(1.3)
+                    .setRandomizationFactor(0.5)
+                    .build();
 
     /**
      * Test the following topology.
@@ -146,6 +166,9 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
         final String lines = "test longValue=1i 1\ntest longValue=1i 1\ntest longValue=1i 1";
 
         final HttpRequest request = this.createPostRequest(lines);
+        assertTrue(checkHealthCheckAvailable());
+        int writeResponseCode = writeToInfluxDB("test longValue=1i 1");
+        assertEquals(204, writeResponseCode);
 
         request.execute();
 
@@ -181,5 +204,28 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
         public void invoke(final Long value) {
             VALUES.add(value);
         }
+    }
+
+    @SneakyThrows
+    private static int writeToInfluxDB(String line) {
+        HttpContent content = ByteArrayContent.fromString("text/plain; charset=utf-8", line);
+        HttpRequest request =
+                HTTP_REQUEST_FACTORY.buildPostRequest(
+                        new GenericUrl("http://localhost:8000/api/v2/write"), content);
+        return request.execute().getStatusCode();
+    }
+
+    @SneakyThrows
+    private static boolean checkHealthCheckAvailable() {
+        HttpRequest request =
+                HTTP_REQUEST_FACTORY.buildGetRequest(
+                        new GenericUrl("http://localhost:8000/health"));
+
+        request.setUnsuccessfulResponseHandler(
+                new HttpBackOffUnsuccessfulResponseHandler(HTTP_BACKOFF));
+        request.setIOExceptionHandler(new HttpBackOffIOExceptionHandler(HTTP_BACKOFF));
+
+        int statusCode = request.execute().getStatusCode();
+        return statusCode == 200;
     }
 }
