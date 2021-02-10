@@ -18,24 +18,11 @@
 package org.apache.flink.streaming.connectors.influxdb.source.http;
 
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
-import java.io.OutputStream;
-import org.jetbrains.annotations.NotNull;
 
-public class HealthCheckHandler extends Base implements HttpHandler {
+public class HealthCheckHandler extends Handler {
     @Override
     public void handle(final HttpExchange t) throws IOException {
         sendResponse(t, 200, "ready for writes");
-    }
-
-    void sendResponse(
-            @NotNull final HttpExchange t, final int responseCode, @NotNull final String message)
-            throws IOException {
-        final byte[] response = message.getBytes();
-        t.sendResponseHeaders(responseCode, response.length);
-        final OutputStream os = t.getResponseBody();
-        os.write(response);
-        os.close();
     }
 }

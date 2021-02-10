@@ -18,11 +18,12 @@
 package org.apache.flink.streaming.connectors.influxdb.source.http;
 
 import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.io.OutputStream;
 import org.jetbrains.annotations.NotNull;
 
-abstract class Base {
+abstract class Handler implements HttpHandler {
     void sendResponse(
             @NotNull final HttpExchange t, final int responseCode, @NotNull final String message)
             throws IOException {
