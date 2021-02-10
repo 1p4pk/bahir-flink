@@ -272,7 +272,6 @@
               <exclude>**/dependency-reduced-pom.xml</exclude>
               <exclude>**/target/**</exclude>
               <exclude>**/README.md</exclude>
-              <exclude>**/rat.txt</exclude>
               <exclude>.github/**</exclude>
             </excludes>
           </configuration>
