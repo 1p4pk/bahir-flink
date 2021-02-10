@@ -86,9 +86,9 @@ public class BlockingOffer {
         this.engineRuntime = engineRuntime;
         this.eventsPerSecond = eventsPerSecond;
         this.eventsPerRequest = eventsPerRequest;
-        this.generatedEventsPerSecond = new int[engineRuntime + 10];
-        this.generatedSuccessfulRequestsPerSecond = new int[engineRuntime + 10];
-        this.generatedRequestsPerSecond = new int[engineRuntime + 10];
+        this.generatedEventsPerSecond = new int[engineRuntime + 300];
+        this.generatedSuccessfulRequestsPerSecond = new int[engineRuntime + 300];
+        this.generatedRequestsPerSecond = new int[engineRuntime + 300];
         this.host = host;
         this.port = port;
         this.healthURL = WRITE_PROTOCOL + "://" + host + ":" + port + HEALTH_CHECK_API;
@@ -102,8 +102,9 @@ public class BlockingOffer {
                         filePath.replace(".csv", "_")
                                 + "port_"
                                 + port
-                                + "host_"
+                                + "_host_"
                                 + host
+                                + "_"
                                 + strDate
                                 + ".csv");
         if (file.createNewFile()) {

@@ -26,23 +26,32 @@ import org.apache.bahir.benchmark.generator.BlockingOffer;
 import org.apache.bahir.benchmark.generator.SimpleLineProtocolGenerator;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.core.execution.JobClient;
+import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSource;
+import org.apache.flink.test.util.MiniClusterWithClientResource;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 @Slf4j
 public class MainBenchmarkRunner implements Runnable {
 
+    public static final MiniClusterWithClientResource CLUSTER =
+            new MiniClusterWithClientResource(
+                    new MiniClusterResourceConfiguration.Builder()
+                            .setNumberSlotsPerTaskManager(2)
+                            .setNumberTaskManagers(1)
+                            .build());
+
     @Option(
             names = {"--eventsPerSecond", "-eps"},
-            defaultValue = "10000000")
+            defaultValue = "1000000")
     private int eventsPerSecond;
 
     @Option(
-            names = {"--eventsPerRequest", "-eps"},
+            names = {"--eventsPerRequest", "-epr"},
             defaultValue = "1000")
     private int eventsPerRequest;
 
@@ -89,13 +98,13 @@ public class MainBenchmarkRunner implements Runnable {
                         this.eventsPerSecond,
                         this.eventsPerRequest,
                         this.outputPath + "result_");
-
+        log.info("Start waiting for connection.");
         offer.waitForConnection();
         final long startTime = System.nanoTime();
         generator.generate(offer).get();
         final long endTime = System.nanoTime();
         offer.writeFile();
-        log.info("Finished after {} seconds.", (endTime - startTime) / 1e9);
+        log.info("Finished after {} seconds.", (endTime - startTime) / 1_000_000_000);
         jobClient.cancel();
     }
 
