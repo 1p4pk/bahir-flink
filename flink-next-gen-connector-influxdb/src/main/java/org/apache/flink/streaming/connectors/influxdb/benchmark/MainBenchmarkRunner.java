@@ -106,6 +106,7 @@ public class MainBenchmarkRunner implements Runnable {
         offer.writeFile();
         log.info("Finished after {} seconds.", (endTime - startTime) / 1_000_000_000);
         jobClient.cancel();
+        System.exit(0);
     }
 
     @SneakyThrows
