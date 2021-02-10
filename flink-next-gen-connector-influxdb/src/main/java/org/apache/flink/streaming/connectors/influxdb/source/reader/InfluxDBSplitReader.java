@@ -146,17 +146,17 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
             try {
                 String line;
                 final List<DataPoint> points = new ArrayList<>();
-                int n = 0;
+                int numberOfLines = 0;
                 while ((line = in.readLine()) != null) {
                     final DataPoint dataPoint =
                             InfluxDBSplitReader.this.parser.parseToDataPoint(line);
                     points.add(dataPoint);
-                    n++;
-                    if (n > InfluxDBSplitReader.this.maximumLinesPerRequest) {
+                    numberOfLines++;
+                    if (numberOfLines > InfluxDBSplitReader.this.maximumLinesPerRequest) {
                         throw new RequestTooLargeException(
-                                "Payload too large. Maximum number of lines per request is "
-                                        + InfluxDBSplitReader.this.maximumLinesPerRequest
-                                        + ".");
+                                String.format(
+                                        "Payload too large. Maximum number of lines per request is %d.",
+                                        InfluxDBSplitReader.this.maximumLinesPerRequest));
                     }
                 }
 
@@ -215,7 +215,7 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
         }
     }
 
-    private static class InfluxDBSplitRecords implements RecordsWithSplitIds<DataPoint> {
+    private static final class InfluxDBSplitRecords implements RecordsWithSplitIds<DataPoint> {
         private final List<DataPoint> records;
         private Iterator<DataPoint> recordIterator;
         private final String splitId;
@@ -225,8 +225,8 @@ public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit
             this.records = new ArrayList<>();
         }
 
-        private boolean addAll(final List<DataPoint> records) {
-            return this.records.addAll(records);
+        private void addAll(final List<? extends DataPoint> records) {
+            this.records.addAll(records);
         }
 
         private void prepareForRead() {

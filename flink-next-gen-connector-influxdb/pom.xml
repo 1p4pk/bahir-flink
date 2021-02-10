@@ -45,6 +45,7 @@ under the License.
     <!--  Test Properties  -->
     <testcontainers.version>1.15.1</testcontainers.version>
     <hamcrest.version>2.2</hamcrest.version>
+    <google.http.client.version>1.38.0</google.http.client.version>
   </properties>
 
   <dependencies>
@@ -150,11 +151,11 @@ under the License.
       <scope>test</scope>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
     <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-      <version>4.5.4</version>
+      <groupId>com.google.http-client</groupId>
+      <artifactId>google-http-client</artifactId>
+      <version>${google.http.client.version}</version>
+      <scope>test</scope>
     </dependency>
 
 
