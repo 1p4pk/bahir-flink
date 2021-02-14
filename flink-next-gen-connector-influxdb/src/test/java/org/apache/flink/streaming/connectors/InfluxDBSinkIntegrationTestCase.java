@@ -17,8 +17,9 @@
  */
 package org.apache.flink.streaming.connectors;
 
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.getInfluxDBClient;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
 import static org.junit.Assert.assertThat;
 
 import com.influxdb.client.InfluxDBClient;
@@ -35,9 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBConfig;
 import org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSink;
-import org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkBuilder;
 import org.apache.flink.streaming.connectors.util.InfluxDBContainer;
 import org.apache.flink.streaming.connectors.util.InfluxDBTestSerializer;
 import org.apache.flink.streaming.util.FiniteTestSource;
@@ -78,20 +77,16 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
     @Test
     public void shouldWriteDataToInfluxDB() throws Exception {
         log.info("Starting test");
-        final StreamExecutionEnvironment env = InfluxDBSinkIntegrationTestCase.buildStreamEnv();
-        final InfluxDBConfig influxDBConfig =
-                InfluxDBConfig.builder()
-                        .url(influxDBContainer.getUrl())
-                        .username(InfluxDBContainer.getUsername())
-                        .password(InfluxDBContainer.getPassword())
-                        .bucket(InfluxDBContainer.getBucket())
-                        .organization(InfluxDBContainer.getOrganization())
-                        .build();
+        final StreamExecutionEnvironment env = buildStreamEnv();
 
         final InfluxDBSink<Long> influxDBSink =
-                new InfluxDBSinkBuilder()
+                InfluxDBSink.<Long>builder()
                         .setInfluxDBSchemaSerializer(new InfluxDBTestSerializer())
-                        .setInfluxDBConfig(influxDBConfig)
+                        .setInfluxDBUrl(influxDBContainer.getUrl())
+                        .setInfluxDBUsername(InfluxDBContainer.getUsername())
+                        .setInfluxDBPassword(InfluxDBContainer.getPassword())
+                        .setInfluxDBBucket(InfluxDBContainer.getBucket())
+                        .setInfluxDBOrganization(InfluxDBContainer.getOrganization())
                         .build();
 
         env.addSource(new FiniteTestSource(SOURCE_DATA), BasicTypeInfo.LONG_TYPE_INFO)
@@ -99,12 +94,13 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
 
         env.execute();
 
-        final List<String> actualWrittenPoints = queryWrittenData(influxDBConfig);
+        final InfluxDBClient client = getInfluxDBClient(influxDBSink.getProperties());
+        final List<String> actualWrittenPoints = queryWrittenData(client);
 
         assertThat(
                 actualWrittenPoints.size(), is(EXPECTED_COMMITTED_DATA_IN_STREAMING_MODE.size()));
 
-        final List<String> actualCheckpoints = queryCheckpoints(influxDBConfig);
+        final List<String> actualCheckpoints = queryCheckpoints(client);
         assertThat(actualCheckpoints.size(), greaterThanOrEqualTo(4));
     }
 
@@ -118,7 +114,7 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
 
     // TODO: Find a clean way to query and test expected data points
 
-    private static List<String> queryWrittenData(final InfluxDBConfig influxDBConfig) {
+    private static List<String> queryWrittenData(final InfluxDBClient influxDBClient) {
         final List<String> dataPoints = new ArrayList<>();
 
         final String query =
@@ -127,7 +123,6 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
                                 + "range(start: -1h) |> "
                                 + "filter(fn:(r) => r._measurement == \"test\")",
                         InfluxDBContainer.getBucket());
-        final InfluxDBClient influxDBClient = influxDBConfig.getClient();
         final List<FluxTable> tables = influxDBClient.getQueryApi().query(query);
         for (final FluxTable table : tables) {
             for (final FluxRecord record : table.getRecords()) {
@@ -137,7 +132,7 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
         return dataPoints;
     }
 
-    private static List<String> queryCheckpoints(final InfluxDBConfig influxDBConfig) {
+    private static List<String> queryCheckpoints(final InfluxDBClient influxDBClient) {
         final List<String> commitDataPoints = new ArrayList<>();
 
         final String query =
@@ -147,7 +142,6 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
                                 + "filter(fn:(r) => r._measurement == \"checkpoint\")",
                         InfluxDBContainer.getBucket());
 
-        final InfluxDBClient influxDBClient = influxDBConfig.getClient();
         final List<FluxTable> tables = influxDBClient.getQueryApi().query(query);
         for (final FluxTable table : tables) {
             for (final FluxRecord record : table.getRecords()) {

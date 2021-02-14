@@ -17,28 +17,45 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.sink;
 
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.INFLUXDB_BUCKET;
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.INFLUXDB_ORGANIZATION;
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.INFLUXDB_PASSWORD;
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.INFLUXDB_URL;
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.INFLUXDB_USERNAME;
 import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.WRITE_BUFFER_SIZE;
 import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.WRITE_DATA_POINT_CHECKPOINT;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 import java.util.Properties;
-import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBConfig;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 
 public class InfluxDBSinkBuilder<IN> {
-    private InfluxDBConfig influxDBConfig;
     private InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer;
     private final Properties properties;
 
     public InfluxDBSinkBuilder() {
-        this.influxDBConfig = null;
         this.influxDBSchemaSerializer = null;
         this.properties = new Properties();
     }
 
-    public InfluxDBSinkBuilder<IN> setInfluxDBConfig(final InfluxDBConfig influxDBConfig) {
-        this.influxDBConfig = influxDBConfig;
-        return this;
+    public InfluxDBSinkBuilder<IN> setInfluxDBUrl(final String influxDBUrl) {
+        return this.setProperty(INFLUXDB_URL.key(), influxDBUrl);
+    }
+
+    public InfluxDBSinkBuilder<IN> setInfluxDBUsername(final String influxDBUrl) {
+        return this.setProperty(INFLUXDB_USERNAME.key(), influxDBUrl);
+    }
+
+    public InfluxDBSinkBuilder<IN> setInfluxDBPassword(final String influxDBUrl) {
+        return this.setProperty(INFLUXDB_PASSWORD.key(), influxDBUrl);
+    }
+
+    public InfluxDBSinkBuilder<IN> setInfluxDBBucket(final String influxDBUrl) {
+        return this.setProperty(INFLUXDB_BUCKET.key(), influxDBUrl);
+    }
+
+    public InfluxDBSinkBuilder<IN> setInfluxDBOrganization(final String influxDBUrl) {
+        return this.setProperty(INFLUXDB_ORGANIZATION.key(), influxDBUrl);
     }
 
     public InfluxDBSinkBuilder<IN> setInfluxDBSchemaSerializer(
@@ -57,8 +74,7 @@ public class InfluxDBSinkBuilder<IN> {
 
     public InfluxDBSink<IN> build() {
         this.sanityCheck();
-        return new InfluxDBSink<>(
-                this.influxDBConfig, this.influxDBSchemaSerializer, this.properties);
+        return new InfluxDBSink<>(this.influxDBSchemaSerializer, this.properties);
     }
 
     // ------------- private helpers  --------------
@@ -81,6 +97,5 @@ public class InfluxDBSinkBuilder<IN> {
         checkNotNull(
                 this.influxDBSchemaSerializer,
                 "Deserialization schema is required but not provided.");
-        checkNotNull(this.influxDBConfig, "The influxDB Configuration can not be null");
     }
 }

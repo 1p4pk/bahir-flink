@@ -17,8 +17,6 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source;
 
-import static org.apache.flink.util.Preconditions.checkNotNull;
-
 import java.util.Properties;
 import org.apache.flink.streaming.connectors.influxdb.source.reader.deserializer.InfluxDBDataPointDeserializer;
 
@@ -111,7 +109,6 @@ public class InfluxDBSourceBuilder<OUT> {
      * @return a InfluxDBSource with the settings made for this builder.
      */
     public InfluxDBSource<OUT> build() {
-        this.sanityCheck();
         return new InfluxDBSource<>(this.properties, this.deserializationSchema);
     }
 
@@ -127,11 +124,5 @@ public class InfluxDBSourceBuilder<OUT> {
     private InfluxDBSourceBuilder<OUT> setProperty(final String key, final String value) {
         this.properties.setProperty(key, value);
         return this;
-    }
-
-    private void sanityCheck() {
-        // Check required settings.
-        checkNotNull(
-                this.deserializationSchema, "Deserialization schema is required but not provided.");
     }
 }

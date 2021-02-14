@@ -18,6 +18,7 @@
 package org.apache.flink.streaming.connectors.influxdb.sink.writer;
 
 import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.getBufferSizeCapacity;
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.getInfluxDBClient;
 import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.writeDataPointCheckpoint;
 
 import com.influxdb.client.InfluxDBClient;
@@ -30,7 +31,6 @@ import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.connector.sink.Sink.ProcessingTimeService;
 import org.apache.flink.api.connector.sink.SinkWriter;
-import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBConfig;
 
 /**
  * This Class implements the {@link SinkWriter} and it is responsible to write incoming inputs to
@@ -55,14 +55,12 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
     private final InfluxDBClient influxDBClient;
 
     public InfluxDBWriter(
-            final InfluxDBSchemaSerializer<IN> schemaSerializer,
-            final InfluxDBConfig config,
-            final Properties properties) {
+            final InfluxDBSchemaSerializer<IN> schemaSerializer, final Properties properties) {
         this.schemaSerializer = schemaSerializer;
         this.bufferSize = getBufferSizeCapacity(properties);
         this.elements = new ArrayList<>(this.bufferSize);
         this.writeCheckpoint = writeDataPointCheckpoint(properties);
-        this.influxDBClient = config.getClient();
+        this.influxDBClient = getInfluxDBClient(properties);
     }
 
     /**
@@ -102,7 +100,7 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
      */
     @Override
     public List<Long> prepareCommit(final boolean flush) {
-        if (this.lastTimestamp == 0 && !this.writeCheckpoint) {
+        if (this.lastTimestamp == 0) {
             return Collections.emptyList();
         }
         final List<Long> lastTimestamp = new ArrayList<>(1);

@@ -17,6 +17,7 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.sink.commiter;
 
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.getInfluxDBClient;
 import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.writeDataPointCheckpoint;
 
 import com.influxdb.client.InfluxDBClient;
@@ -30,7 +31,6 @@ import java.util.Properties;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.connector.sink.Committer;
-import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBConfig;
 
 /**
  * The InfluxDBCommitter implements the {@link Committer} interface The InfluxDBCommitter is called
@@ -43,8 +43,8 @@ public class InfluxDBCommitter implements Committer<Long> {
     private final InfluxDBClient influxDBClient;
     private final boolean writeCheckpoint;
 
-    public InfluxDBCommitter(final InfluxDBConfig config, final Properties properties) {
-        this.influxDBClient = config.getClient();
+    public InfluxDBCommitter(final Properties properties) {
+        this.influxDBClient = getInfluxDBClient(properties);
         this.writeCheckpoint = writeDataPointCheckpoint(properties);
     }
 

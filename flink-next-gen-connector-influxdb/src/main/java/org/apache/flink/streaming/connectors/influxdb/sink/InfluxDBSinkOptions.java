@@ -17,6 +17,9 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.sink;
 
+import com.influxdb.client.InfluxDBClient;
+import com.influxdb.client.InfluxDBClientFactory;
+import com.influxdb.client.InfluxDBClientOptions;
 import java.util.Properties;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
@@ -40,11 +43,57 @@ public final class InfluxDBSinkOptions extends InfluxDBOptionsBase {
                     .withDescription(
                             "Size of the buffer to store the data before writing to InfluxDB.");
 
+    public static final ConfigOption<String> INFLUXDB_URL =
+            ConfigOptions.key("influxDB.URL")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription("InfluxDB Connection URL.");
+
+    public static final ConfigOption<String> INFLUXDB_USERNAME =
+            ConfigOptions.key("influxDB.username")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription("InfluxDB username.");
+
+    public static final ConfigOption<String> INFLUXDB_PASSWORD =
+            ConfigOptions.key("influxDB.password")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription("InfluxDB password.");
+
+    public static final ConfigOption<String> INFLUXDB_BUCKET =
+            ConfigOptions.key("influxDB.bucket")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription("InfluxDB bucket name.");
+
+    public static final ConfigOption<String> INFLUXDB_ORGANIZATION =
+            ConfigOptions.key("influxDB.organization")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription("InfluxDB organization name.");
+
     public static boolean writeDataPointCheckpoint(final Properties properties) {
         return getOption(properties, WRITE_DATA_POINT_CHECKPOINT, Boolean::parseBoolean);
     }
 
     public static int getBufferSizeCapacity(final Properties properties) {
         return getOption(properties, WRITE_BUFFER_SIZE, Integer::parseInt);
+    }
+
+    public static InfluxDBClient getInfluxDBClient(final Properties properties) {
+        final String url = getOption(properties, INFLUXDB_URL, String::toString);
+        final String username = getOption(properties, INFLUXDB_USERNAME, String::toString);
+        final String password = getOption(properties, INFLUXDB_PASSWORD, String::toString);
+        final String bucket = getOption(properties, INFLUXDB_BUCKET, String::toString);
+        final String organization = getOption(properties, INFLUXDB_ORGANIZATION, String::toString);
+        final InfluxDBClientOptions influxDBClientOptions =
+                InfluxDBClientOptions.builder()
+                        .url(url)
+                        .authenticate(username, password.toCharArray())
+                        .bucket(bucket)
+                        .org(organization)
+                        .build();
+        return InfluxDBClientFactory.create(influxDBClientOptions);
     }
 }
