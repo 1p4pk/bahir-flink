@@ -18,12 +18,12 @@
 package org.apache.flink.streaming.connectors.influxdb.source;
 
 import java.util.Properties;
-import java.util.function.Function;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
+import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBOptionsBase;
 
 /* Configurations for a InfluxDBSource. */
-public final class InfluxDBSourceOptions {
+public final class InfluxDBSourceOptions extends InfluxDBOptionsBase {
 
     private InfluxDBSourceOptions() {}
 
@@ -69,14 +69,5 @@ public final class InfluxDBSourceOptions {
 
     public static int getPort(final Properties properties) {
         return getOption(properties, PORT, Integer::parseInt);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> T getOption(
-            final Properties props,
-            final ConfigOption configOption,
-            final Function<String, T> parser) {
-        final String value = props.getProperty(configOption.key());
-        return (T) (value == null ? configOption.defaultValue() : parser.apply(value));
     }
 }

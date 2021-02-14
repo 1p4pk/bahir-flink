@@ -94,19 +94,6 @@ public class InfluxDBSourceBuilder<OUT> {
     }
 
     /**
-     * Set an arbitrary property for the InfluxDBSource. The valid keys can be found in {@link
-     * InfluxDBSourceOptions}.
-     *
-     * @param key the key of the property.
-     * @param value the value of the property.
-     * @return this InfluxDBSourceBuilder.
-     */
-    public InfluxDBSourceBuilder<OUT> setProperty(final String key, final String value) {
-        this.properties.setProperty(key, value);
-        return this;
-    }
-
-    /**
      * Set arbitrary properties for the InfluxDBSource. The valid keys can be found in {@link
      * InfluxDBSourceOptions}.
      *
@@ -129,6 +116,19 @@ public class InfluxDBSourceBuilder<OUT> {
     }
 
     // ------------- private helpers  --------------
+    /**
+     * Set an arbitrary property for the InfluxDBSource. The valid keys can be found in {@link
+     * InfluxDBSourceOptions}.
+     *
+     * @param key the key of the property.
+     * @param value the value of the property.
+     * @return this InfluxDBSourceBuilder.
+     */
+    private InfluxDBSourceBuilder<OUT> setProperty(final String key, final String value) {
+        this.properties.setProperty(key, value);
+        return this;
+    }
+
     private void sanityCheck() {
         // Check required settings.
         checkNotNull(

@@ -20,7 +20,7 @@ package org.apache.flink.streaming.connectors.influxdb.sink;
 import com.influxdb.client.write.Point;
 import java.util.List;
 import java.util.Optional;
-import lombok.Builder;
+import java.util.Properties;
 import org.apache.flink.api.connector.sink.Committer;
 import org.apache.flink.api.connector.sink.GlobalCommitter;
 import org.apache.flink.api.connector.sink.Sink;
@@ -33,31 +33,34 @@ import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBPointS
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter;
 
-@Builder
-public class InfluxDBSink<IN> implements Sink<IN, Long, Point, Void> {
+public final class InfluxDBSink<IN> implements Sink<IN, Long, Point, Void> {
 
     private final InfluxDBConfig influxDBConfig;
     private final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer;
+    private final Properties properties;
 
-    private InfluxDBSink(
+    InfluxDBSink(
             final InfluxDBConfig influxDBConfig,
-            final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer) {
+            final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer,
+            final Properties properties) {
         this.influxDBConfig = influxDBConfig;
         this.influxDBSchemaSerializer = influxDBSchemaSerializer;
+        this.properties = properties;
     }
 
     @Override
     public SinkWriter<IN, Long, Point> createWriter(
             final InitContext initContext, final List<Point> list) {
         final InfluxDBWriter<IN> writer =
-                new InfluxDBWriter<>(this.influxDBSchemaSerializer, this.influxDBConfig);
+                new InfluxDBWriter<>(
+                        this.influxDBSchemaSerializer, this.influxDBConfig, this.properties);
         writer.setProcessingTimerService(initContext.getProcessingTimeService());
         return writer;
     }
 
     @Override
     public Optional<Committer<Long>> createCommitter() {
-        return Optional.of(new InfluxDBCommitter(this.influxDBConfig));
+        return Optional.of(new InfluxDBCommitter(this.influxDBConfig, this.properties));
     }
 
     @Override

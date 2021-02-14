@@ -37,6 +37,7 @@ import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBConfig;
 import org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSink;
+import org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkBuilder;
 import org.apache.flink.streaming.connectors.util.InfluxDBContainer;
 import org.apache.flink.streaming.connectors.util.InfluxDBTestSerializer;
 import org.apache.flink.streaming.util.FiniteTestSource;
@@ -77,7 +78,7 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
     @Test
     public void shouldWriteDataToInfluxDB() throws Exception {
         log.info("Starting test");
-        final StreamExecutionEnvironment env = this.buildStreamEnv();
+        final StreamExecutionEnvironment env = InfluxDBSinkIntegrationTestCase.buildStreamEnv();
         final InfluxDBConfig influxDBConfig =
                 InfluxDBConfig.builder()
                         .url(influxDBContainer.getUrl())
@@ -88,9 +89,9 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
                         .build();
 
         final InfluxDBSink<Long> influxDBSink =
-                InfluxDBSink.<Long>builder()
-                        .influxDBSchemaSerializer(new InfluxDBTestSerializer())
-                        .influxDBConfig(influxDBConfig)
+                new InfluxDBSinkBuilder()
+                        .setInfluxDBSchemaSerializer(new InfluxDBTestSerializer())
+                        .setInfluxDBConfig(influxDBConfig)
                         .build();
 
         env.addSource(new FiniteTestSource(SOURCE_DATA), BasicTypeInfo.LONG_TYPE_INFO)
@@ -107,7 +108,7 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
         assertThat(actualCheckpoints.size(), greaterThanOrEqualTo(4));
     }
 
-    private StreamExecutionEnvironment buildStreamEnv() {
+    private static StreamExecutionEnvironment buildStreamEnv() {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
         env.setParallelism(1);

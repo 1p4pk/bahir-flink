@@ -17,12 +17,16 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.sink.writer;
 
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.getBufferSizeCapacity;
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.writeDataPointCheckpoint;
+
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.WriteApi;
 import com.influxdb.client.write.Point;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.connector.sink.Sink.ProcessingTimeService;
 import org.apache.flink.api.connector.sink.SinkWriter;
@@ -32,7 +36,7 @@ import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBConfig;
  * This Class implements the {@link SinkWriter} and it is responsible to write incoming inputs to
  * InfluxDB. It uses the {@link InfluxDBSchemaSerializer} to serialize the input into a {@link
  * Point} object. Each serialized object is stored in the {@link #elements} list. Whenever the size
- * of the list reaches the {@link #BUFFER_SIZE}, the influxDB write API is called and all the items
+ * of the list reaches the {@link #bufferSize}, the influxDB write API is called and all the items
  * all written. The {@link #lastTimestamp} keeps track of the biggest timestamp of the incoming
  * elements.
  *
@@ -42,8 +46,8 @@ import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBConfig;
 @Slf4j
 public class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
 
-    private static final int BUFFER_SIZE = 1000;
-
+    private final int bufferSize;
+    private final boolean writeCheckpoint;
     private long lastTimestamp = 0;
     private final List<Point> elements;
     private ProcessingTimeService processingTimerService;
@@ -51,15 +55,19 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
     private final InfluxDBClient influxDBClient;
 
     public InfluxDBWriter(
-            final InfluxDBSchemaSerializer<IN> schemaSerializer, final InfluxDBConfig config) {
+            final InfluxDBSchemaSerializer<IN> schemaSerializer,
+            final InfluxDBConfig config,
+            final Properties properties) {
         this.schemaSerializer = schemaSerializer;
-        this.elements = new ArrayList<>(BUFFER_SIZE);
+        this.bufferSize = getBufferSizeCapacity(properties);
+        this.elements = new ArrayList<>(this.bufferSize);
+        this.writeCheckpoint = writeDataPointCheckpoint(properties);
         this.influxDBClient = config.getClient();
     }
 
     /**
      * This method calls the InfluxDB write API whenever the element list reaches the {@link
-     * #BUFFER_SIZE}. It keeps track of the latest timestamp of each element. It compares the latest
+     * #bufferSize}. It keeps track of the latest timestamp of each element. It compares the latest
      * timestamp with the context.timestamp() and takes the bigger (latest) timestamp.
      *
      * @param in incoming data
@@ -69,7 +77,7 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
     @Override
     public void write(final IN in, final Context context) {
         try {
-            if (this.elements.size() == BUFFER_SIZE) {
+            if (this.elements.size() == this.bufferSize) {
                 log.info("Buffer size reached preparing to write the elements.");
                 this.writeCurrentElements();
                 this.elements.clear();
@@ -94,10 +102,10 @@ public class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
      */
     @Override
     public List<Long> prepareCommit(final boolean flush) {
-        if (this.lastTimestamp == 0) {
+        if (this.lastTimestamp == 0 && !this.writeCheckpoint) {
             return Collections.emptyList();
         }
-        final List<Long> lastTimestamp = new ArrayList<>();
+        final List<Long> lastTimestamp = new ArrayList<>(1);
         lastTimestamp.add(this.lastTimestamp);
         return lastTimestamp;
     }
