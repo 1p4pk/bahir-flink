@@ -117,8 +117,16 @@ under the License.
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-streaming-java_${scala.binary.new.version}</artifactId>
       <version>${flink.new.version}</version>
-      <scope>test</scope>
-      <classifier>tests</classifier>
+      <!--Benchmarking-->
+      <!--<scope>test</scope>
+      <classifier>tests</classifier>-->
+    </dependency>
+
+    <!--Benchmarking-->
+    <dependency>
+      <artifactId>flink-clients_${scala.binary.new.version}</artifactId>
+      <groupId>org.apache.flink</groupId>
+      <version>${flink.new.version}</version>
     </dependency>
 
     <!-- Test container -->
@@ -155,7 +163,8 @@ under the License.
       <groupId>com.google.http-client</groupId>
       <artifactId>google-http-client</artifactId>
       <version>${google.http.client.version}</version>
-      <scope>test</scope>
+      <!--Benchmarking-->
+      <!--<scope>test</scope>-->
     </dependency>
 
     <!-- Benchmarking -->
