@@ -17,18 +17,11 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.benchmark;
 
-// import picocli.CommandLine.Option;
-
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.core.execution.JobClient;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.DiscardingSink;
 import org.apache.flink.streaming.connectors.influxdb.benchmark.generator.BlockingOffer;
 import org.apache.flink.streaming.connectors.influxdb.benchmark.generator.SimpleLineProtocolGenerator;
-import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
-import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSource;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -37,7 +30,7 @@ public class MainBenchmarkRunner implements Runnable {
 
     @Option(
             names = {"--eventsPerSecond", "-eps"},
-            defaultValue = "1000000")
+            defaultValue = "100000")
     private int eventsPerSecond;
 
     @Option(
@@ -62,8 +55,9 @@ public class MainBenchmarkRunner implements Runnable {
 
     @Option(
             names = {"--query"},
-            defaultValue = "sourceDiscarding")
-    private String query;
+            defaultValue = "FileSource",
+            description = "Enum values: ${COMPLETION-CANDIDATES}")
+    private BenchmarkQueries.Queries query;
 
     @Option(
             names = {"--outputPath"},
@@ -83,14 +77,25 @@ public class MainBenchmarkRunner implements Runnable {
     public void run() {
         JobClient jobClient = null;
         switch (this.query) {
-            case "sourceDiscarding":
-                jobClient = this.startDiscardingQueryAsync();
+            case DiscardingSource:
+                jobClient = BenchmarkQueries.startDiscardingQueryAsync();
+                this.runSourceBenchmark();
+                break;
+            case FileSource:
+                final String filePath = String.format("%s/file_source_latency", this.outputPath);
+                jobClient = BenchmarkQueries.startFileQueryAsync(filePath);
+                this.runSourceBenchmark();
                 break;
             default:
                 log.error("Query {} not known", this.query);
                 System.exit(1);
         }
+        jobClient.cancel();
+        System.exit(0);
+    }
 
+    @SneakyThrows
+    private void runSourceBenchmark() {
         final SimpleLineProtocolGenerator generator =
                 new SimpleLineProtocolGenerator(
                         this.eventsPerSecond, this.eventsPerRequest, this.timeInSeconds);
@@ -109,22 +114,5 @@ public class MainBenchmarkRunner implements Runnable {
         final long endTime = System.nanoTime();
         offer.writeFile();
         log.info("Finished after {} seconds.", (endTime - startTime) / 1_000_000_000);
-        jobClient.cancel();
-        System.exit(0);
-    }
-
-    @SneakyThrows
-    private JobClient startDiscardingQueryAsync() {
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
-        env.setParallelism(1);
-
-        final InfluxDBSource<DataPoint> influxDBSource =
-                InfluxDBSource.<DataPoint>builder()
-                        .setDeserializer(new InfluxDBBenchmarkDeserializer())
-                        .build();
-
-        env.fromSource(influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
-                .addSink(new DiscardingSink<>());
-        return env.executeAsync();
     }
 }

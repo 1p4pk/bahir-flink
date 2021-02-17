@@ -41,7 +41,7 @@ public class SimpleLineProtocolGenerator extends LineProtocolGenerator {
         final StringBuilder stringBuilder = new StringBuilder();
 
         for (int i = 0; i < this.eventsPerRequest; i++) {
-            final long eventTime = System.currentTimeMillis() / 1000L;
+            final long eventTime = System.currentTimeMillis();
             stringBuilder.append("testGenerator"); // measurement
             stringBuilder.append(",simpleTag=testTag "); // simple tag
             stringBuilder.append("fieldCount=");

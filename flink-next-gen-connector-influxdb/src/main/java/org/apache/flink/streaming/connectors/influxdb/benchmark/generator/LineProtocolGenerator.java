@@ -75,7 +75,8 @@ public abstract class LineProtocolGenerator {
             timeNow = System.nanoTime();
             final long nanoDifference = timeNow - startTime;
 
-            final long currentEventTarget = nanoDifference * this.eventsPerSecond / 1_000_000_000;
+            final long currentEventTarget =
+                    nanoDifference * (this.eventsPerSecond / this.eventsPerRequest) / 1_000_000_000;
             final long missingEvents = currentEventTarget - totalSentEvents;
 
             // Ensures that we don't sent too many events
