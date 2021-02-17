@@ -17,14 +17,14 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source.split;
 
-import java.io.IOException;
+import java.nio.ByteBuffer;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 /**
  * The {@link org.apache.flink.core.io.SimpleVersionedSerializer serializer} for {@link
  * InfluxDBSplit}.
  */
-public class InfluxDBSplitSerializer implements SimpleVersionedSerializer<InfluxDBSplit> {
+public final class InfluxDBSplitSerializer implements SimpleVersionedSerializer<InfluxDBSplit> {
 
     private static final int CURRENT_VERSION = 0;
 
@@ -34,12 +34,17 @@ public class InfluxDBSplitSerializer implements SimpleVersionedSerializer<Influx
     }
 
     @Override
-    public byte[] serialize(final InfluxDBSplit influxDBSplit) throws IOException {
-        return new byte[0];
+    public byte[] serialize(final InfluxDBSplit influxDBSplit) {
+        final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.putLong(0, influxDBSplit.getId());
+        return buffer.array();
     }
 
     @Override
-    public InfluxDBSplit deserialize(final int i, final byte[] bytes) throws IOException {
-        return new InfluxDBSplit(0);
+    public InfluxDBSplit deserialize(final int version, final byte[] serialized) {
+        final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.put(serialized, 0, serialized.length);
+        buffer.flip();
+        return new InfluxDBSplit(buffer.getLong());
     }
 }

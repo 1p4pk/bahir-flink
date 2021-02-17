@@ -59,6 +59,6 @@ public class InfluxDBSourceReader<OUT>
 
     @Override
     protected InfluxDBSplit toSplitType(final String s, final InfluxDBSplit influxDBSplitState) {
-        return null;
+        return influxDBSplitState;
     }
 }
