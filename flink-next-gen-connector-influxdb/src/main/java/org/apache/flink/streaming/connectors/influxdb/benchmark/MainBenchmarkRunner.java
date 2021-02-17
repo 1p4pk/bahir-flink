@@ -61,6 +61,11 @@ public class MainBenchmarkRunner implements Runnable {
     private int port;
 
     @Option(
+            names = {"--query"},
+            defaultValue = "sourceDiscarding")
+    private String query;
+
+    @Option(
             names = {"--outputPath"},
             defaultValue = "")
     private String outputPath;
@@ -76,7 +81,13 @@ public class MainBenchmarkRunner implements Runnable {
     @SneakyThrows
     @Override
     public void run() {
-        final JobClient jobClient = this.startDiscardingQueryAsync();
+        JobClient jobClient = null;
+        if (this.query.equals("sourceDiscarding")) {
+            jobClient = this.startDiscardingQueryAsync();
+        } else {
+            log.error("Query {} not known", this.query);
+            System.exit(1);
+        }
 
         final SimpleLineProtocolGenerator generator =
                 new SimpleLineProtocolGenerator(
