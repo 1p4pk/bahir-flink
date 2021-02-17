@@ -29,7 +29,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 import java.util.Properties;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 
-public class InfluxDBSinkBuilder<IN> {
+public final class InfluxDBSinkBuilder<IN> {
     private InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer;
     private final Properties properties;
 
