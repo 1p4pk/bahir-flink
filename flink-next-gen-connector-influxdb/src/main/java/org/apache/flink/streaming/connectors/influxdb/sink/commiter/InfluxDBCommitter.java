@@ -67,7 +67,7 @@ public final class InfluxDBCommitter implements Committer<Long> {
     @Override
     public List<Long> commit(final List<Long> committables) {
         if (this.writeCheckpoint) {
-            log.info("A checkpoint is set.");
+            log.debug("A checkpoint is set.");
             Optional<Long> lastTimestamp = Optional.empty();
             if (committables.size() >= 1) {
                 lastTimestamp = Optional.ofNullable(committables.get(committables.size() - 1));
