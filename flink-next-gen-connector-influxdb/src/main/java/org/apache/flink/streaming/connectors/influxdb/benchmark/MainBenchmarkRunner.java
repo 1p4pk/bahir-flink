@@ -19,15 +19,12 @@ package org.apache.flink.streaming.connectors.influxdb.benchmark;
 
 // import picocli.CommandLine.Option;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.SinkFunction;
+import org.apache.flink.streaming.api.functions.sink.DiscardingSink;
 import org.apache.flink.streaming.connectors.influxdb.benchmark.generator.BlockingOffer;
 import org.apache.flink.streaming.connectors.influxdb.benchmark.generator.SimpleLineProtocolGenerator;
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
@@ -79,7 +76,7 @@ public class MainBenchmarkRunner implements Runnable {
     @SneakyThrows
     @Override
     public void run() {
-        final JobClient jobClient = this.startEngineQueryAsync();
+        final JobClient jobClient = this.startDiscardingQueryAsync();
 
         final SimpleLineProtocolGenerator generator =
                 new SimpleLineProtocolGenerator(
@@ -104,11 +101,9 @@ public class MainBenchmarkRunner implements Runnable {
     }
 
     @SneakyThrows
-    private JobClient startEngineQueryAsync() {
+    private JobClient startDiscardingQueryAsync() {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         env.setParallelism(1);
-
-        CollectSink.VALUES.clear();
 
         final InfluxDBSource<DataPoint> influxDBSource =
                 InfluxDBSource.<DataPoint>builder()
@@ -116,18 +111,7 @@ public class MainBenchmarkRunner implements Runnable {
                         .build();
 
         env.fromSource(influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
-                .addSink(new CollectSink());
+                .addSink(new DiscardingSink<>());
         return env.executeAsync();
-    }
-
-    private static class CollectSink implements SinkFunction<DataPoint> {
-
-        public static final List<DataPoint> VALUES =
-                Collections.synchronizedList(new ArrayList<>());
-
-        @Override
-        public void invoke(final DataPoint value) throws Exception {
-            VALUES.add(value);
-        }
     }
 }
