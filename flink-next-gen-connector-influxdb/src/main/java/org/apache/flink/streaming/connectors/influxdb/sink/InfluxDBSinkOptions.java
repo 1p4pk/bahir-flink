@@ -30,45 +30,45 @@ public final class InfluxDBSinkOptions extends InfluxDBOptionsBase {
     private InfluxDBSinkOptions() {}
 
     public static final ConfigOption<Boolean> WRITE_DATA_POINT_CHECKPOINT =
-            ConfigOptions.key("write.data_point.checkpoint")
+            ConfigOptions.key("sink.influxDB.write.data_point.checkpoint")
                     .booleanType()
-                    .defaultValue(true)
+                    .defaultValue(false)
                     .withDescription(
                             "Determines if the checkpoint data point should be written to InfluxDB or not.");
 
     public static final ConfigOption<Integer> WRITE_BUFFER_SIZE =
-            ConfigOptions.key("write.buffer.size")
+            ConfigOptions.key("sink.influxDB.write.buffer.size")
                     .intType()
                     .defaultValue(1000)
                     .withDescription(
                             "Size of the buffer to store the data before writing to InfluxDB.");
 
     public static final ConfigOption<String> INFLUXDB_URL =
-            ConfigOptions.key("influxDB.URL")
+            ConfigOptions.key("sink.influxDB.client.URL")
                     .stringType()
                     .noDefaultValue()
                     .withDescription("InfluxDB Connection URL.");
 
     public static final ConfigOption<String> INFLUXDB_USERNAME =
-            ConfigOptions.key("influxDB.username")
+            ConfigOptions.key("sink.influxDB.client.username")
                     .stringType()
                     .noDefaultValue()
                     .withDescription("InfluxDB username.");
 
     public static final ConfigOption<String> INFLUXDB_PASSWORD =
-            ConfigOptions.key("influxDB.password")
+            ConfigOptions.key("sink.influxDB.client.password")
                     .stringType()
                     .noDefaultValue()
                     .withDescription("InfluxDB password.");
 
     public static final ConfigOption<String> INFLUXDB_BUCKET =
-            ConfigOptions.key("influxDB.bucket")
+            ConfigOptions.key("sink.influxDB.client.bucket")
                     .stringType()
                     .noDefaultValue()
                     .withDescription("InfluxDB bucket name.");
 
     public static final ConfigOption<String> INFLUXDB_ORGANIZATION =
-            ConfigOptions.key("influxDB.organization")
+            ConfigOptions.key("sink.influxDB.client.organization")
                     .stringType()
                     .noDefaultValue()
                     .withDescription("InfluxDB organization name.");

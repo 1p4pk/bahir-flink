@@ -38,7 +38,7 @@ import org.apache.flink.api.connector.sink.Committer;
  * point in InfluxDB. The checkpoint data point uses the latest written record timestamp.
  */
 @Slf4j
-public class InfluxDBCommitter implements Committer<Long> {
+public final class InfluxDBCommitter implements Committer<Long> {
 
     private final InfluxDBClient influxDBClient;
     private final boolean writeCheckpoint;

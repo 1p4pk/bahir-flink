@@ -17,10 +17,12 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source;
 
+import static lombok.Lombok.checkNotNull;
+
 import java.util.Properties;
 import org.apache.flink.streaming.connectors.influxdb.source.reader.deserializer.InfluxDBDataPointDeserializer;
 
-public class InfluxDBSourceBuilder<OUT> {
+public final class InfluxDBSourceBuilder<OUT> {
 
     private InfluxDBDataPointDeserializer<OUT> deserializationSchema;
     // Configurations
@@ -109,6 +111,7 @@ public class InfluxDBSourceBuilder<OUT> {
      * @return a InfluxDBSource with the settings made for this builder.
      */
     public InfluxDBSource<OUT> build() {
+        this.sanityCheck();
         return new InfluxDBSource<>(this.properties, this.deserializationSchema);
     }
 
@@ -124,5 +127,10 @@ public class InfluxDBSourceBuilder<OUT> {
     private InfluxDBSourceBuilder<OUT> setProperty(final String key, final String value) {
         this.properties.setProperty(key, value);
         return this;
+    }
+
+    private void sanityCheck() {
+        checkNotNull(
+                this.deserializationSchema, "Deserialization schema is required but not provided.");
     }
 }

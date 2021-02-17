@@ -44,7 +44,7 @@ import org.apache.flink.api.connector.sink.SinkWriter;
  * @see WriteApi
  */
 @Slf4j
-public class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
+public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
 
     private final int bufferSize;
     private final boolean writeCheckpoint;

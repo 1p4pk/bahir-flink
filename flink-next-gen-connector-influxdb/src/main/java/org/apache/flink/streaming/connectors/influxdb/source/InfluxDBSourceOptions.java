@@ -28,28 +28,28 @@ public final class InfluxDBSourceOptions extends InfluxDBOptionsBase {
     private InfluxDBSourceOptions() {}
 
     public static final ConfigOption<Long> ENQUEUE_WAIT_TIME =
-            ConfigOptions.key("timeout.enqueue")
+            ConfigOptions.key("source.influxDB.timeout.enqueue")
                     .longType()
                     .defaultValue(5L)
                     .withDescription(
                             "The time out in seconds for enqueuing an HTTP request to the queue.");
 
     public static final ConfigOption<Integer> INGEST_QUEUE_CAPACITY =
-            ConfigOptions.key("queue_capacity.ingest")
+            ConfigOptions.key("source.influxDB.queue_capacity.ingest")
                     .intType()
                     .defaultValue(1000)
                     .withDescription(
                             "Size of queue that buffers HTTP requests data points before fetching.");
 
     public static final ConfigOption<Integer> MAXIMUM_LINES_PER_REQUEST =
-            ConfigOptions.key("limit.lines_per_request")
+            ConfigOptions.key("source.influxDB.limit.lines_per_request")
                     .intType()
                     .defaultValue(1000)
                     .withDescription(
                             "The maximum number of lines that should be parsed per HTTP request.");
 
     public static final ConfigOption<Integer> PORT =
-            ConfigOptions.key("port")
+            ConfigOptions.key("source.influxDB.port")
                     .intType()
                     .defaultValue(8000)
                     .withDescription(
