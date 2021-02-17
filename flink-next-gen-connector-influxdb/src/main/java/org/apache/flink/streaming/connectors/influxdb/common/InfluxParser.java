@@ -131,7 +131,7 @@ public class InfluxParser {
             if (strTimestamp.length() < 7) {
                 return 0L;
             } else {
-                return Long.valueOf(strTimestamp.substring(0, strTimestamp.length() - 6));
+                return Long.valueOf(strTimestamp);
             }
         }
         return null;
