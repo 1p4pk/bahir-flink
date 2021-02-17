@@ -82,11 +82,13 @@ public class MainBenchmarkRunner implements Runnable {
     @Override
     public void run() {
         JobClient jobClient = null;
-        if (this.query.equals("sourceDiscarding")) {
-            jobClient = this.startDiscardingQueryAsync();
-        } else {
-            log.error("Query {} not known", this.query);
-            System.exit(1);
+        switch (this.query) {
+            case "sourceDiscarding":
+                jobClient = this.startDiscardingQueryAsync();
+                break;
+            default:
+                log.error("Query {} not known", this.query);
+                System.exit(1);
         }
 
         final SimpleLineProtocolGenerator generator =
