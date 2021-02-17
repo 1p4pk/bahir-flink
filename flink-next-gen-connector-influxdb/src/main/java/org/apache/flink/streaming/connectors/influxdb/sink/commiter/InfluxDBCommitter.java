@@ -17,6 +17,9 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.sink.commiter;
 
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.getInfluxDBClient;
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.writeDataPointCheckpoint;
+
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.WriteApi;
 import com.influxdb.client.domain.WritePrecision;
@@ -24,10 +27,10 @@ import com.influxdb.client.write.Point;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.connector.sink.Committer;
-import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBConfig;
 
 /**
  * The InfluxDBCommitter implements the {@link Committer} interface The InfluxDBCommitter is called
@@ -35,12 +38,14 @@ import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBConfig;
  * point in InfluxDB. The checkpoint data point uses the latest written record timestamp.
  */
 @Slf4j
-public class InfluxDBCommitter implements Committer<Long> {
+public final class InfluxDBCommitter implements Committer<Long> {
 
     private final InfluxDBClient influxDBClient;
+    private final boolean writeCheckpoint;
 
-    public InfluxDBCommitter(final InfluxDBConfig config) {
-        this.influxDBClient = config.getClient();
+    public InfluxDBCommitter(final Properties properties) {
+        this.influxDBClient = getInfluxDBClient(properties);
+        this.writeCheckpoint = writeDataPointCheckpoint(properties);
     }
 
     /**
@@ -61,12 +66,14 @@ public class InfluxDBCommitter implements Committer<Long> {
     @SneakyThrows
     @Override
     public List<Long> commit(final List<Long> committables) {
-        log.info("A checkpoint is set.");
-        Optional<Long> lastTimestamp = Optional.empty();
-        if (committables.size() >= 1) {
-            lastTimestamp = Optional.ofNullable(committables.get(committables.size() - 1));
+        if (this.writeCheckpoint) {
+            log.debug("A checkpoint is set.");
+            Optional<Long> lastTimestamp = Optional.empty();
+            if (committables.size() >= 1) {
+                lastTimestamp = Optional.ofNullable(committables.get(committables.size() - 1));
+            }
+            this.writeCheckpointDataPoint(lastTimestamp);
         }
-        this.writeCheckpointDataPoint(lastTimestamp);
         return Collections.emptyList();
     }
 
