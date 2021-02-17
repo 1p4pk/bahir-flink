@@ -34,90 +34,68 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BlockingOffer {
+public final class BlockingOffer {
 
     private static final String WRITE_PROTOCOL = "http";
     private static final String WRITE_API = "/api/v2/write";
-    private static final String HEALTH_CHECK_API = "/health";
 
     private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
             new NetHttpTransport().createRequestFactory();
-    private static final ExponentialBackOff HTTP_BACKOFF =
-            new ExponentialBackOff.Builder()
-                    .setInitialIntervalMillis(250)
-                    .setMaxElapsedTimeMillis(10000)
-                    .setMaxIntervalMillis(1000)
-                    .setMultiplier(1.3)
-                    .setRandomizationFactor(0.5)
-                    .build();
-
-    private final String writeURL;
-    private final String healthURL;
-    private final int engineRuntime;
-    private final int eventsPerSecond;
-    private final int eventsPerRequest;
-    private final int[] generatedEventsPerSecond;
-    private final int[] generatedSuccessfulRequestsPerSecond;
-    private final int[] generatedRequestsPerSecond;
-
-    private BufferedWriter measurements;
 
     private final String host;
     private final int port;
+    private final int engineRuntime;
+    private final int eventsPerSecond;
+    private final int eventsPerRequest;
+    private final String filePath;
 
+    private final String writeURL;
+    private final int[] generatedEventsPerSecond;
+    private final int[] generatedSuccessfulRequestsPerSecond;
+    private final int[] generatedRequestsPerSecond;
+    private BufferedWriter measurements;
     private long startTime;
     private int lastSecond = 0;
 
+    public static BlockingOfferBuilder builder() {
+        return new CustomBlockingOfferBuilder();
+    }
+
     @SneakyThrows
-    public BlockingOffer(
+    @Builder
+    private BlockingOffer(
             final String host,
             final int port,
             final int engineRuntime,
             final int eventsPerSecond,
             final int eventsPerRequest,
             final String filePath) {
+        this.host = host;
+        this.port = port;
         this.engineRuntime = engineRuntime;
         this.eventsPerSecond = eventsPerSecond;
         this.eventsPerRequest = eventsPerRequest;
+        this.filePath = filePath;
+
         this.generatedEventsPerSecond = new int[engineRuntime + 300];
         this.generatedSuccessfulRequestsPerSecond = new int[engineRuntime + 300];
         this.generatedRequestsPerSecond = new int[engineRuntime + 300];
-        this.host = host;
-        this.port = port;
-        this.healthURL = WRITE_PROTOCOL + "://" + host + ":" + port + HEALTH_CHECK_API;
         this.writeURL = WRITE_PROTOCOL + "://" + host + ":" + port + WRITE_API;
-
         final Date date = Calendar.getInstance().getTime();
         final DateFormat dateFormat = new SimpleDateFormat("hh-mm-ss");
         final String strDate = dateFormat.format(date);
         final File file =
                 new File(
-                        filePath.replace(".csv", "_")
-                                + "port_"
-                                + port
-                                + "_host_"
-                                + host
-                                + "_"
-                                + strDate
-                                + ".csv");
+                        String.format(
+                                "%sresult_port_%s_host_%s_%s.csv",
+                                this.filePath, port, host, strDate));
         if (file.createNewFile()) {
             this.measurements = new BufferedWriter(new FileWriter(file));
-        }
-    }
-
-    @SneakyThrows
-    public void waitForConnection() {
-        // wait until client appears
-        log.info("Listening on port {} and host {}", this.port, this.host);
-        if (this.checkServerAvailability()) {
-            this.startTime = System.nanoTime();
-            log.info("connected successfully.");
-        } else {
-            log.error("could not establish a connection to server.");
         }
     }
 
@@ -133,9 +111,9 @@ public class BlockingOffer {
         }
         if (currentSecond > this.lastSecond) {
             log.info(
-                    this.generatedEventsPerSecond[this.lastSecond]
-                            + " events for second "
-                            + this.lastSecond);
+                    "{} events for second {}",
+                    this.generatedEventsPerSecond[this.lastSecond],
+                    this.lastSecond);
             this.lastSecond = currentSecond;
         }
     }
@@ -145,14 +123,12 @@ public class BlockingOffer {
         this.measurements.write("seconds,events,requests,successfulRequests\n");
         for (int i = 0; i < this.engineRuntime; i++) {
             this.measurements.write(
-                    i
-                            + ","
-                            + this.generatedEventsPerSecond[i]
-                            + ","
-                            + this.generatedRequestsPerSecond[i]
-                            + ","
-                            + this.generatedSuccessfulRequestsPerSecond[i]
-                            + "\n");
+                    String.format(
+                            "%s,%s,%s,%s\n",
+                            i,
+                            this.generatedEventsPerSecond[i],
+                            this.generatedRequestsPerSecond[i],
+                            this.generatedSuccessfulRequestsPerSecond[i]));
         }
         this.measurements.flush();
         log.info("Wrote result file.");
@@ -167,13 +143,54 @@ public class BlockingOffer {
         return request.execute().getStatusCode();
     }
 
-    @SneakyThrows
-    private boolean checkServerAvailability() {
-        final HttpRequest request =
-                HTTP_REQUEST_FACTORY.buildGetRequest(new GenericUrl(this.healthURL));
-        request.setUnsuccessfulResponseHandler(
-                new HttpBackOffUnsuccessfulResponseHandler(HTTP_BACKOFF));
-        request.setIOExceptionHandler(new HttpBackOffIOExceptionHandler(HTTP_BACKOFF));
-        return request.execute().getStatusCode() == HttpURLConnection.HTTP_OK;
+    private static class CustomBlockingOfferBuilder extends BlockingOfferBuilder {
+
+        private static final String HEALTH_CHECK_API = "/health";
+
+        private static final ExponentialBackOff HTTP_BACKOFF =
+                new ExponentialBackOff.Builder()
+                        .setInitialIntervalMillis(250)
+                        .setMaxElapsedTimeMillis(10000)
+                        .setMaxIntervalMillis(1000)
+                        .setMultiplier(1.3)
+                        .setRandomizationFactor(0.5)
+                        .build();
+
+        @Override
+        public BlockingOffer build() {
+            final BlockingOffer blockingOffer = super.build();
+            log.info("Start waiting for connection.");
+            waitForConnection(blockingOffer);
+            return blockingOffer;
+        }
+
+        @SneakyThrows
+        private static void waitForConnection(final BlockingOffer blockingOffer) {
+            // wait until client appears
+            log.info("Listening on port {} and host {}", blockingOffer.port, blockingOffer.host);
+            if (checkServerAvailability(blockingOffer)) {
+                blockingOffer.startTime = System.nanoTime();
+                log.info("connected successfully.");
+            } else {
+                log.error("could not establish a connection to server.");
+            }
+        }
+
+        @SneakyThrows
+        private static boolean checkServerAvailability(final BlockingOffer blockingOffer) {
+            final String healthURL =
+                    WRITE_PROTOCOL
+                            + "://"
+                            + blockingOffer.host
+                            + ":"
+                            + blockingOffer.port
+                            + HEALTH_CHECK_API;
+            final HttpRequest request =
+                    HTTP_REQUEST_FACTORY.buildGetRequest(new GenericUrl(healthURL));
+            request.setUnsuccessfulResponseHandler(
+                    new HttpBackOffUnsuccessfulResponseHandler(HTTP_BACKOFF));
+            request.setIOExceptionHandler(new HttpBackOffIOExceptionHandler(HTTP_BACKOFF));
+            return request.execute().getStatusCode() == HttpURLConnection.HTTP_OK;
+        }
     }
 }

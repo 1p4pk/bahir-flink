@@ -22,9 +22,11 @@ import org.apache.flink.streaming.connectors.influxdb.source.reader.deserializer
 
 public class InfluxDBBenchmarkDeserializer implements InfluxDBDataPointDeserializer<DataPoint> {
 
+    public static final long NANO = 100_000L;
+
     @Override
     public DataPoint deserialize(final DataPoint dataPoint) {
-        dataPoint.addField("deserializeTimestamp", System.currentTimeMillis() / 1000L);
+        dataPoint.addField("deserializeTimestamp", System.currentTimeMillis() * NANO);
         return dataPoint;
     }
 }

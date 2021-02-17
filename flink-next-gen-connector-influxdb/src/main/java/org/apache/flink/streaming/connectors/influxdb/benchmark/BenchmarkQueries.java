@@ -31,7 +31,9 @@ import org.apache.flink.streaming.api.functions.sink.filesystem.OutputFileConfig
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSource;
 
-public class BenchmarkQueries {
+public final class BenchmarkQueries {
+
+    private BenchmarkQueries() {}
 
     public enum Queries {
         DiscardingSource,
@@ -70,11 +72,11 @@ public class BenchmarkQueries {
         return env.executeAsync();
     }
 
-    private static class FilterDataPoints implements FilterFunction<DataPoint> {
+    private static final class FilterDataPoints implements FilterFunction<DataPoint> {
         private long counter = -1;
         private final int writeEveryX;
 
-        FilterDataPoints(final int writeEveryX) {
+        private FilterDataPoints(final int writeEveryX) {
             this.writeEveryX = writeEveryX;
         }
 
@@ -89,8 +91,7 @@ public class BenchmarkQueries {
 
         @Override
         public String map(final DataPoint dataPoint) {
-            return String.format(
-                    "%s,%s", dataPoint.getTimestamp().toString(), System.currentTimeMillis());
+            return String.format("%s,%s", dataPoint.getTimestamp(), System.currentTimeMillis());
         }
     }
 

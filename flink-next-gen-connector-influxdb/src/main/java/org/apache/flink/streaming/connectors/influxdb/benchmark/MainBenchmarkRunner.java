@@ -30,7 +30,7 @@ public class MainBenchmarkRunner implements Runnable {
 
     @Option(
             names = {"--eventsPerSecond", "-eps"},
-            defaultValue = "100000")
+            defaultValue = "10000")
     private int eventsPerSecond;
 
     @Option(
@@ -100,15 +100,14 @@ public class MainBenchmarkRunner implements Runnable {
                 new SimpleLineProtocolGenerator(
                         this.eventsPerSecond, this.eventsPerRequest, this.timeInSeconds);
         final BlockingOffer offer =
-                new BlockingOffer(
-                        this.host,
-                        this.port,
-                        this.timeInSeconds,
-                        this.eventsPerSecond,
-                        this.eventsPerRequest,
-                        this.outputPath + "result_");
-        log.info("Start waiting for connection.");
-        offer.waitForConnection();
+                BlockingOffer.builder()
+                        .host(this.host)
+                        .port(this.port)
+                        .engineRuntime(this.timeInSeconds)
+                        .eventsPerSecond(this.eventsPerSecond)
+                        .eventsPerRequest(this.eventsPerRequest)
+                        .filePath(this.outputPath)
+                        .build();
         final long startTime = System.nanoTime();
         generator.generate(offer).get();
         final long endTime = System.nanoTime();
