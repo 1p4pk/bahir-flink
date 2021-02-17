@@ -59,9 +59,7 @@ public class MainBenchmarkRunner implements Runnable {
             description = "Enum values: ${COMPLETION-CANDIDATES}")
     private BenchmarkQueries.Queries query;
 
-    @Option(
-            names = {"--outputPath"},
-            defaultValue = "")
+    @Option(names = {"--outputPath"})
     private String outputPath;
 
     public static void main(final String[] args) {
@@ -75,6 +73,10 @@ public class MainBenchmarkRunner implements Runnable {
     @SneakyThrows
     @Override
     public void run() {
+        if (this.outputPath == null) {
+            this.outputPath = System.getProperty("user.dir");
+            log.info("Output path: {}", this.outputPath);
+        }
         JobClient jobClient = null;
         switch (this.query) {
             case DiscardingSource:
