@@ -30,7 +30,7 @@ import org.apache.flink.streaming.connectors.influxdb.common.InfluxParser;
 public class InfluxDBPointSerializer implements SimpleVersionedSerializer<Point> {
 
     private static final Charset CHARSET = StandardCharsets.UTF_8;
-    InfluxParser parser = new InfluxParser();
+    private final InfluxParser parser = new InfluxParser();
 
     @Override
     public int getVersion() {
@@ -38,7 +38,7 @@ public class InfluxDBPointSerializer implements SimpleVersionedSerializer<Point>
     }
 
     @Override
-    public byte[] serialize(final Point point) throws IOException {
+    public byte[] serialize(final Point point) {
         final byte[] serialized = point.toLineProtocol().getBytes(CHARSET);
         final byte[] targetBytes = new byte[Integer.BYTES + serialized.length];
 

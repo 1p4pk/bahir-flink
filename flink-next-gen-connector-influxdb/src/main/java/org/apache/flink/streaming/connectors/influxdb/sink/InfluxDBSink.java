@@ -20,44 +20,52 @@ package org.apache.flink.streaming.connectors.influxdb.sink;
 import com.influxdb.client.write.Point;
 import java.util.List;
 import java.util.Optional;
-import lombok.Builder;
+import java.util.Properties;
+import lombok.Getter;
 import org.apache.flink.api.connector.sink.Committer;
 import org.apache.flink.api.connector.sink.GlobalCommitter;
 import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
-import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBConfig;
 import org.apache.flink.streaming.connectors.influxdb.sink.commiter.InfluxDBCommittableSerializer;
 import org.apache.flink.streaming.connectors.influxdb.sink.commiter.InfluxDBCommitter;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBPointSerializer;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter;
 
-@Builder
-public class InfluxDBSink<IN> implements Sink<IN, Long, Point, Void> {
+public final class InfluxDBSink<IN> implements Sink<IN, Long, Point, Void> {
 
-    private final InfluxDBConfig influxDBConfig;
     private final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer;
+    @Getter private final Properties properties;
 
-    private InfluxDBSink(
-            final InfluxDBConfig influxDBConfig,
-            final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer) {
-        this.influxDBConfig = influxDBConfig;
+    InfluxDBSink(
+            final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer,
+            final Properties properties) {
         this.influxDBSchemaSerializer = influxDBSchemaSerializer;
+        this.properties = properties;
+    }
+
+    /**
+     * Get a influxDBSinkBuilder to build a {@link InfluxDBSink}.
+     *
+     * @return a InfluxDB sink builder.
+     */
+    public static <IN> InfluxDBSinkBuilder<IN> builder() {
+        return new InfluxDBSinkBuilder<>();
     }
 
     @Override
     public SinkWriter<IN, Long, Point> createWriter(
             final InitContext initContext, final List<Point> list) {
         final InfluxDBWriter<IN> writer =
-                new InfluxDBWriter<>(this.influxDBSchemaSerializer, this.influxDBConfig);
+                new InfluxDBWriter<>(this.influxDBSchemaSerializer, this.properties);
         writer.setProcessingTimerService(initContext.getProcessingTimeService());
         return writer;
     }
 
     @Override
     public Optional<Committer<Long>> createCommitter() {
-        return Optional.of(new InfluxDBCommitter(this.influxDBConfig));
+        return Optional.of(new InfluxDBCommitter(this.properties));
     }
 
     @Override
