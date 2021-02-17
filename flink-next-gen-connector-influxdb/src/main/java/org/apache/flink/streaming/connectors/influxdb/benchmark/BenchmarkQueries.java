@@ -28,7 +28,10 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.DiscardingSink;
 import org.apache.flink.streaming.api.functions.sink.filesystem.OutputFileConfig;
+import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunction;
+import org.apache.flink.streaming.connectors.influxdb.benchmark.testContainer.InfluxDBContainer;
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
+import org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSink;
 import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSource;
 
 public final class BenchmarkQueries {
@@ -37,7 +40,8 @@ public final class BenchmarkQueries {
 
     public enum Queries {
         DiscardingSource,
-        FileSource
+        FileSource,
+        Sink
     }
 
     @SneakyThrows
@@ -72,6 +76,26 @@ public final class BenchmarkQueries {
         return env.executeAsync();
     }
 
+    @SneakyThrows
+    static JobClient startSinkQuery(final InfluxDBContainer<?> influxDBContainer) {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
+        env.setParallelism(1);
+
+        final InfluxDBSink<Long> influxDBSink =
+                InfluxDBSink.<Long>builder()
+                        .setInfluxDBUrl(influxDBContainer.getUrl())
+                        .setInfluxDBUsername(InfluxDBContainer.getUsername())
+                        .setInfluxDBPassword(InfluxDBContainer.getPassword())
+                        .setInfluxDBBucket(InfluxDBContainer.getBucket())
+                        .setInfluxDBOrganization(InfluxDBContainer.getOrganization())
+                        .setInfluxDBSchemaSerializer(new InfluxDBBenchmarkSerializer())
+                        .build();
+
+        // TODO: change this to an infinite source
+        env.fromElements(1L, 2L, 3L, 4L, 5L).sinkTo(influxDBSink);
+        return env.executeAsync();
+    }
+
     private static final class FilterDataPoints implements FilterFunction<DataPoint> {
         private long counter = -1;
         private final int writeEveryX;
@@ -100,5 +124,28 @@ public final class BenchmarkQueries {
         return FileSink.forRowFormat(new Path(path), new SimpleStringEncoder<String>("UTF-8"))
                 .withOutputFileConfig(config)
                 .build();
+    }
+
+    private static final class InfiniteSourceFunction extends RichParallelSourceFunction<Integer> {
+
+        private static final long serialVersionUID = -8758033916372648233L;
+
+        private boolean running = true;
+
+        @Override
+        public void run(final SourceContext<Integer> ctx) throws Exception {
+            while (this.running) {
+                synchronized (ctx.getCheckpointLock()) {
+                    ctx.collect(0);
+                }
+
+                Thread.sleep(5L);
+            }
+        }
+
+        @Override
+        public void cancel() {
+            this.running = false;
+        }
     }
 }

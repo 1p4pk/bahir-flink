@@ -141,7 +141,8 @@ under the License.
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
       <version>${testcontainers.version}</version>
-      <scope>test</scope>
+      <!--Benchmarking-->
+      <!--      <scope>test</scope>-->
     </dependency>
 
     <dependency>

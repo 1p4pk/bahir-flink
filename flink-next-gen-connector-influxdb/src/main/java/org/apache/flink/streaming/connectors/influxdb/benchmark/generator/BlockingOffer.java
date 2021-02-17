@@ -62,10 +62,6 @@ public final class BlockingOffer {
     private long startTime;
     private int lastSecond = 0;
 
-    public static BlockingOfferBuilder builder() {
-        return new CustomBlockingOfferBuilder();
-    }
-
     @SneakyThrows
     @Builder
     private BlockingOffer(
@@ -97,6 +93,10 @@ public final class BlockingOffer {
         if (file.createNewFile()) {
             this.measurements = new BufferedWriter(new FileWriter(file));
         }
+    }
+
+    public static BlockingOfferBuilder builder() {
+        return new CustomBlockingOfferBuilder();
     }
 
     @SneakyThrows
@@ -131,7 +131,7 @@ public final class BlockingOffer {
                             this.generatedSuccessfulRequestsPerSecond[i]));
         }
         this.measurements.flush();
-        log.info("Wrote result file.");
+        log.info("Wrote result to file.");
     }
 
     @SneakyThrows
