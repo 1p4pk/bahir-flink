@@ -17,14 +17,11 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.benchmark;
 
+import static org.apache.flink.streaming.connectors.influxdb.benchmark.InfluxDBBenchmarkSerializer.queryWrittenData;
+
 import com.influxdb.client.InfluxDBClient;
-import com.influxdb.client.domain.WritePrecision;
-import com.influxdb.client.write.Point;
 import com.influxdb.query.FluxRecord;
-import com.influxdb.query.FluxTable;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.core.execution.JobClient;
@@ -37,6 +34,7 @@ import picocli.CommandLine.Option;
 @Slf4j
 public class MainBenchmarkRunner implements Runnable {
 
+    // TODO: Create two sub commands for source and sink
     @Option(
             names = {"--eventsPerSecond", "-eps"},
             defaultValue = "10000")
@@ -71,6 +69,11 @@ public class MainBenchmarkRunner implements Runnable {
     @Option(names = {"--outputPath"})
     private String outputPath;
 
+    @Option(
+            names = {"--numberOfItemsToSink"},
+            defaultValue = "1000000")
+    private long numberOfItemsToSink;
+
     public static void main(final String[] args) {
         log.info("Start benchmark.");
         for (final String s : args) {
@@ -100,8 +103,14 @@ public class MainBenchmarkRunner implements Runnable {
             case Sink:
                 final InfluxDBContainer<?> influxDBContainer =
                         InfluxDBContainer.createWithDefaultTag();
-                jobClient = BenchmarkQueries.startSinkQuery(influxDBContainer);
-                this.runSinkBenchmark(influxDBContainer.getClient());
+
+                final long startTime = System.nanoTime();
+                BenchmarkQueries.startSinkQuery(influxDBContainer, this.numberOfItemsToSink);
+                final long endTime = System.nanoTime();
+
+                final long duration = endTime - startTime;
+                log.info("Finished after {} seconds.", duration / 1_000_000_000);
+                this.runSinkBenchmark(influxDBContainer.getClient(), duration);
                 influxDBContainer.close();
                 break;
             default:
@@ -134,37 +143,9 @@ public class MainBenchmarkRunner implements Runnable {
     }
 
     @SneakyThrows
-    private void runSinkBenchmark(final InfluxDBClient influxDBClient) {
+    private void runSinkBenchmark(final InfluxDBClient influxDBClient, final long duration) {
         // TODO: Read Data from InfluxDB and write to file
-        final List<String> data = queryWrittenData(influxDBClient);
-        log.info("Getting data.");
-    }
-
-    private static List<String> queryWrittenData(final InfluxDBClient influxDBClient) {
-        final List<String> dataPoints = new ArrayList<>();
-
-        final String query =
-                String.format(
-                        "from(bucket: \"%s\") |> "
-                                + "range(start: -1h) |> "
-                                + "filter(fn:(r) => r._measurement == \"testSink\")",
-                        InfluxDBContainer.getBucket());
-        final List<FluxTable> tables = influxDBClient.getQueryApi().query(query);
-        for (final FluxTable table : tables) {
-            for (final FluxRecord record : table.getRecords()) {
-                dataPoints.add(recordToDataPoint(record).toLineProtocol());
-            }
-        }
-        return dataPoints;
-    }
-
-    private static Point recordToDataPoint(final FluxRecord record) {
-        final String tagKey = "simpleTag";
-        final Point point = new Point(record.getMeasurement());
-        point.addTag(tagKey, String.valueOf(record.getValueByKey(tagKey)));
-        point.addField(
-                Objects.requireNonNull(record.getField()), String.valueOf(record.getValue()));
-        point.time(record.getTime(), WritePrecision.NS);
-        return point;
+        final List<FluxRecord> records = queryWrittenData(influxDBClient);
+        log.info("Getting data.\n {} of records written.\n duration {}", records.size(), duration);
     }
 }

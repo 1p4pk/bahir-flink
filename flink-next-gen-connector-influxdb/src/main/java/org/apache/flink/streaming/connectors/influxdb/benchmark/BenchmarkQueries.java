@@ -18,6 +18,7 @@
 package org.apache.flink.streaming.connectors.influxdb.benchmark;
 
 import lombok.SneakyThrows;
+import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -28,7 +29,6 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.DiscardingSink;
 import org.apache.flink.streaming.api.functions.sink.filesystem.OutputFileConfig;
-import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunction;
 import org.apache.flink.streaming.connectors.influxdb.benchmark.testContainer.InfluxDBContainer;
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSink;
@@ -77,9 +77,12 @@ public final class BenchmarkQueries {
     }
 
     @SneakyThrows
-    static JobClient startSinkQuery(final InfluxDBContainer<?> influxDBContainer) {
+    static void startSinkQuery(
+            final InfluxDBContainer<?> influxDBContainer, final long numberOfItemsToSink) {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
+        env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
         env.setParallelism(1);
+        env.enableCheckpointing(100);
 
         final InfluxDBSink<Long> influxDBSink =
                 InfluxDBSink.<Long>builder()
@@ -91,9 +94,10 @@ public final class BenchmarkQueries {
                         .setInfluxDBSchemaSerializer(new InfluxDBBenchmarkSerializer())
                         .build();
 
-        // TODO: change this to an infinite source
-        env.fromElements(1L, 2L, 3L, 4L, 5L).sinkTo(influxDBSink);
-        return env.executeAsync();
+        // TODO: The user should define how many elements they want to send through the source and
+        // then calculate the time of ingestion
+        env.fromSequence(0L, numberOfItemsToSink).sinkTo(influxDBSink);
+        env.execute();
     }
 
     private static final class FilterDataPoints implements FilterFunction<DataPoint> {
@@ -112,7 +116,6 @@ public final class BenchmarkQueries {
     }
 
     private static class AddTimestamp implements MapFunction<DataPoint, String> {
-
         @Override
         public String map(final DataPoint dataPoint) {
             return String.format("%s,%s", dataPoint.getTimestamp(), System.currentTimeMillis());
@@ -124,28 +127,5 @@ public final class BenchmarkQueries {
         return FileSink.forRowFormat(new Path(path), new SimpleStringEncoder<String>("UTF-8"))
                 .withOutputFileConfig(config)
                 .build();
-    }
-
-    private static final class InfiniteSourceFunction extends RichParallelSourceFunction<Integer> {
-
-        private static final long serialVersionUID = -8758033916372648233L;
-
-        private boolean running = true;
-
-        @Override
-        public void run(final SourceContext<Integer> ctx) throws Exception {
-            while (this.running) {
-                synchronized (ctx.getCheckpointLock()) {
-                    ctx.collect(0);
-                }
-
-                Thread.sleep(5L);
-            }
-        }
-
-        @Override
-        public void cancel() {
-            this.running = false;
-        }
     }
 }

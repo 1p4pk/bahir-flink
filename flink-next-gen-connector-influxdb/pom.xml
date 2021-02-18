@@ -116,7 +116,8 @@ under the License.
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-test-utils_${scala.binary.new.version}</artifactId>
       <version>${flink.new.version}</version>
-      <scope>test</scope>
+      <!--  Benchmarking    -->
+      <!--      <scope>test</scope>-->
     </dependency>
 
     <dependency>
