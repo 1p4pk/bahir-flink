@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.streaming.connectors.influxdb.benchmark.generator.BlockingOffer;
 import org.apache.flink.streaming.connectors.influxdb.benchmark.generator.SimpleLineProtocolGenerator;
-import org.apache.flink.streaming.connectors.influxdb.benchmark.testContainer.InfluxDBContainer;
+import org.apache.flink.streaming.connectors.influxdb.benchmark.testcontainer.InfluxDBContainer;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 

@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.flink.api.connector.sink.SinkWriter.Context;
-import org.apache.flink.streaming.connectors.influxdb.benchmark.testContainer.InfluxDBContainer;
+import org.apache.flink.streaming.connectors.influxdb.benchmark.testcontainer.InfluxDBContainer;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 
 public class InfluxDBBenchmarkSerializer implements InfluxDBSchemaSerializer<Long> {
