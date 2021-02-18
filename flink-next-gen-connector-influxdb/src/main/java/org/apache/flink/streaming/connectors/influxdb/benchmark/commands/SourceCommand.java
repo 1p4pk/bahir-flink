@@ -15,26 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.streaming.connectors.influxdb.benchmark;
+package org.apache.flink.streaming.connectors.influxdb.benchmark.commands;
 
-import static org.apache.flink.streaming.connectors.influxdb.benchmark.InfluxDBBenchmarkSerializer.queryWrittenData;
-
-import com.influxdb.client.InfluxDBClient;
-import com.influxdb.query.FluxRecord;
-import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.core.execution.JobClient;
+import org.apache.flink.streaming.connectors.influxdb.benchmark.BenchmarkQueries;
 import org.apache.flink.streaming.connectors.influxdb.benchmark.generator.BlockingOffer;
 import org.apache.flink.streaming.connectors.influxdb.benchmark.generator.SimpleLineProtocolGenerator;
-import org.apache.flink.streaming.connectors.influxdb.benchmark.testcontainer.InfluxDBContainer;
-import picocli.CommandLine;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
+@Command(name = "source", description = "Command to start source benchmarking")
 @Slf4j
-public class MainBenchmarkRunner implements Runnable {
-
-    // TODO: Create two sub commands for source and sink
+public class SourceCommand implements Runnable {
     @Option(
             names = {"--eventsPerSecond", "-eps"},
             defaultValue = "10000")
@@ -52,35 +46,24 @@ public class MainBenchmarkRunner implements Runnable {
 
     @Option(
             names = {"--host", "-h"},
-            defaultValue = "localhost")
+            defaultValue = "localhost",
+            description = "Host address of HTTP server (defaults to localhost)")
     private String host;
 
     @Option(
             names = {"--port", "-p"},
-            defaultValue = "8000")
+            defaultValue = "8000",
+            description = "Port number of HTTP server (defaults to 8000)")
     private int port;
 
     @Option(
             names = {"--query"},
-            defaultValue = "Sink",
+            defaultValue = "DiscardingSource",
             description = "Enum values: ${COMPLETION-CANDIDATES}")
     private BenchmarkQueries.Queries query;
 
     @Option(names = {"--outputPath"})
     private String outputPath;
-
-    @Option(
-            names = {"--numberOfItemsToSink"},
-            defaultValue = "1000000")
-    private long numberOfItemsToSink;
-
-    public static void main(final String[] args) {
-        log.info("Start benchmark.");
-        for (final String s : args) {
-            log.info(s);
-        }
-        new CommandLine(new MainBenchmarkRunner()).execute(args);
-    }
 
     @SneakyThrows
     @Override
@@ -99,19 +82,6 @@ public class MainBenchmarkRunner implements Runnable {
                 final String filePath = String.format("%s/file_source_latency", this.outputPath);
                 jobClient = BenchmarkQueries.startFileQueryAsync(filePath);
                 this.runSourceBenchmark();
-                break;
-            case Sink:
-                final InfluxDBContainer<?> influxDBContainer =
-                        InfluxDBContainer.createWithDefaultTag();
-
-                final long startTime = System.nanoTime();
-                BenchmarkQueries.startSinkQuery(influxDBContainer, this.numberOfItemsToSink);
-                final long endTime = System.nanoTime();
-
-                final long duration = endTime - startTime;
-                log.info("Finished after {} seconds.", duration / 1_000_000_000);
-                this.runSinkBenchmark(influxDBContainer.getClient(), duration);
-                influxDBContainer.close();
                 break;
             default:
                 log.error("Query {} not known", this.query);
@@ -140,12 +110,5 @@ public class MainBenchmarkRunner implements Runnable {
         final long endTime = System.nanoTime();
         offer.writeFile();
         log.info("Finished after {} seconds.", (endTime - startTime) / 1_000_000_000);
-    }
-
-    @SneakyThrows
-    private void runSinkBenchmark(final InfluxDBClient influxDBClient, final long duration) {
-        // TODO: Read Data from InfluxDB and write to file
-        final List<FluxRecord> records = queryWrittenData(influxDBClient);
-        log.info("Getting data.\n {} of records written.\n duration {}", records.size(), duration);
     }
 }

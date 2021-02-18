@@ -40,12 +40,11 @@ public final class BenchmarkQueries {
 
     public enum Queries {
         DiscardingSource,
-        FileSource,
-        Sink
+        FileSource
     }
 
     @SneakyThrows
-    static JobClient startDiscardingQueryAsync() {
+    public static JobClient startDiscardingQueryAsync() {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         env.setParallelism(1);
 
@@ -60,7 +59,7 @@ public final class BenchmarkQueries {
     }
 
     @SneakyThrows
-    static JobClient startFileQueryAsync(final String path) {
+    public static JobClient startFileQueryAsync(final String path) {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         env.setParallelism(1);
 
@@ -77,7 +76,7 @@ public final class BenchmarkQueries {
     }
 
     @SneakyThrows
-    static void startSinkQuery(
+    public static void startSinkQuery(
             final InfluxDBContainer<?> influxDBContainer, final long numberOfItemsToSink) {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
