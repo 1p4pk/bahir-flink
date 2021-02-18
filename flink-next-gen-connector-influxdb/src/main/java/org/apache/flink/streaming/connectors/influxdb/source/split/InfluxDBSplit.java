@@ -17,13 +17,14 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source.split;
 
+import lombok.Getter;
 import org.apache.flink.api.connector.source.SourceSplit;
 
 /** A {@link SourceSplit} for a InfluxDB split. */
 public class InfluxDBSplit implements SourceSplit {
 
     /** The unique ID of the split. Unique within the scope of this source. */
-    private final long id;
+    @Getter private final long id;
 
     public InfluxDBSplit(final long id) {
         this.id = id;
