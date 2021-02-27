@@ -43,4 +43,14 @@ public final class InfluxDBClientConfig {
                         .build();
         return InfluxDBClientFactory.create(influxDBClientOptions);
     }
+
+    public static void clearData() {
+        final String query =
+                String.format(
+                        "from(bucket: \"%s\") |> "
+                                + "range(start: -1h) |> "
+                                + "filter(fn:(r) => r._measurement == \"test\")"
+                                + "drop(columns: [_measurement])",
+                        getBucket());
+    }
 }

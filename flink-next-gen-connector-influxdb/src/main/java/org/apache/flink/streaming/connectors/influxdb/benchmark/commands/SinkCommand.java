@@ -81,7 +81,7 @@ public class SinkCommand implements Runnable {
                 System.exit(1);
         }
         final long duration = endTime - startTime;
-        final long throughput = (this.numberOfItemsToSink / duration) * 1_000_000;
+        final long throughput = (long) (((double) this.numberOfItemsToSink / duration) * 1000);
         log.info("Throughput: {} records/seconds", throughput);
         log.info("Runtime: {} milliseconds", duration);
         if (this.query == Queries.SinkLatency) {
@@ -93,7 +93,6 @@ public class SinkCommand implements Runnable {
     @SneakyThrows
     private static void queryResultFromInfluxDB(
             final InfluxDBClient influxDBClient, final long duration) {
-        // TODO: Read Data from InfluxDB and write to file
         Thread.sleep(1000);
         final List<FluxRecord> records = queryWrittenData(influxDBClient);
         final Collection<String[]> dataLines = new ArrayList<>();
