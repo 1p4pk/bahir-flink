@@ -82,8 +82,8 @@ public class SinkCommand implements Runnable {
         }
         final long duration = endTime - startTime;
         final long throughput = (this.numberOfItemsToSink / duration) * 1_000_000;
-        System.out.println("Throughput: " + throughput + " records/seconds");
-        System.out.println("Runtime: " + duration);
+        log.info("Throughput: {} records/seconds", throughput);
+        log.info("Runtime: {}", duration);
         log.info("Finished after {} seconds.", duration / 1_000_000_000);
         if (this.query == Queries.SinkLatency) {
             queryResultFromInfluxDB(influxDBClient, duration);
@@ -106,7 +106,7 @@ public class SinkCommand implements Runnable {
                         processingTime.toString(), String.valueOf(ingestionTime.toEpochMilli())
                     });
         }
-        System.out.println("length: " + records.size());
+        log.info("length: {}", records.size());
         writeFile(dataLines);
         log.info("Getting data.\n {} of records written.\n duration {}", records.size(), duration);
     }
