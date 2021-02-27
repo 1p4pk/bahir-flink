@@ -39,7 +39,8 @@ import picocli.CommandLine.Option;
 @Slf4j
 public class SinkCommand implements Runnable {
 
-    private static final String CSV_FILE_NAME = "sink-output.csv";
+    @Option(names = {"--outputPath"})
+    private String outputPath;
 
     @Option(
             names = {"-n", "--numberOfItemsToSink"},
@@ -61,6 +62,10 @@ public class SinkCommand implements Runnable {
 
     @Override
     public void run() {
+        if (this.outputPath == null) {
+            this.outputPath = System.getProperty("user.dir");
+            log.info("Output path: {}", this.outputPath);
+        }
         final InfluxDBClient influxDBClient = InfluxDBClientConfig.getClient();
         long startTime = 0, endTime = 0;
         switch (this.query) {
@@ -85,15 +90,14 @@ public class SinkCommand implements Runnable {
         log.info("Throughput: {} records/seconds", throughput);
         log.info("Runtime: {} milliseconds", duration);
         if (this.query == Queries.SinkLatency) {
-            queryResultFromInfluxDB(influxDBClient, duration);
+            this.queryResultFromInfluxDB(influxDBClient, duration);
         }
         InfluxDBClientConfig.clearData(influxDBClient);
         influxDBClient.close();
     }
 
     @SneakyThrows
-    private static void queryResultFromInfluxDB(
-            final InfluxDBClient influxDBClient, final long duration) {
+    private void queryResultFromInfluxDB(final InfluxDBClient influxDBClient, final long duration) {
         Thread.sleep(1000);
         final List<FluxRecord> records = queryWrittenData(influxDBClient);
         final Collection<String[]> dataLines = new ArrayList<>();
@@ -106,13 +110,17 @@ public class SinkCommand implements Runnable {
                     });
         }
         log.info("length: {}", records.size());
-        writeFile(dataLines);
+        this.writeFile(dataLines);
         log.info("Getting data.\n {} of records written.\n duration {}", records.size(), duration);
     }
 
     @SneakyThrows
-    private static void writeFile(final Collection<String[]> dataLines) {
-        final File csvOutputFile = new File(CSV_FILE_NAME);
+    private void writeFile(final Collection<String[]> dataLines) {
+        final File csvOutputFile =
+                new File(
+                        String.format(
+                                "%s/sink_output_b_%s_n_%s.csv",
+                                this.outputPath, this.batchSize, this.numberOfItemsToSink));
         try (final PrintWriter pw = new PrintWriter(csvOutputFile)) {
             pw.println("processingTime,influxIngestionTime");
             dataLines.stream().map(SinkCommand::convertToCSV).forEach(pw::println);
