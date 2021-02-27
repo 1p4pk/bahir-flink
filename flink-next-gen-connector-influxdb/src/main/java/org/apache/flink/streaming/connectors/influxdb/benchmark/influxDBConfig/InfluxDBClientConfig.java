@@ -59,6 +59,6 @@ public final class InfluxDBClientConfig {
         final Organization org = influxDBClient.getOrganizationsApi().findOrganizations().get(0);
         newBucket.setOrgID(org.getId());
         influxDBClient.getBucketsApi().createBucket(newBucket);
-        log.info("clear data");
+        log.trace("clear data");
     }
 }
