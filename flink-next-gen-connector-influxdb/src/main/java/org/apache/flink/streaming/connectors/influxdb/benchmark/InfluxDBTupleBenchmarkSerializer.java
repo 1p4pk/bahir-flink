@@ -28,7 +28,8 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.connectors.influxdb.benchmark.testcontainer.InfluxDBContainer;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 
-public class InfluxDBBenchmarkSerializer implements InfluxDBSchemaSerializer<Tuple2<Long, Long>> {
+public class InfluxDBTupleBenchmarkSerializer
+        implements InfluxDBSchemaSerializer<Tuple2<Long, Long>> {
 
     private static final String MEASUREMENT = "test";
     private static final String TAG_KEY = "longValue";

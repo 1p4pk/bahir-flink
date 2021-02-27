@@ -58,7 +58,7 @@ public class SourceCommand implements Runnable {
 
     @Option(
             names = {"--query"},
-            defaultValue = "DiscardingSource",
+            defaultValue = "SourceThroughput",
             description = "Enum values: ${COMPLETION-CANDIDATES}")
     private BenchmarkQueries.Queries query;
 
@@ -74,17 +74,17 @@ public class SourceCommand implements Runnable {
         }
         JobClient jobClient = null;
         switch (this.query) {
-            case DiscardingSink:
+            case SourceThroughput:
                 jobClient = BenchmarkQueries.startDiscardingQueryAsync();
                 this.runSourceBenchmark();
                 break;
-            case FileSink:
+            case SourceLatency:
                 final String filePath = String.format("%s/file_source_latency", this.outputPath);
                 jobClient = BenchmarkQueries.startFileQueryAsync(filePath);
                 this.runSourceBenchmark();
                 break;
             default:
-                log.error("Query {} not known", this.query);
+                log.error("Query {} not known in source", this.query);
                 System.exit(1);
         }
         jobClient.cancel();

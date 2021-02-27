@@ -41,8 +41,10 @@ public final class BenchmarkQueries {
     private BenchmarkQueries() {}
 
     public enum Queries {
-        DiscardingSink,
-        FileSink
+        SourceThroughput,
+        SourceLatency,
+        SinkThroughput,
+        SinkLatency
     }
 
     @SneakyThrows
@@ -86,18 +88,43 @@ public final class BenchmarkQueries {
     }
 
     @SneakyThrows
-    public static void startSinkQuery(
-            final InfluxDBContainer<?> influxDBContainer, final long numberOfItemsToSink) {
+    public static void startSinkThroughputQuery(
+            final InfluxDBContainer<?> influxDBContainer,
+            final long numberOfItemsToSink,
+            final int writeBufferSize) {
         final StreamExecutionEnvironment env = getStreamExecutionEnvironment();
 
-        final InfluxDBSink<Tuple2<Long, Long>> influxDBSink =
-                InfluxDBSink.<Tuple2<Long, Long>>builder()
+        final InfluxDBSink<Long> influxDBSink =
+                InfluxDBSink.<Long>builder()
+                        .setWriteBufferSize(writeBufferSize)
                         .setInfluxDBUrl(influxDBContainer.getUrl())
                         .setInfluxDBUsername(InfluxDBContainer.getUsername())
                         .setInfluxDBPassword(InfluxDBContainer.getPassword())
                         .setInfluxDBBucket(InfluxDBContainer.getBucket())
                         .setInfluxDBOrganization(InfluxDBContainer.getOrganization())
-                        .setInfluxDBSchemaSerializer(new InfluxDBBenchmarkSerializer())
+                        .setInfluxDBSchemaSerializer(new InfluxDBLongBenchmarkSerializer())
+                        .build();
+
+        env.fromSequence(0L, numberOfItemsToSink).sinkTo(influxDBSink);
+        env.execute();
+    }
+
+    @SneakyThrows
+    public static void startSinkLatencyQuery(
+            final InfluxDBContainer<?> influxDBContainer,
+            final long numberOfItemsToSink,
+            final int writeBufferSize) {
+        final StreamExecutionEnvironment env = getStreamExecutionEnvironment();
+
+        final InfluxDBSink<Tuple2<Long, Long>> influxDBSink =
+                InfluxDBSink.<Tuple2<Long, Long>>builder()
+                        .setWriteBufferSize(writeBufferSize)
+                        .setInfluxDBUrl(influxDBContainer.getUrl())
+                        .setInfluxDBUsername(InfluxDBContainer.getUsername())
+                        .setInfluxDBPassword(InfluxDBContainer.getPassword())
+                        .setInfluxDBBucket(InfluxDBContainer.getBucket())
+                        .setInfluxDBOrganization(InfluxDBContainer.getOrganization())
+                        .setInfluxDBSchemaSerializer(new InfluxDBTupleBenchmarkSerializer())
                         .build();
 
         env.fromSequence(0L, numberOfItemsToSink)

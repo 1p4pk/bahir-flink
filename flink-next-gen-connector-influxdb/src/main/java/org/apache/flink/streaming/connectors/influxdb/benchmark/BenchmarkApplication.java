@@ -33,13 +33,13 @@ import picocli.CommandLine.Spec;
         mixinStandardHelpOptions = true,
         subcommands = {SinkCommand.class, SourceCommand.class},
         commandListHeading = "%nCommands:%n%n")
-public class BenchMarkApplication implements Callable<Void> {
+public class BenchmarkApplication implements Callable<Void> {
 
     @Spec private CommandSpec spec;
 
     public static void main(final String[] args) {
         log.info("Starting benchmark with args: {}", Arrays.toString(args));
-        System.exit(new CommandLine(new BenchMarkApplication()).execute(args));
+        System.exit(new CommandLine(new BenchmarkApplication()).execute(args));
     }
 
     @Override

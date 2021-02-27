@@ -189,6 +189,38 @@ under the License.
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <configuration>
+              <archive>
+                <manifest>
+                  <mainClass>
+                    org.apache.flink.streaming.connectors.influxdb.benchmark.BenchmarkApplication
+                  </mainClass>
+                </manifest>
+                <manifestEntries>
+                  <Multi-Release>true</Multi-Release> <!-- to fix WARNING: sun.reflect.Reflection
+                  .getCallerClass is not supported. This will impact performance.-->
+                </manifestEntries>
+              </archive>
+              <descriptorRefs>
+                <descriptorRef>jar-with-dependencies</descriptorRef>
+              </descriptorRefs>
+              <finalName>benchmark</finalName>
+            </configuration>
+            <id>benchmark</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
           <execution>

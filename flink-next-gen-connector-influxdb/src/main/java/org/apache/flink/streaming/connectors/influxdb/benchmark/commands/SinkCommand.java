@@ -17,7 +17,7 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.benchmark.commands;
 
-import static org.apache.flink.streaming.connectors.influxdb.benchmark.InfluxDBBenchmarkSerializer.queryWrittenData;
+import static org.apache.flink.streaming.connectors.influxdb.benchmark.InfluxDBTupleBenchmarkSerializer.queryWrittenData;
 import static org.junit.Assert.assertTrue;
 
 import com.influxdb.client.InfluxDBClient;
@@ -31,6 +31,7 @@ import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.streaming.connectors.influxdb.benchmark.BenchmarkQueries;
+import org.apache.flink.streaming.connectors.influxdb.benchmark.BenchmarkQueries.Queries;
 import org.apache.flink.streaming.connectors.influxdb.benchmark.testcontainer.InfluxDBContainer;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -50,25 +51,53 @@ public class SinkCommand implements Runnable {
             required = true)
     private long numberOfItemsToSink;
 
+    @Option(
+            names = {"-b", "--batchSize"},
+            description = "Number of data points to be batched by sink",
+            required = true)
+    private int batchSize;
+
+    @Option(
+            names = {"--query"},
+            defaultValue = "SinkThroughput",
+            description = "Enum values: ${COMPLETION-CANDIDATES}")
+    private BenchmarkQueries.Queries query;
+
     @Override
     public void run() {
         final InfluxDBContainer<?> influxDBContainer = InfluxDBContainer.createWithDefaultTag();
-
-        final long startTime = System.currentTimeMillis();
-        BenchmarkQueries.startSinkQuery(influxDBContainer, this.numberOfItemsToSink - 1);
-        final long endTime = System.currentTimeMillis();
-
+        long startTime = 0, endTime = 0;
+        switch (this.query) {
+            case SinkThroughput:
+                startTime = System.currentTimeMillis();
+                BenchmarkQueries.startSinkThroughputQuery(
+                        influxDBContainer, this.numberOfItemsToSink - 1, this.batchSize);
+                endTime = System.currentTimeMillis();
+                break;
+            case SinkLatency:
+                startTime = System.currentTimeMillis();
+                BenchmarkQueries.startSinkLatencyQuery(
+                        influxDBContainer, this.numberOfItemsToSink - 1, this.batchSize);
+                endTime = System.currentTimeMillis();
+                break;
+            default:
+                log.error("Query {} not known in source", this.query);
+                System.exit(1);
+        }
         final long duration = endTime - startTime;
         final long throughput = (this.numberOfItemsToSink / duration) * 1_000_000;
         System.out.println("Throughput: " + throughput + " records/seconds");
         System.out.println("Runtime: " + duration);
         log.info("Finished after {} seconds.", duration / 1_000_000_000);
-        runSinkBenchmark(influxDBContainer.getClient(), duration);
+        if (this.query == Queries.SinkLatency) {
+            queryResultFromInlfuxDB(influxDBContainer.getClient(), duration);
+        }
         influxDBContainer.close();
     }
 
     @SneakyThrows
-    private static void runSinkBenchmark(final InfluxDBClient influxDBClient, final long duration) {
+    private static void queryResultFromInlfuxDB(
+            final InfluxDBClient influxDBClient, final long duration) {
         // TODO: Read Data from InfluxDB and write to file
         Thread.sleep(1000);
         final List<FluxRecord> records = queryWrittenData(influxDBClient);
