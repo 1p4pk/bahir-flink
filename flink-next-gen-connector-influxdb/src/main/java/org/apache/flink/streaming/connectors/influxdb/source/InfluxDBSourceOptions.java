@@ -44,7 +44,7 @@ public final class InfluxDBSourceOptions extends InfluxDBOptionsBase {
     public static final ConfigOption<Integer> MAXIMUM_LINES_PER_REQUEST =
             ConfigOptions.key("source.influxDB.limit.lines_per_request")
                     .intType()
-                    .defaultValue(1000)
+                    .defaultValue(10000)
                     .withDescription(
                             "The maximum number of lines that should be parsed per HTTP request.");
 
