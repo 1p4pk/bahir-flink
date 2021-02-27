@@ -119,7 +119,7 @@ public class SinkCommand implements Runnable {
         final File csvOutputFile =
                 new File(
                         String.format(
-                                "%s/sink_output_b_%s_n_%s.csv",
+                                "%s/sink_latency_b_%s_n_%s.csv",
                                 this.outputPath, this.batchSize, this.numberOfItemsToSink));
         try (final PrintWriter pw = new PrintWriter(csvOutputFile)) {
             pw.println("processingTime,influxIngestionTime");
