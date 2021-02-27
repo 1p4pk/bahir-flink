@@ -88,8 +88,13 @@ public final class BlockingOffer {
         final File file =
                 new File(
                         String.format(
-                                "%sresult_port_%s_host_%s_%s.csv",
-                                this.filePath, port, host, strDate));
+                                "%s/result_port_%s_host_%s_%s_eps_%s_epr_%s.csv",
+                                this.filePath,
+                                port,
+                                host,
+                                strDate,
+                                eventsPerSecond,
+                                eventsPerRequest));
         if (file.createNewFile()) {
             this.measurements = new BufferedWriter(new FileWriter(file));
         }

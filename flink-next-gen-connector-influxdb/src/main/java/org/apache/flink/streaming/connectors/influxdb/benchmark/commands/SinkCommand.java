@@ -32,7 +32,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.streaming.connectors.influxdb.benchmark.BenchmarkQueries;
 import org.apache.flink.streaming.connectors.influxdb.benchmark.BenchmarkQueries.Queries;
-import org.apache.flink.streaming.connectors.influxdb.benchmark.testcontainer.InfluxDBContainer;
+import org.apache.flink.streaming.connectors.influxdb.benchmark.influxDBConfig.InfluxDBClientConfig;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -62,19 +62,19 @@ public class SinkCommand implements Runnable {
 
     @Override
     public void run() {
-        final InfluxDBContainer<?> influxDBContainer = InfluxDBContainer.createWithDefaultTag();
+        final InfluxDBClient influxDBClient = InfluxDBClientConfig.getClient();
         long startTime = 0, endTime = 0;
         switch (this.query) {
             case SinkThroughput:
                 startTime = System.currentTimeMillis();
                 BenchmarkQueries.startSinkThroughputQuery(
-                        influxDBContainer, this.numberOfItemsToSink - 1, this.batchSize);
+                        this.numberOfItemsToSink - 1, this.batchSize);
                 endTime = System.currentTimeMillis();
                 break;
             case SinkLatency:
                 startTime = System.currentTimeMillis();
                 BenchmarkQueries.startSinkLatencyQuery(
-                        influxDBContainer, this.numberOfItemsToSink - 1, this.batchSize);
+                        this.numberOfItemsToSink - 1, this.batchSize);
                 endTime = System.currentTimeMillis();
                 break;
             default:
@@ -87,13 +87,13 @@ public class SinkCommand implements Runnable {
         System.out.println("Runtime: " + duration);
         log.info("Finished after {} seconds.", duration / 1_000_000_000);
         if (this.query == Queries.SinkLatency) {
-            queryResultFromInlfuxDB(influxDBContainer.getClient(), duration);
+            queryResultFromInfluxDB(influxDBClient, duration);
         }
-        influxDBContainer.close();
+        influxDBClient.close();
     }
 
     @SneakyThrows
-    private static void queryResultFromInlfuxDB(
+    private static void queryResultFromInfluxDB(
             final InfluxDBClient influxDBClient, final long duration) {
         // TODO: Read Data from InfluxDB and write to file
         Thread.sleep(1000);

@@ -30,7 +30,7 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.DiscardingSink;
 import org.apache.flink.streaming.api.functions.sink.filesystem.OutputFileConfig;
-import org.apache.flink.streaming.connectors.influxdb.benchmark.testcontainer.InfluxDBContainer;
+import org.apache.flink.streaming.connectors.influxdb.benchmark.influxDBConfig.InfluxDBClientConfig;
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSink;
 import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSource;
@@ -72,7 +72,7 @@ public final class BenchmarkQueries {
     }
 
     @SneakyThrows
-    public static JobClient startFileQueryAsync(final String path) {
+    public static JobClient startFileQueryAsync(final String path, final int writeEveryX) {
         final StreamExecutionEnvironment env = getStreamExecutionEnvironment();
 
         final InfluxDBSource<DataPoint> influxDBSource =
@@ -81,7 +81,7 @@ public final class BenchmarkQueries {
                         .build();
 
         env.fromSource(influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
-                .filter(new FilterDataPoints(10000))
+                .filter(new FilterDataPoints(writeEveryX))
                 .map(new AddTimestamp()) // build filter to not write all data points but every x
                 .sinkTo(createFileSink(path));
         return env.executeAsync();
@@ -89,19 +89,17 @@ public final class BenchmarkQueries {
 
     @SneakyThrows
     public static void startSinkThroughputQuery(
-            final InfluxDBContainer<?> influxDBContainer,
-            final long numberOfItemsToSink,
-            final int writeBufferSize) {
+            final long numberOfItemsToSink, final int writeBufferSize) {
         final StreamExecutionEnvironment env = getStreamExecutionEnvironment();
 
         final InfluxDBSink<Long> influxDBSink =
                 InfluxDBSink.<Long>builder()
                         .setWriteBufferSize(writeBufferSize)
-                        .setInfluxDBUrl(influxDBContainer.getUrl())
-                        .setInfluxDBUsername(InfluxDBContainer.getUsername())
-                        .setInfluxDBPassword(InfluxDBContainer.getPassword())
-                        .setInfluxDBBucket(InfluxDBContainer.getBucket())
-                        .setInfluxDBOrganization(InfluxDBContainer.getOrganization())
+                        .setInfluxDBUrl(InfluxDBClientConfig.getUrl())
+                        .setInfluxDBUsername(InfluxDBClientConfig.getUsername())
+                        .setInfluxDBPassword(InfluxDBClientConfig.getPassword())
+                        .setInfluxDBBucket(InfluxDBClientConfig.getBucket())
+                        .setInfluxDBOrganization(InfluxDBClientConfig.getOrganization())
                         .setInfluxDBSchemaSerializer(new InfluxDBLongBenchmarkSerializer())
                         .build();
 
@@ -111,19 +109,17 @@ public final class BenchmarkQueries {
 
     @SneakyThrows
     public static void startSinkLatencyQuery(
-            final InfluxDBContainer<?> influxDBContainer,
-            final long numberOfItemsToSink,
-            final int writeBufferSize) {
+            final long numberOfItemsToSink, final int writeBufferSize) {
         final StreamExecutionEnvironment env = getStreamExecutionEnvironment();
 
         final InfluxDBSink<Tuple2<Long, Long>> influxDBSink =
                 InfluxDBSink.<Tuple2<Long, Long>>builder()
                         .setWriteBufferSize(writeBufferSize)
-                        .setInfluxDBUrl(influxDBContainer.getUrl())
-                        .setInfluxDBUsername(InfluxDBContainer.getUsername())
-                        .setInfluxDBPassword(InfluxDBContainer.getPassword())
-                        .setInfluxDBBucket(InfluxDBContainer.getBucket())
-                        .setInfluxDBOrganization(InfluxDBContainer.getOrganization())
+                        .setInfluxDBUrl(InfluxDBClientConfig.getUrl())
+                        .setInfluxDBUsername(InfluxDBClientConfig.getUsername())
+                        .setInfluxDBPassword(InfluxDBClientConfig.getPassword())
+                        .setInfluxDBBucket(InfluxDBClientConfig.getBucket())
+                        .setInfluxDBOrganization(InfluxDBClientConfig.getOrganization())
                         .setInfluxDBSchemaSerializer(new InfluxDBTupleBenchmarkSerializer())
                         .build();
 

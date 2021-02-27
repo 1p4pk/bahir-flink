@@ -45,6 +45,11 @@ public class SourceCommand implements Runnable {
     private int timeInSeconds;
 
     @Option(
+            names = {"--writeEveryX", "-wex"},
+            defaultValue = "10000")
+    private int writeEveryX;
+
+    @Option(
             names = {"--host", "-h"},
             defaultValue = "localhost",
             description = "Host address of HTTP server (defaults to localhost)")
@@ -80,7 +85,7 @@ public class SourceCommand implements Runnable {
                 break;
             case SourceLatency:
                 final String filePath = String.format("%s/file_source_latency", this.outputPath);
-                jobClient = BenchmarkQueries.startFileQueryAsync(filePath);
+                jobClient = BenchmarkQueries.startFileQueryAsync(filePath, this.writeEveryX);
                 this.runSourceBenchmark();
                 break;
             default:

@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.flink.api.connector.sink.SinkWriter.Context;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.streaming.connectors.influxdb.benchmark.testcontainer.InfluxDBContainer;
+import org.apache.flink.streaming.connectors.influxdb.benchmark.influxDBConfig.InfluxDBClientConfig;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 
 public class InfluxDBTupleBenchmarkSerializer
@@ -51,7 +51,7 @@ public class InfluxDBTupleBenchmarkSerializer
                         "from(bucket: \"%s\") |> "
                                 + "range(start: -1h) |> "
                                 + "filter(fn:(r) => r._measurement == \"%s\")",
-                        InfluxDBContainer.getBucket(), MEASUREMENT);
+                        InfluxDBClientConfig.getBucket(), MEASUREMENT);
         final List<FluxTable> tables = influxDBClient.getQueryApi().query(query);
         for (final FluxTable table : tables) {
             fluxRecords.addAll(table.getRecords());
