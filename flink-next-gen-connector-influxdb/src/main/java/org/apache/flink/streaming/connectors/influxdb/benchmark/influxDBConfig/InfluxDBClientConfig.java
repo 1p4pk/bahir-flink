@@ -20,20 +20,22 @@ package org.apache.flink.streaming.connectors.influxdb.benchmark.influxDBConfig;
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
 import com.influxdb.client.InfluxDBClientOptions;
+import com.influxdb.client.domain.Bucket;
+import com.influxdb.client.domain.Organization;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class InfluxDBClientConfig {
+    @Getter private final InfluxDBClient influxDBClient;
+
     @Getter private static final String username = "test-user";
     @Getter private static final String password = "test-password";
     @Getter private static final String organization = "test-org";
     @Getter private static final String bucket = "test-bucket";
     @Getter private static final String url = "http://localhost:8086";
 
-    private InfluxDBClientConfig() {}
-
-    public static InfluxDBClient getClient() {
+    private InfluxDBClientConfig() {
         final InfluxDBClientOptions influxDBClientOptions =
                 InfluxDBClientOptions.builder()
                         .url(url)
@@ -41,16 +43,22 @@ public final class InfluxDBClientConfig {
                         .bucket(bucket)
                         .org(organization)
                         .build();
-        return InfluxDBClientFactory.create(influxDBClientOptions);
+        this.influxDBClient = InfluxDBClientFactory.create(influxDBClientOptions);
     }
 
-    public static void clearData() {
-        final String query =
-                String.format(
-                        "from(bucket: \"%s\") |> "
-                                + "range(start: -1h) |> "
-                                + "filter(fn:(r) => r._measurement == \"test\")"
-                                + "drop(columns: [_measurement])",
-                        getBucket());
+    public static InfluxDBClient getClient() {
+        final InfluxDBClientConfig influxDBClientConfig = new InfluxDBClientConfig();
+        return influxDBClientConfig.influxDBClient;
+    }
+
+    public static void clearData(final InfluxDBClient influxDBClient) {
+        final Bucket oldBucket = influxDBClient.getBucketsApi().findBucketByName(bucket);
+        influxDBClient.getBucketsApi().deleteBucket(oldBucket);
+        final Bucket newBucket = new Bucket();
+        newBucket.setName(bucket);
+        final Organization org = influxDBClient.getOrganizationsApi().findOrganizations().get(0);
+        newBucket.setOrgID(org.getId());
+        influxDBClient.getBucketsApi().createBucket(newBucket);
+        log.info("clear data");
     }
 }

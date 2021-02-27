@@ -87,6 +87,7 @@ public class SinkCommand implements Runnable {
         if (this.query == Queries.SinkLatency) {
             queryResultFromInfluxDB(influxDBClient, duration);
         }
+        InfluxDBClientConfig.clearData(influxDBClient);
         influxDBClient.close();
     }
 
