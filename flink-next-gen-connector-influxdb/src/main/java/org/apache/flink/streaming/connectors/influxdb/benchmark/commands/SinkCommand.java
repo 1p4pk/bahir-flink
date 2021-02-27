@@ -83,8 +83,7 @@ public class SinkCommand implements Runnable {
         final long duration = endTime - startTime;
         final long throughput = (this.numberOfItemsToSink / duration) * 1_000_000;
         log.info("Throughput: {} records/seconds", throughput);
-        log.info("Runtime: {}", duration);
-        log.info("Finished after {} seconds.", duration / 1_000_000_000);
+        log.info("Runtime: {} milliseconds", duration);
         if (this.query == Queries.SinkLatency) {
             queryResultFromInfluxDB(influxDBClient, duration);
         }

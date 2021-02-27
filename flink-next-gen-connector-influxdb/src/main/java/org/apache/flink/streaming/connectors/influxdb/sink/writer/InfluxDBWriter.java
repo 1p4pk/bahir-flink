@@ -76,11 +76,11 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
     public void write(final IN in, final Context context) {
         try {
             if (this.elements.size() == this.bufferSize) {
-                log.info("Buffer size reached preparing to write the elements.");
+                log.trace("Buffer size reached preparing to write the elements.");
                 this.writeCurrentElements();
                 this.elements.clear();
             } else {
-                log.debug("Adding elements to buffer. Buffer size: {}", this.elements.size());
+                log.trace("Adding elements to buffer. Buffer size: {}", this.elements.size());
                 this.elements.add(this.schemaSerializer.serialize(in, context));
                 if (context.timestamp() != null) {
                     this.lastTimestamp = Math.max(this.lastTimestamp, context.timestamp());
@@ -115,9 +115,9 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
 
     @Override
     public void close() throws Exception {
-        log.debug("Preparing to write the elements in close.");
+        log.trace("Preparing to write the elements in close.");
         this.writeCurrentElements();
-        log.debug("Closing the writer.");
+        log.trace("Closing the writer.");
         this.elements.clear();
     }
 
@@ -128,7 +128,7 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
     private void writeCurrentElements() throws Exception {
         try (final WriteApi writeApi = this.influxDBClient.getWriteApi()) {
             writeApi.writePoints(this.elements);
-            log.debug("Wrote {} data points", this.elements.size());
+            log.trace("Wrote {} data points", this.elements.size());
         }
     }
 }
