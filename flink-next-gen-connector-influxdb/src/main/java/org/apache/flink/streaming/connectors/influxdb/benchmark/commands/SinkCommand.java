@@ -40,9 +40,6 @@ import picocli.CommandLine.Option;
 @Slf4j
 public class SinkCommand implements Runnable {
 
-    @Option(names = {"--outputPath"})
-    private String outputPath;
-
     private static final String CSV_FILE_NAME = "sink-output.csv";
 
     @Option(

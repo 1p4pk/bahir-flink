@@ -17,14 +17,8 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.benchmark;
 
-import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.write.Point;
-import com.influxdb.query.FluxRecord;
-import com.influxdb.query.FluxTable;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.flink.api.connector.sink.SinkWriter.Context;
-import org.apache.flink.streaming.connectors.influxdb.benchmark.testcontainer.InfluxDBContainer;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 
 public class InfluxDBLongBenchmarkSerializer implements InfluxDBSchemaSerializer<Long> {
@@ -37,20 +31,5 @@ public class InfluxDBLongBenchmarkSerializer implements InfluxDBSchemaSerializer
         final Point dataPoint = new Point(MEASUREMENT);
         dataPoint.addField(FIELD_KEY, String.valueOf(element));
         return dataPoint;
-    }
-
-    public static List<FluxRecord> queryWrittenData(final InfluxDBClient influxDBClient) {
-        final List<FluxRecord> fluxRecords = new ArrayList<>();
-        final String query =
-                String.format(
-                        "from(bucket: \"%s\") |> "
-                                + "range(start: -1h) |> "
-                                + "filter(fn:(r) => r._measurement == \"%s\")",
-                        InfluxDBContainer.getBucket(), MEASUREMENT);
-        final List<FluxTable> tables = influxDBClient.getQueryApi().query(query);
-        for (final FluxTable table : tables) {
-            fluxRecords.addAll(table.getRecords());
-        }
-        return fluxRecords;
     }
 }
