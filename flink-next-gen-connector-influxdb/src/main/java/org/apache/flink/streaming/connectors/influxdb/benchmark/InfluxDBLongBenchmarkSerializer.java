@@ -30,12 +30,12 @@ import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchema
 public class InfluxDBLongBenchmarkSerializer implements InfluxDBSchemaSerializer<Long> {
 
     private static final String MEASUREMENT = "test";
-    private static final String TAG_KEY = "longValue";
+    private static final String FIELD_KEY = "longValue";
 
     @Override
     public Point serialize(final Long element, final Context context) throws Exception {
         final Point dataPoint = new Point(MEASUREMENT);
-        dataPoint.addTag(TAG_KEY, String.valueOf(element));
+        dataPoint.addField(FIELD_KEY, String.valueOf(element));
         return dataPoint;
     }
 
