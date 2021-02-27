@@ -23,6 +23,7 @@ import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringEncoder;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.connector.file.sink.FileSink;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.core.fs.Path;
@@ -33,20 +34,20 @@ import org.apache.flink.streaming.connectors.influxdb.benchmark.testcontainer.In
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSink;
 import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSource;
+import org.jetbrains.annotations.NotNull;
 
 public final class BenchmarkQueries {
 
     private BenchmarkQueries() {}
 
     public enum Queries {
-        DiscardingSource,
-        FileSource
+        DiscardingSink,
+        FileSink
     }
 
     @SneakyThrows
     public static JobClient startDiscardingQueryAsync() {
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
-        env.setParallelism(1);
+        final StreamExecutionEnvironment env = getStreamExecutionEnvironment();
 
         final InfluxDBSource<DataPoint> influxDBSource =
                 InfluxDBSource.<DataPoint>builder()
@@ -55,13 +56,22 @@ public final class BenchmarkQueries {
 
         env.fromSource(influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
                 .addSink(new DiscardingSink<>());
+
         return env.executeAsync();
+    }
+
+    @NotNull
+    private static StreamExecutionEnvironment getStreamExecutionEnvironment() {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
+        env.getConfig().enableObjectReuse();
+        env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
+        env.setParallelism(1);
+        return env;
     }
 
     @SneakyThrows
     public static JobClient startFileQueryAsync(final String path) {
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
-        env.setParallelism(1);
+        final StreamExecutionEnvironment env = getStreamExecutionEnvironment();
 
         final InfluxDBSource<DataPoint> influxDBSource =
                 InfluxDBSource.<DataPoint>builder()
@@ -78,13 +88,10 @@ public final class BenchmarkQueries {
     @SneakyThrows
     public static void startSinkQuery(
             final InfluxDBContainer<?> influxDBContainer, final long numberOfItemsToSink) {
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
-        env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
-        env.setParallelism(1);
-        env.enableCheckpointing(100);
+        final StreamExecutionEnvironment env = getStreamExecutionEnvironment();
 
-        final InfluxDBSink<Long> influxDBSink =
-                InfluxDBSink.<Long>builder()
+        final InfluxDBSink<Tuple2<Long, Long>> influxDBSink =
+                InfluxDBSink.<Tuple2<Long, Long>>builder()
                         .setInfluxDBUrl(influxDBContainer.getUrl())
                         .setInfluxDBUsername(InfluxDBContainer.getUsername())
                         .setInfluxDBPassword(InfluxDBContainer.getPassword())
@@ -93,9 +100,9 @@ public final class BenchmarkQueries {
                         .setInfluxDBSchemaSerializer(new InfluxDBBenchmarkSerializer())
                         .build();
 
-        // TODO: The user should define how many elements they want to send through the source and
-        // then calculate the time of ingestion
-        env.fromSequence(0L, numberOfItemsToSink).sinkTo(influxDBSink);
+        env.fromSequence(0L, numberOfItemsToSink)
+                .map(new AddTimestampToSequence())
+                .sinkTo(influxDBSink);
         env.execute();
     }
 
@@ -108,7 +115,7 @@ public final class BenchmarkQueries {
         }
 
         @Override
-        public boolean filter(final DataPoint dataPoint) throws Exception {
+        public boolean filter(final DataPoint dataPoint) {
             this.counter++;
             return this.counter % this.writeEveryX == 0;
         }
@@ -118,6 +125,13 @@ public final class BenchmarkQueries {
         @Override
         public String map(final DataPoint dataPoint) {
             return String.format("%s,%s", dataPoint.getTimestamp(), System.currentTimeMillis());
+        }
+    }
+
+    private static class AddTimestampToSequence implements MapFunction<Long, Tuple2<Long, Long>> {
+        @Override
+        public Tuple2<Long, Long> map(final Long value) {
+            return new Tuple2<>(value, System.currentTimeMillis());
         }
     }
 

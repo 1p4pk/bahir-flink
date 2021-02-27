@@ -21,39 +21,30 @@ import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.write.Point;
 import com.influxdb.query.FluxRecord;
 import com.influxdb.query.FluxTable;
-import java.math.BigInteger;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.apache.flink.api.connector.sink.SinkWriter.Context;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.connectors.influxdb.benchmark.testcontainer.InfluxDBContainer;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 
-public class InfluxDBBenchmarkSerializer implements InfluxDBSchemaSerializer<Long> {
+public class InfluxDBBenchmarkSerializer implements InfluxDBSchemaSerializer<Tuple2<Long, Long>> {
 
-    private static final BigInteger NANOS_PER_SECOND = BigInteger.valueOf(1000000000L);
     private static final String MEASUREMENT = "test";
     private static final String TAG_KEY = "longValue";
     private static final String FIELD_KEY = "serializationTime";
 
     @Override
-    public Point serialize(final Long element, final Context context) throws Exception {
+    public Point serialize(final Tuple2<Long, Long> element, final Context context)
+            throws Exception {
         final Point dataPoint = new Point(MEASUREMENT);
-        dataPoint.addTag(TAG_KEY, String.valueOf(element));
-        final Instant time = Instant.now();
-        final BigInteger nanos =
-                BigInteger.valueOf(time.getEpochSecond())
-                        .multiply(NANOS_PER_SECOND)
-                        .add(BigInteger.valueOf(time.getNano()));
-        dataPoint.addField(FIELD_KEY, nanos);
+        dataPoint.addTag(TAG_KEY, String.valueOf(element.f0));
+        dataPoint.addField(FIELD_KEY, element.f1);
         return dataPoint;
     }
 
     public static List<FluxRecord> queryWrittenData(final InfluxDBClient influxDBClient) {
         final List<FluxRecord> fluxRecords = new ArrayList<>();
-        final Map<String, String> times = new HashMap<>();
         final String query =
                 String.format(
                         "from(bucket: \"%s\") |> "

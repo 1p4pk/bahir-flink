@@ -74,11 +74,11 @@ public class SourceCommand implements Runnable {
         }
         JobClient jobClient = null;
         switch (this.query) {
-            case DiscardingSource:
+            case DiscardingSink:
                 jobClient = BenchmarkQueries.startDiscardingQueryAsync();
                 this.runSourceBenchmark();
                 break;
-            case FileSource:
+            case FileSink:
                 final String filePath = String.format("%s/file_source_latency", this.outputPath);
                 jobClient = BenchmarkQueries.startFileQueryAsync(filePath);
                 this.runSourceBenchmark();
