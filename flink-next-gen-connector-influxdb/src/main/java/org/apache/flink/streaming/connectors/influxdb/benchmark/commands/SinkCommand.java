@@ -18,7 +18,6 @@
 package org.apache.flink.streaming.connectors.influxdb.benchmark.commands;
 
 import static org.apache.flink.streaming.connectors.influxdb.benchmark.InfluxDBTupleBenchmarkSerializer.queryWrittenData;
-import static org.junit.Assert.assertTrue;
 
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.query.FluxRecord;
@@ -119,7 +118,6 @@ public class SinkCommand implements Runnable {
             pw.println("processingTime,influxIngestionTime");
             dataLines.stream().map(SinkCommand::convertToCSV).forEach(pw::println);
         }
-        assertTrue(csvOutputFile.exists());
         log.info("Wrote result to file.");
     }
 
