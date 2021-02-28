@@ -33,7 +33,7 @@ public class InfluxDBTupleBenchmarkSerializer
 
     private static final String MEASUREMENT = "test";
     private static final String TAG_KEY = "longValue";
-    private static final String FIELD_KEY = "serializationTime";
+    private static final String FIELD_KEY = "operatorStartTime";
 
     @Override
     public Point serialize(final Tuple2<Long, Long> element, final Context context)
@@ -48,9 +48,16 @@ public class InfluxDBTupleBenchmarkSerializer
         final List<FluxRecord> fluxRecords = new ArrayList<>();
         final String query =
                 String.format(
-                        "from(bucket: \"%s\") |> "
-                                + "range(start: -1h) |> "
-                                + "filter(fn:(r) => r._measurement == \"%s\")",
+                        "from(bucket: \"%s\")\n"
+                                + "  |> range(start: -1h)\n"
+                                + "  |> filter(fn: (r) => r[\"_measurement\"] == \"%s\")\n"
+                                + "  |> map(fn: (r) => ({\n"
+                                + "      r with\n"
+                                + "      latency: uint(v: r._time) - uint(v: r._value * 1000000)\n"
+                                + "    })\n"
+                                + "  )\n"
+                                + "  |> group()\n"
+                                + "  |> mean(column: \"latency\")\n",
                         InfluxDBClientConfig.getBucket(), MEASUREMENT);
         final List<FluxTable> tables = influxDBClient.getQueryApi().query(query);
         for (final FluxTable table : tables) {

@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class InfluxDBClientConfig {
-    @Getter private final InfluxDBClient influxDBClient;
+    private final InfluxDBClient influxDBClient;
 
     @Getter private static final String username = "test-user";
     @Getter private static final String password = "test-password";

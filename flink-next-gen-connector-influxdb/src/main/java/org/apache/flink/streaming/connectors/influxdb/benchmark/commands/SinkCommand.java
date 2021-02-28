@@ -21,11 +21,6 @@ import static org.apache.flink.streaming.connectors.influxdb.benchmark.InfluxDBT
 
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.query.FluxRecord;
-import java.io.File;
-import java.io.PrintWriter;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -38,9 +33,6 @@ import picocli.CommandLine.Option;
 @Command(name = "sink", description = "Command to start sink benchmarking")
 @Slf4j
 public class SinkCommand implements Runnable {
-
-    @Option(names = {"--outputPath"})
-    private String outputPath;
 
     @Option(
             names = {"-n", "--numberOfItemsToSink"},
@@ -62,10 +54,6 @@ public class SinkCommand implements Runnable {
 
     @Override
     public void run() {
-        if (this.outputPath == null) {
-            this.outputPath = System.getProperty("user.dir");
-            log.info("Output path: {}", this.outputPath);
-        }
         final InfluxDBClient influxDBClient = InfluxDBClientConfig.getClient();
         long startTime = 0, endTime = 0;
         switch (this.query) {
@@ -100,35 +88,15 @@ public class SinkCommand implements Runnable {
     private void queryResultFromInfluxDB(final InfluxDBClient influxDBClient, final long duration) {
         Thread.sleep(1000);
         final List<FluxRecord> records = queryWrittenData(influxDBClient);
-        final Collection<String[]> dataLines = new ArrayList<>();
         for (final FluxRecord record : records) {
-            final Object processingTime = record.getValue();
-            final Instant ingestionTime = record.getTime();
-            dataLines.add(
-                    new String[] {
-                        processingTime.toString(), String.valueOf(ingestionTime.toEpochMilli())
-                    });
+            final Double latency = (Double) record.getValueByKey("latency");
+            log.info(
+                    "latency for batch size {} and number of elements {} is {} nanoseconds",
+                    this.batchSize,
+                    this.numberOfItemsToSink,
+                    latency.longValue());
         }
         log.info("length: {}", records.size());
-        this.writeFile(dataLines);
         log.info("Getting data.\n {} of records written.\n duration {}", records.size(), duration);
-    }
-
-    @SneakyThrows
-    private void writeFile(final Collection<String[]> dataLines) {
-        final File csvOutputFile =
-                new File(
-                        String.format(
-                                "%s/sink_latency_b_%s_n_%s.csv",
-                                this.outputPath, this.batchSize, this.numberOfItemsToSink));
-        try (final PrintWriter pw = new PrintWriter(csvOutputFile)) {
-            pw.println("processingTime,influxIngestionTime");
-            dataLines.stream().map(SinkCommand::convertToCSV).forEach(pw::println);
-        }
-        log.info("Wrote result to file.");
-    }
-
-    private static String convertToCSV(final String[] data) {
-        return String.join(",", data);
     }
 }

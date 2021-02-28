@@ -62,15 +62,6 @@ public final class BenchmarkQueries {
         return env.executeAsync();
     }
 
-    @NotNull
-    private static StreamExecutionEnvironment getStreamExecutionEnvironment() {
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
-        env.getConfig().enableObjectReuse();
-        env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
-        env.setParallelism(1);
-        return env;
-    }
-
     @SneakyThrows
     public static JobClient startFileQueryAsync(final String path, final int writeEveryX) {
         final StreamExecutionEnvironment env = getStreamExecutionEnvironment();
@@ -127,6 +118,17 @@ public final class BenchmarkQueries {
                 .map(new AddTimestampToSequence())
                 .sinkTo(influxDBSink);
         env.execute();
+    }
+
+    // ---------------- private helpers --------------------
+
+    @NotNull
+    private static StreamExecutionEnvironment getStreamExecutionEnvironment() {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
+        env.getConfig().enableObjectReuse();
+        env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
+        env.setParallelism(1);
+        return env;
     }
 
     private static final class FilterDataPoints implements FilterFunction<DataPoint> {
