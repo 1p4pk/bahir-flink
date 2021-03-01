@@ -40,9 +40,9 @@ public final class InfluxDBClientConfig {
     private InfluxDBClientConfig() {
         final OkHttpClient.Builder client =
                 new OkHttpClient.Builder()
-                        .connectTimeout(10, TimeUnit.MINUTES)
-                        .readTimeout(10, TimeUnit.MINUTES)
-                        .writeTimeout(10, TimeUnit.MINUTES)
+                        .connectTimeout(60, TimeUnit.MINUTES)
+                        .readTimeout(60, TimeUnit.MINUTES)
+                        .writeTimeout(60, TimeUnit.MINUTES)
                         .retryOnConnectionFailure(true);
         final InfluxDBClientOptions influxDBClientOptions =
                 InfluxDBClientOptions.builder()
