@@ -98,6 +98,7 @@ public final class BlockingOffer {
         if (file.createNewFile()) {
             this.measurements = new BufferedWriter(new FileWriter(file));
         }
+        this.startTime = System.nanoTime();
     }
 
     public static BlockingOfferBuilder builder() {
@@ -165,7 +166,7 @@ public final class BlockingOffer {
         public BlockingOffer build() {
             final BlockingOffer blockingOffer = super.build();
             log.info("Start waiting for connection.");
-            waitForConnection(blockingOffer);
+            // waitForConnection(blockingOffer);
             return blockingOffer;
         }
 

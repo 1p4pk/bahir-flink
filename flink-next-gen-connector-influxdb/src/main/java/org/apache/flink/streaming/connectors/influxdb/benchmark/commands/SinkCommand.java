@@ -78,14 +78,14 @@ public class SinkCommand implements Runnable {
         log.info("Throughput: {} records/seconds", throughput);
         log.info("Runtime: {} milliseconds", duration);
         if (this.query == Queries.SinkLatency) {
-            this.queryResultFromInfluxDB(influxDBClient, duration);
+            this.queryResultFromInfluxDB(influxDBClient);
         }
         InfluxDBClientConfig.clearData(influxDBClient);
         influxDBClient.close();
     }
 
     @SneakyThrows
-    private void queryResultFromInfluxDB(final InfluxDBClient influxDBClient, final long duration) {
+    private void queryResultFromInfluxDB(final InfluxDBClient influxDBClient) {
         Thread.sleep(1000);
         final List<FluxRecord> records = queryWrittenData(influxDBClient);
         for (final FluxRecord record : records) {
@@ -96,7 +96,5 @@ public class SinkCommand implements Runnable {
                     this.numberOfItemsToSink,
                     latency.longValue());
         }
-        log.info("length: {}", records.size());
-        log.info("Getting data.\n {} of records written.\n duration {}", records.size(), duration);
     }
 }
