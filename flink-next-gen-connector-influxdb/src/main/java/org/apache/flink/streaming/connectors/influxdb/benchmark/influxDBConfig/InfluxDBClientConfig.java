@@ -22,8 +22,10 @@ import com.influxdb.client.InfluxDBClientFactory;
 import com.influxdb.client.InfluxDBClientOptions;
 import com.influxdb.client.domain.Bucket;
 import com.influxdb.client.domain.Organization;
+import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
 
 @Slf4j
 public final class InfluxDBClientConfig {
@@ -36,12 +38,19 @@ public final class InfluxDBClientConfig {
     @Getter private static final String url = "http://localhost:8086";
 
     private InfluxDBClientConfig() {
+        final OkHttpClient.Builder client =
+                new OkHttpClient.Builder()
+                        .connectTimeout(10, TimeUnit.MINUTES)
+                        .readTimeout(10, TimeUnit.MINUTES)
+                        .writeTimeout(10, TimeUnit.MINUTES)
+                        .retryOnConnectionFailure(true);
         final InfluxDBClientOptions influxDBClientOptions =
                 InfluxDBClientOptions.builder()
                         .url(url)
                         .authenticate(username, password.toCharArray())
                         .bucket(bucket)
                         .org(organization)
+                        .okHttpClient(client)
                         .build();
         this.influxDBClient = InfluxDBClientFactory.create(influxDBClientOptions);
     }
