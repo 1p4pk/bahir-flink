@@ -87,6 +87,7 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
                         .setInfluxDBPassword(InfluxDBContainer.getPassword())
                         .setInfluxDBBucket(InfluxDBContainer.getBucket())
                         .setInfluxDBOrganization(InfluxDBContainer.getOrganization())
+                        .setDataPointCheckpoint(true)
                         .build();
 
         env.addSource(new FiniteTestSource(SOURCE_DATA), BasicTypeInfo.LONG_TYPE_INFO)
@@ -111,8 +112,6 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
         env.enableCheckpointing(100);
         return env;
     }
-
-    // TODO: Find a clean way to query and test expected data points
 
     private static List<String> queryWrittenData(final InfluxDBClient influxDBClient) {
         final List<String> dataPoints = new ArrayList<>();
