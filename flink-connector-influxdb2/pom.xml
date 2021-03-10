@@ -30,8 +30,8 @@ under the License.
     <relativePath>..</relativePath>
   </parent>
 
-  <artifactId>flink-next-gen-connector-influxdb_2.12</artifactId>
-  <name>flink-next-gen-connector-influxdb</name>
+  <artifactId>flink-connector-influxdb2_2.12</artifactId>
+  <name>flink-connector-influxdb2</name>
 
   <packaging>jar</packaging>
 
