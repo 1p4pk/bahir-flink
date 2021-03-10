@@ -9,7 +9,7 @@ To use this connector, add the following dependency to your project:
 ```xml=
 <dependency>
   <groupId>org.apache.bahir</groupId>
-  <artifactId>flink-next-gen-connector-influxdb_2.11</artifactId>
+  <artifactId>flink-connector-influxdb2_2.12</artifactId>
   <version>1.1-SNAPSHOT</version>
 </dependency>
 ```
