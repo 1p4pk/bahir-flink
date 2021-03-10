@@ -178,13 +178,6 @@ Some basic benchmarks were conducted. Results of these benchmarks can be visuali
     </td>
   </tr>
 </table>
-
-<style>
-.noBorder {
-    border: none !important;
-}
-.roundImg {border-radius: 50%}
-</style>
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
