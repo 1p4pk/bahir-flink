@@ -55,6 +55,9 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
 
     @Rule public ExpectedException exceptionRule = ExpectedException.none();
 
+    private static final String HTTP_ADDRESS = "http://localhost";
+    private static final String PORT = "8000";
+
     private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
             new NetHttpTransport().createRequestFactory();
     private static final ExponentialBackOff HTTP_BACKOFF =
@@ -154,7 +157,8 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
         final HttpContent content = ByteArrayContent.fromString("text/plain; charset=utf-8", line);
         final HttpRequest request =
                 HTTP_REQUEST_FACTORY.buildPostRequest(
-                        new GenericUrl("http://localhost:8000/api/v2/write"), content);
+                        new GenericUrl(String.format("%s:%s/api/v2/write", HTTP_ADDRESS, PORT)),
+                        content);
         return request.execute().getStatusCode();
     }
 
@@ -162,7 +166,7 @@ public class InfluxDBSourceIntegrationTestCase extends TestLogger {
     private static boolean checkHealthCheckAvailable() {
         final HttpRequest request =
                 HTTP_REQUEST_FACTORY.buildGetRequest(
-                        new GenericUrl("http://localhost:8000/health"));
+                        new GenericUrl(String.format("%s:%s/health", HTTP_ADDRESS, PORT)));
 
         request.setUnsuccessfulResponseHandler(
                 new HttpBackOffUnsuccessfulResponseHandler(HTTP_BACKOFF));
