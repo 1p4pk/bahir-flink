@@ -42,12 +42,7 @@ import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit
 /**
  * The Source implementation of InfluxDB. Please use a {@link InfluxDBSourceBuilder} to construct a
  * {@link InfluxDBSource}. The following example shows how to create an InfluxDBSource emitting
- * records of <code>
- * String</code> type.
- *
- * <pre>{@code
- * add example
- * }</pre>
+ * records of <code>String</code> type.
  *
  * <p>See {@link InfluxDBSourceBuilder} for more details.
  *
