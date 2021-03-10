@@ -125,15 +125,16 @@ public class InfluxParser {
     }
 
     private Number parseTimestamp(@Nullable final TimestampContext timestamp) {
-        if (timestamp != null) {
-            final String strTimestamp = timestamp.getText();
-            // Influx timestamps come in nanoseconds; treat anything less than 1 ms as 0
-            if (strTimestamp.length() < 7) {
-                return 0L;
-            } else {
-                return Long.valueOf(strTimestamp.substring(0, strTimestamp.length() - 6));
-            }
+        if (timestamp == null) {
+            return null;
         }
-        return null;
+
+        final String strTimestamp = timestamp.getText();
+        // Influx timestamps come in nanoseconds; treat anything less than 1 ms as 0
+        if (strTimestamp.length() < 7) {
+            return 0L;
+        } else {
+            return Long.valueOf(strTimestamp.substring(0, strTimestamp.length() - 6));
+        }
     }
 }
