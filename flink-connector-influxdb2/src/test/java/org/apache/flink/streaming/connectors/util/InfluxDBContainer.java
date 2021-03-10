@@ -86,6 +86,7 @@ public final class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
                 String.format("%s", INFLUX_SETUP_SH));
         this.start();
         this.setUpInfluxDB();
+        log.info("Started InfluxDB container on: {}", this.getUrl());
     }
 
     @SneakyThrows({InterruptedException.class, IOException.class})

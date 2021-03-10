@@ -73,8 +73,7 @@ class InfluxDBSinkIntegrationTestCase extends TestLogger {
      * some cases there are more than 4 checkpoints set.
      */
     @Test
-    void shouldWriteDataToInfluxDB() throws Exception {
-        log.info("Starting test");
+    void testSinkDataToInfluxDB() throws Exception {
         final StreamExecutionEnvironment env = buildStreamEnv();
 
         final InfluxDBSink<Long> influxDBSink =

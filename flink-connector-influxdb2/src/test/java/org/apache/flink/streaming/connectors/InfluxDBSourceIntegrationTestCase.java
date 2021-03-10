@@ -128,6 +128,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
     void testRequestTooLargeException() throws Exception {
         final InfluxDBSource<Long> influxDBSource =
                 InfluxDBSource.<Long>builder()
+                        .setPort(PORT)
                         .setDeserializer(new InfluxDBTestDeserializer())
                         .setMaximumLinesPerRequest(2)
                         .build();
@@ -153,7 +154,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
         final HttpContent content = ByteArrayContent.fromString("text/plain; charset=utf-8", line);
         final HttpRequest request =
                 HTTP_REQUEST_FACTORY.buildPostRequest(
-                        new GenericUrl(String.format("%s:%d/api/v2/write", HTTP_ADDRESS, PORT)),
+                        new GenericUrl(String.format("%s:%s/api/v2/write", HTTP_ADDRESS, PORT)),
                         content);
         return request.execute().getStatusCode();
     }
@@ -162,7 +163,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
     private static boolean checkHealthCheckAvailable() {
         final HttpRequest request =
                 HTTP_REQUEST_FACTORY.buildGetRequest(
-                        new GenericUrl(String.format("%s:%d/health", HTTP_ADDRESS, PORT)));
+                        new GenericUrl(String.format("%s:%s/health", HTTP_ADDRESS, PORT)));
 
         request.setUnsuccessfulResponseHandler(
                 new HttpBackOffUnsuccessfulResponseHandler(HTTP_BACKOFF));
