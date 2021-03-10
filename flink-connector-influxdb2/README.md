@@ -150,8 +150,7 @@ class TestSerializer implements InfluxDBSchemaSerializer<Long> {
 The connector can be built by using maven:
 
 ```bash
-cd flink-next-gen-connector-influxdb
-mvn clean install -DskipTests
+mvn clean install -DskipTests -pl flink-connector-influxdb2 
 ```
 
 ## Benchmarks
