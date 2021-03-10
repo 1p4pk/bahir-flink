@@ -93,6 +93,12 @@ The Sink writes data points to InfluxDB using the [InfluxDB Java Client](https:/
 
 It is possible to write multiple data points to InfluxDB simultaneously by separating each point with a new line. Batching data points in this manner results in much higher performance. The batch size can be set through the `WRITE_BUFFER_SIZE` option. By default, the buffer size is set to 1000 and can be changed to any value using the `setWriteBufferSize(final int bufferSize)` of the Sink builder class.
 
+It is possible to write checkpoint data points to InfluxDB whenever Flink sets a checkpoint. To enable this functionality, you need to set the `WRITE_DATA_POINT_CHECKPOINT` flag to true (default is false). The checkpoint data point looks as follow:
+```text
+checkpoint checkpoint=flink <timestamp>
+```
+The timestamp refers to the latest element that Flink serializes.
+
 ### Usage
 
 ```java=
