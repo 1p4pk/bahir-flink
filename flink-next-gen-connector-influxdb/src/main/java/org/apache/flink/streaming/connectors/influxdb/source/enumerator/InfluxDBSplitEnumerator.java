@@ -26,6 +26,8 @@ import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** The enumerator class for InfluxDB source. */
 @Internal
@@ -33,6 +35,7 @@ public class InfluxDBSplitEnumerator
         implements SplitEnumerator<InfluxDBSplit, InfluxDBSourceEnumState> {
 
     private final SplitEnumeratorContext<InfluxDBSplit> context;
+    private static final Logger LOG = LoggerFactory.getLogger(InfluxDBSplitEnumerator.class);
 
     public InfluxDBSplitEnumerator(final SplitEnumeratorContext<InfluxDBSplit> context) {
         this.context = checkNotNull(context);
@@ -45,6 +48,7 @@ public class InfluxDBSplitEnumerator
 
     @Override
     public void handleSplitRequest(final int subtaskId, @Nullable final String requesterHostname) {
+        LOG.info("handleSplitRequest with requesterHostname " + requesterHostname);
         this.context.assignSplit(new InfluxDBSplit(subtaskId), subtaskId);
     }
 
