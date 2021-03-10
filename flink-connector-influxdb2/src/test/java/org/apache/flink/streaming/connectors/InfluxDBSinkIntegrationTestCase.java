@@ -18,9 +18,8 @@
 package org.apache.flink.streaming.connectors;
 
 import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.getInfluxDBClient;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.domain.WritePrecision;
@@ -41,13 +40,15 @@ import org.apache.flink.streaming.connectors.util.InfluxDBContainer;
 import org.apache.flink.streaming.connectors.util.InfluxDBTestSerializer;
 import org.apache.flink.streaming.util.FiniteTestSource;
 import org.apache.flink.util.TestLogger;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Slf4j
-public class InfluxDBSinkIntegrationTestCase extends TestLogger {
+@Testcontainers
+class InfluxDBSinkIntegrationTestCase extends TestLogger {
 
-    @ClassRule
+    @Container
     public static final InfluxDBContainer<?> influxDBContainer =
             InfluxDBContainer.createWithDefaultTag();
 
@@ -72,7 +73,7 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
      * some cases there are more than 4 checkpoints set.
      */
     @Test
-    public void shouldWriteDataToInfluxDB() throws Exception {
+    void shouldWriteDataToInfluxDB() throws Exception {
         log.info("Starting test");
         final StreamExecutionEnvironment env = buildStreamEnv();
 
@@ -95,11 +96,10 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
         final InfluxDBClient client = getInfluxDBClient(influxDBSink.getProperties());
         final List<String> actualWrittenPoints = queryWrittenData(client);
 
-        assertThat(
-                actualWrittenPoints.size(), is(EXPECTED_COMMITTED_DATA_IN_STREAMING_MODE.size()));
+        assertEquals(actualWrittenPoints.size(), EXPECTED_COMMITTED_DATA_IN_STREAMING_MODE.size());
 
         final List<String> actualCheckpoints = queryCheckpoints(client);
-        assertThat(actualCheckpoints.size(), greaterThanOrEqualTo(4));
+        assertTrue(actualCheckpoints.size() >= 4);
     }
 
     // ---------------- private helper methods --------------------
