@@ -20,6 +20,7 @@ package org.apache.flink.streaming.connectors.influxdb.source.enumerator;
 import java.io.IOException;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
+/** InfluxDB is stateless due to its unreplayable HTTP request source. */
 public final class InfluxDBSourceEnumStateSerializer
         implements SimpleVersionedSerializer<InfluxDBSourceEnumState> {
     @Override
