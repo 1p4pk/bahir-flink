@@ -87,7 +87,7 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
                 }
             }
         } catch (final Exception e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
         }
     }
 
