@@ -42,6 +42,8 @@ public final class InfluxDBCommittableSerializer implements SimpleVersionedSeria
     public Long deserialize(final int version, final byte[] serialized) {
         final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
         buffer.put(serialized, 0, serialized.length);
+        // Use flip to set the limit to the current position and the position to 0
+        // Required to read the long that was inserted into the buffer from the first position
         buffer.flip();
         return buffer.getLong();
     }
