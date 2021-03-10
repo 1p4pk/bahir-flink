@@ -45,6 +45,8 @@ public final class InfluxDBSplitSerializer implements SimpleVersionedSerializer<
     public InfluxDBSplit deserialize(final int version, final byte[] serialized) {
         final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
         buffer.put(serialized, 0, serialized.length);
+        // Use flip to set the limit to the current position and the position to 0
+        // Required to read the long that was inserted into the buffer from the first position
         // More information about the explicit type cast to Buffer class:
         // https://github.com/plasma-umass/doppio/issues/497#issuecomment-334740243
         ((Buffer) buffer).flip();

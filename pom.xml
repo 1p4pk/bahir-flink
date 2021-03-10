@@ -16,7 +16,9 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.apache</groupId>
@@ -38,7 +40,8 @@
   </licenses>
   <scm>
     <connection>scm:git:git@github.com:apache/bahir-flink.git</connection>
-    <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/bahir-flink.git</developerConnection>
+    <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/bahir-flink.git
+    </developerConnection>
     <url>https://github.com/apache/bahir-flink</url>
     <tag>HEAD</tag>
   </scm>
@@ -99,7 +102,7 @@
     <!-- Flink version -->
     <flink.version>1.11.2</flink.version>
 
-    <junit.jupiter.version>5.4.1</junit.jupiter.version>
+    <junit.jupiter.version>5.4.2</junit.jupiter.version>
 
     <scalatest.version>3.0.5</scalatest.version>
     <scalacheck.version>1.14.0</scalacheck.version>
@@ -348,7 +351,8 @@
           <!-- Note config is repeated in scalatest config -->
           <configuration>
             <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
-            <argLine>-Xmx3g -Xss4096k -XX:MaxPermSize=${MaxPermGen} -XX:ReservedCodeCacheSize=512m</argLine>
+            <argLine>-Xmx3g -Xss4096k -XX:MaxPermSize=${MaxPermGen} -XX:ReservedCodeCacheSize=512m
+            </argLine>
             <systemProperties>
               <log4j.configuration>file:src/test/resources/log4j.properties</log4j.configuration>
             </systemProperties>
@@ -373,14 +377,17 @@
             <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
             <junitxml>.</junitxml>
             <filereports>ScalaTestsReport.txt</filereports>
-            <argLine>-ea -Xmx3g -XX:MaxPermSize=${MaxPermGen} -XX:ReservedCodeCacheSize=${CodeCacheSize}</argLine>
-            <stderr />
+            <argLine>-ea -Xmx3g -XX:MaxPermSize=${MaxPermGen}
+              -XX:ReservedCodeCacheSize=${CodeCacheSize}
+            </argLine>
+            <stderr/>
             <environmentVariables>
               <JAVA_HOME>${test.java.home}</JAVA_HOME>
             </environmentVariables>
             <systemProperties>
               <log4j.configuration>file:src/test/resources/log4j.properties</log4j.configuration>
-              <java.util.logging.config.file>${basedir}/src/test/resources/logging.properties</java.util.logging.config.file>
+              <java.util.logging.config.file>${basedir}/src/test/resources/logging.properties
+              </java.util.logging.config.file>
             </systemProperties>
           </configuration>
           <executions>
@@ -460,7 +467,7 @@
             <execution>
               <id>default-cli</id>
               <goals>
-                 <goal>build-classpath</goal>
+                <goal>build-classpath</goal>
               </goals>
               <configuration>
                 <!-- This includes dependencies with 'runtime' and 'compile' scopes;
@@ -489,7 +496,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore />
+                    <ignore/>
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -502,7 +509,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore />
+                    <ignore/>
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -515,7 +522,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore />
+                    <ignore/>
                   </action>
                 </pluginExecution>
               </pluginExecutions>
@@ -677,7 +684,8 @@
               <excludeDefaultDirectories>true</excludeDefaultDirectories>
               <filesets>
                 <fileset>
-                  <directory>${user.home}/.ivy2/cache/${project.groupId}/${project.artifactId}</directory>
+                  <directory>${user.home}/.ivy2/cache/${project.groupId}/${project.artifactId}
+                  </directory>
                   <includes>
                     <include>*-${project.version}.*</include>
                     <include>jars/${project.build.finalName}.jar</include>
@@ -777,7 +785,9 @@
     <profile>
       <id>test-java-home</id>
       <activation>
-        <property><name>env.JAVA_HOME</name></property>
+        <property>
+          <name>env.JAVA_HOME</name>
+        </property>
       </activation>
       <properties>
         <test.java.home>${env.JAVA_HOME}</test.java.home>
