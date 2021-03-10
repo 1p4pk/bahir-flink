@@ -75,11 +75,11 @@
     <module>flink-connector-akka</module>
     <module>flink-connector-flume</module>
     <module>flink-connector-influxdb</module>
+    <module>flink-connector-influxdb2</module>
     <module>flink-connector-kudu</module>
     <module>flink-connector-netty</module>
     <module>flink-connector-redis</module>
     <module>flink-library-siddhi</module>
-    <module>flink-next-gen-connector-influxdb</module>
   </modules>
 
   <properties>
@@ -94,7 +94,7 @@
 
     <slf4j.version>1.7.16</slf4j.version>
     <log4j.version>1.2.17</log4j.version>
-    <log4j2.version>2.13.3</log4j2.version>
+    <log4j2.version>2.12.1</log4j2.version>
 
     <!-- Flink version -->
     <flink.version>1.11.2</flink.version>
@@ -269,7 +269,6 @@
               <exclude>**/dependency-reduced-pom.xml</exclude>
               <exclude>**/target/**</exclude>
               <exclude>**/README.md</exclude>
-              <exclude>.github/**</exclude>
             </excludes>
           </configuration>
         </plugin>
