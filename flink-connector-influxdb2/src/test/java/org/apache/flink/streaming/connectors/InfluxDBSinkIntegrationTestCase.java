@@ -62,12 +62,9 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
      * Test the following topology.
      *
      * <pre>
-     *     1L,2L,3L           "Test,LongValue=1 fieldKey="fieldValue"",
-     *                        "Test,LongValue=2 fieldKey="fieldValue"",
-     *                        "Test,LongValue=3 fieldKey="fieldValue"",
-     *                        "Test,LongValue=1 fieldKey="fieldValue"",
-     *                        "Test,LongValue=2 fieldKey="fieldValue"",
-     *                        "Test,LongValue=3 fieldKey="fieldValue"",
+     *     1L,2L,3L           "test,longValue=1 fieldKey="fieldValue"",
+     *                        "test,longValue=2 fieldKey="fieldValue"",
+     *                        "test,longValue=3 fieldKey="fieldValue""
      *     (source2/2) -----> (sink1/1)
      * </pre>
      *
@@ -104,6 +101,8 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
         final List<String> actualCheckpoints = queryCheckpoints(client);
         assertThat(actualCheckpoints.size(), greaterThanOrEqualTo(4));
     }
+
+    // ---------------- private helper methods --------------------
 
     private static StreamExecutionEnvironment buildStreamEnv() {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -144,7 +143,7 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
         final List<FluxTable> tables = influxDBClient.getQueryApi().query(query);
         for (final FluxTable table : tables) {
             for (final FluxRecord record : table.getRecords()) {
-                commitDataPoints.add(recordToDataPoint2(record).toLineProtocol());
+                commitDataPoints.add(recordToCheckpointDataPoint(record).toLineProtocol());
             }
         }
         return commitDataPoints;
@@ -160,7 +159,7 @@ public class InfluxDBSinkIntegrationTestCase extends TestLogger {
         return point;
     }
 
-    private static Point recordToDataPoint2(final FluxRecord record) {
+    private static Point recordToCheckpointDataPoint(final FluxRecord record) {
         final Point point = new Point(record.getMeasurement());
         point.addField(
                 Objects.requireNonNull(record.getField()), String.valueOf(record.getValue()));
