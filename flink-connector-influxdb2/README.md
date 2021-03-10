@@ -155,7 +155,21 @@ mvn clean install -DskipTests -pl flink-connector-influxdb2
 
 ## Benchmarks
 
-Some basic benchmarks were conducted. Results of these benchmarks can be visualized [here](media/benchmarks.pdf).
+Some basic benchmarks were conducted.
+
+### Source
+A data generator that sends line protocol in form of HTTP requests to an REST endpoint was used for the source benchmarks.
+Throughput and latency was measured for a direct connection between the data generator and the InlfuxDB source.
+A setup including Telegraf was used to benchmark the latency in a more realistic setup.
+
+### Sink
+The from sequence source was used to generate data for the sink benchmark.
+Throughput was measured without any other Flink operators, whereas the latency was measured by adding a timestamp to the event using a map operator before the sink.
+This timestamp was then compared to the insertion timestamp set by InfluxDB itself.
+
+### Visualization
+
+The results of these benchmarks are visualized [here](media/benchmarks.pdf).
 
 ## Future Work
 
