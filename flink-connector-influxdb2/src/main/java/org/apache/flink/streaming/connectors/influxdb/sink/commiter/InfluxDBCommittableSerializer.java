@@ -22,9 +22,9 @@ import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 /**
  * This class Serialize and deserializes the commit values. Since we are sending the timestamp value
- * as a commitabel the Long object is (de)serialized.
+ * as a commitable the Long object is (de)serialized.
  */
-public class InfluxDBCommittableSerializer implements SimpleVersionedSerializer<Long> {
+public final class InfluxDBCommittableSerializer implements SimpleVersionedSerializer<Long> {
 
     @Override
     public int getVersion() {

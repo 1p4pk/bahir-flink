@@ -21,7 +21,7 @@ import lombok.Getter;
 import org.apache.flink.api.connector.source.SourceSplit;
 
 /** A {@link SourceSplit} for a InfluxDB split. */
-public class InfluxDBSplit implements SourceSplit {
+public final class InfluxDBSplit implements SourceSplit {
 
     /** The unique ID of the split. Unique within the scope of this source. */
     @Getter private final long id;

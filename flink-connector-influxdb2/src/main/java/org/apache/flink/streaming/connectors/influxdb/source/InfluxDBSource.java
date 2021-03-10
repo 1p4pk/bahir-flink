@@ -53,7 +53,7 @@ import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit
  *
  * @param <OUT> the output type of the source.
  */
-public class InfluxDBSource<OUT>
+public final class InfluxDBSource<OUT>
         implements Source<OUT, InfluxDBSplit, InfluxDBSourceEnumState>, ResultTypeQueryable<OUT> {
 
     private final Properties properties;

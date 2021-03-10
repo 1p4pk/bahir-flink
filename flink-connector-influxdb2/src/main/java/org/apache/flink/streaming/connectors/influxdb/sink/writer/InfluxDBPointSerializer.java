@@ -27,7 +27,7 @@ import lombok.SneakyThrows;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.streaming.connectors.influxdb.common.InfluxParser;
 
-public class InfluxDBPointSerializer implements SimpleVersionedSerializer<Point> {
+public final class InfluxDBPointSerializer implements SimpleVersionedSerializer<Point> {
 
     private static final Charset CHARSET = StandardCharsets.UTF_8;
     private final InfluxParser parser = new InfluxParser();

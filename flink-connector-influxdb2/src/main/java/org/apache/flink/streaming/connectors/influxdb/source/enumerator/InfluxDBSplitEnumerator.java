@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 /** The enumerator class for InfluxDB source. */
 @Internal
-public class InfluxDBSplitEnumerator
+public final class InfluxDBSplitEnumerator
         implements SplitEnumerator<InfluxDBSplit, InfluxDBSourceEnumState> {
 
     private final SplitEnumeratorContext<InfluxDBSplit> context;

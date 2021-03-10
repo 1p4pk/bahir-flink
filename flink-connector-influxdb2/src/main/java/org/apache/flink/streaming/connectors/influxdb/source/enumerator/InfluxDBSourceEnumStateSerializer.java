@@ -20,7 +20,7 @@ package org.apache.flink.streaming.connectors.influxdb.source.enumerator;
 import java.io.IOException;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
-public class InfluxDBSourceEnumStateSerializer
+public final class InfluxDBSourceEnumStateSerializer
         implements SimpleVersionedSerializer<InfluxDBSourceEnumState> {
     @Override
     public int getVersion() {
@@ -28,8 +28,7 @@ public class InfluxDBSourceEnumStateSerializer
     }
 
     @Override
-    public byte[] serialize(final InfluxDBSourceEnumState influxDBSourceEnumState)
-            throws IOException {
+    public byte[] serialize(final InfluxDBSourceEnumState influxDBSourceEnumState) {
         return new byte[0];
     }
 

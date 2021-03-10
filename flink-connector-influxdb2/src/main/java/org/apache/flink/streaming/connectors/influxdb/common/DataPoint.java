@@ -25,8 +25,12 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import lombok.Getter;
 
-/** InfluxDB data points */
-public class DataPoint {
+/**
+ * InfluxDB data point class.
+ *
+ * <p>{@link InfluxParser} parses line protocol into this data point representation.
+ */
+public final class DataPoint {
     @Getter private final String name;
     private final Map<String, String> tags = new HashMap();
     private final Map<String, Object> fields = new HashMap();
@@ -38,6 +42,11 @@ public class DataPoint {
         this.timestamp = timestamp;
     }
 
+    /**
+     * Converts this {@link DataPoint} to {@link Point}.
+     *
+     * @return {@link Point}.
+     */
     public Point toPoint() {
         final Point out = new Point(this.name);
         out.time(this.timestamp, WritePrecision.NS);
@@ -46,21 +55,45 @@ public class DataPoint {
         return out;
     }
 
+    /**
+     * Adds key and value to field set.
+     *
+     * @param field Key of field.
+     * @param value Value for the field key.
+     */
     public void addField(final String field, final Object value) {
         Arguments.checkNonEmpty(field, "fieldName");
         this.fields.put(field, value);
     }
 
+    /**
+     * Gets value for a specific field.
+     *
+     * @param field Key of field.
+     * @return value Value for the field key.
+     */
     public Object getField(final String field) {
         Arguments.checkNonEmpty(field, "fieldName");
         return this.fields.getOrDefault(field, null);
     }
 
+    /**
+     * Adds key and value to tag set.
+     *
+     * @param key Key of tag.
+     * @param value Value for the tag key.
+     */
     public void addTag(final String key, final String value) {
         Arguments.checkNotNull(key, "tagName");
         this.tags.put(key, value);
     }
 
+    /**
+     * Gets value for a specific tag.
+     *
+     * @param key Key of tag.
+     * @return value Value for the tag key.
+     */
     public String getTag(final String key) {
         Arguments.checkNotNull(key, "tagName");
         return this.tags.getOrDefault(key, null);

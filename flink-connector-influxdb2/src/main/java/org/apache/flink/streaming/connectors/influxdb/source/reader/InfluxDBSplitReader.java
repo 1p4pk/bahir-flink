@@ -45,7 +45,7 @@ import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit
  * <p>The returned type are in the format of {@link DataPoint}.
  */
 @Slf4j
-public class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit> {
+public final class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit> {
 
     private final long enqueueWaitTime;
     private final int maximumLinesPerRequest;

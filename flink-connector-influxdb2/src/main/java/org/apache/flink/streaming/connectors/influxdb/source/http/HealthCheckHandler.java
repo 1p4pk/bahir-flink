@@ -20,9 +20,9 @@ package org.apache.flink.streaming.connectors.influxdb.source.http;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 
-public class HealthCheckHandler extends Handler {
+public final class HealthCheckHandler extends Handler {
     @Override
     public void handle(final HttpExchange t) throws IOException {
-        sendResponse(t, 200, "ready for writes");
+        this.sendResponse(t, 200, "ready for writes");
     }
 }

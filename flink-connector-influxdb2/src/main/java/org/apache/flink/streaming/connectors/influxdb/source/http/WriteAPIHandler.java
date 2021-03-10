@@ -36,7 +36,7 @@ import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.common.InfluxParser;
 
 @Slf4j
-public class WriteAPIHandler extends Handler {
+public final class WriteAPIHandler extends Handler {
     private final InfluxParser parser = new InfluxParser();
     private final int maximumLinesPerRequest;
     private final FutureCompletingBlockingQueue ingestionQueue;
