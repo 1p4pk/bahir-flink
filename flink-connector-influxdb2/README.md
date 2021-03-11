@@ -6,7 +6,7 @@ This connector provides a Source that parses the [InfluxDB Line Protocol](https:
 
 To use this connector, add the following dependency to your project:
 
-```xml=
+```xml
 <dependency>
   <groupId>org.apache.bahir</groupId>
   <artifactId>flink-connector-influxdb2_2.12</artifactId>
@@ -42,7 +42,7 @@ When using Telegraf, you have two choices to configure it. You can either config
 
 ### Usage
 
-```java=
+```java
 InfluxDBSource<Long> influxDBSource = InfluxBSource.<Long>builder()
         .setDeserializer(new TestDeserializer())
         .build()
@@ -101,7 +101,7 @@ The timestamp refers to the latest element that Flink serializes.
 
 ### Usage
 
-```java=
+```java
 // The InfluxDB Sink uses the build pattern to create a Sink object
 InfluxDBSink<Long> influxDBSink = InfluxDBSink.<Long>builder()
         .setInfluxDBSchemaSerializer(new TestSerializer())
