@@ -15,10 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.streaming.connectors;
+package org.apache.flink.streaming.connectors.influxdb;
 
 import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.getInfluxDBClient;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.influxdb.client.InfluxDBClient;
@@ -36,8 +37,8 @@ import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSink;
-import org.apache.flink.streaming.connectors.util.InfluxDBContainer;
-import org.apache.flink.streaming.connectors.util.InfluxDBTestSerializer;
+import org.apache.flink.streaming.connectors.influxdb.util.InfluxDBContainer;
+import org.apache.flink.streaming.connectors.influxdb.util.InfluxDBTestSerializer;
 import org.apache.flink.streaming.util.FiniteTestSource;
 import org.apache.flink.util.TestLogger;
 import org.junit.jupiter.api.Test;
@@ -84,7 +85,7 @@ class InfluxDBSinkIntegrationTestCase extends TestLogger {
                         .setInfluxDBPassword(InfluxDBContainer.getPassword())
                         .setInfluxDBBucket(InfluxDBContainer.getBucket())
                         .setInfluxDBOrganization(InfluxDBContainer.getOrganization())
-                        .setDataPointCheckpoint(true)
+                        .addCheckpointDataPoint(true)
                         .build();
 
         env.addSource(new FiniteTestSource(SOURCE_DATA), BasicTypeInfo.LONG_TYPE_INFO)

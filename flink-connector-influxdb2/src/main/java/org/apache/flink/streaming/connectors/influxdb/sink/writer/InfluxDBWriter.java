@@ -76,11 +76,11 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
     public void write(final IN in, final Context context) {
         try {
             if (this.elements.size() == this.bufferSize) {
-                log.info("Buffer size reached preparing to write the elements.");
+                log.debug("Buffer size reached preparing to write the elements.");
                 this.writeCurrentElements();
                 this.elements.clear();
             } else {
-                log.debug("Adding elements to buffer. Buffer size: {}", this.elements.size());
+                log.trace("Adding elements to buffer. Buffer size: {}", this.elements.size());
                 this.elements.add(this.schemaSerializer.serialize(in, context));
                 if (context.timestamp() != null) {
                     this.lastTimestamp = Math.max(this.lastTimestamp, context.timestamp());
@@ -92,7 +92,7 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
     }
 
     /**
-     * This method is called whenever a checkpoint is set by Flink. It creates a list and feels it
+     * This method is called whenever a checkpoint is set by Flink. It creates a list and fills it
      * up with the latest timestamp.
      *
      * @param flush
@@ -115,7 +115,7 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
 
     @Override
     public void close() throws Exception {
-        log.debug("Preparing to write the elements in close.");
+        log.debug("Preparing to write the elements in InfluxDB.");
         this.writeCurrentElements();
         log.debug("Closing the writer.");
         this.elements.clear();

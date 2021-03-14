@@ -31,31 +31,46 @@ import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchema
 
 public final class InfluxDBSinkBuilder<IN> {
     private InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer;
+    private String influxDBUrl;
+    private String influxDBUsername;
+    private String influxDBPassword;
+    private String bucketName;
+    private String organizationName;
     private final Properties properties;
 
     public InfluxDBSinkBuilder() {
+        this.influxDBUrl = null;
+        this.influxDBUsername = null;
+        this.influxDBPassword = null;
+        this.bucketName = null;
+        this.organizationName = null;
         this.influxDBSchemaSerializer = null;
         this.properties = new Properties();
     }
 
     public InfluxDBSinkBuilder<IN> setInfluxDBUrl(final String influxDBUrl) {
+        this.influxDBUrl = influxDBUrl;
         return this.setProperty(INFLUXDB_URL.key(), influxDBUrl);
     }
 
-    public InfluxDBSinkBuilder<IN> setInfluxDBUsername(final String influxDBUrl) {
-        return this.setProperty(INFLUXDB_USERNAME.key(), influxDBUrl);
+    public InfluxDBSinkBuilder<IN> setInfluxDBUsername(final String influxDBUsername) {
+        this.influxDBUsername = influxDBUsername;
+        return this.setProperty(INFLUXDB_USERNAME.key(), influxDBUsername);
     }
 
-    public InfluxDBSinkBuilder<IN> setInfluxDBPassword(final String influxDBUrl) {
-        return this.setProperty(INFLUXDB_PASSWORD.key(), influxDBUrl);
+    public InfluxDBSinkBuilder<IN> setInfluxDBPassword(final String influxDBPassword) {
+        this.influxDBPassword = influxDBPassword;
+        return this.setProperty(INFLUXDB_PASSWORD.key(), influxDBPassword);
     }
 
-    public InfluxDBSinkBuilder<IN> setInfluxDBBucket(final String influxDBUrl) {
-        return this.setProperty(INFLUXDB_BUCKET.key(), influxDBUrl);
+    public InfluxDBSinkBuilder<IN> setInfluxDBBucket(final String bucketName) {
+        this.bucketName = bucketName;
+        return this.setProperty(INFLUXDB_BUCKET.key(), bucketName);
     }
 
-    public InfluxDBSinkBuilder<IN> setInfluxDBOrganization(final String influxDBUrl) {
-        return this.setProperty(INFLUXDB_ORGANIZATION.key(), influxDBUrl);
+    public InfluxDBSinkBuilder<IN> setInfluxDBOrganization(final String organizationName) {
+        this.organizationName = organizationName;
+        return this.setProperty(INFLUXDB_ORGANIZATION.key(), organizationName);
     }
 
     public InfluxDBSinkBuilder<IN> setInfluxDBSchemaSerializer(
@@ -64,11 +79,14 @@ public final class InfluxDBSinkBuilder<IN> {
         return this;
     }
 
-    public InfluxDBSinkBuilder<IN> setDataPointCheckpoint(final boolean shouldWrite) {
+    public InfluxDBSinkBuilder<IN> addCheckpointDataPoint(final boolean shouldWrite) {
         return this.setProperty(WRITE_DATA_POINT_CHECKPOINT.key(), String.valueOf(shouldWrite));
     }
 
     public InfluxDBSinkBuilder<IN> setWriteBufferSize(final int bufferSize) {
+        if (bufferSize <= 0) {
+            throw new IllegalArgumentException("The buffer size should be greater than 0.");
+        }
         return this.setProperty(WRITE_BUFFER_SIZE.key(), String.valueOf(bufferSize));
     }
 
@@ -94,8 +112,13 @@ public final class InfluxDBSinkBuilder<IN> {
     /** Checks if the SchemaSerializer and the influxDBConfig are not null and set. */
     private void sanityCheck() {
         // Check required settings.
+        checkNotNull(this.influxDBUrl, "The InfluxDB URL is required but not provided.");
+        checkNotNull(this.influxDBUsername, "The InfluxDB username is required but not provided.");
+        checkNotNull(this.influxDBPassword, "The InfluxDB password is required but not provided.");
+        checkNotNull(this.bucketName, "The Bucket name is required but not provided.");
+        checkNotNull(this.organizationName, "The Organization name is required but not provided.");
         checkNotNull(
                 this.influxDBSchemaSerializer,
-                "Deserialization schema is required but not provided.");
+                "Serialization schema is required but not provided.");
     }
 }

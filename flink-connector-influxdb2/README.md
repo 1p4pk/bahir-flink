@@ -85,6 +85,7 @@ class TestDeserializer implements InfluxDBDataPointDeserializer<Long> {
 |    Boolean    | ✅            |
 
 See InfluxDB field set value [data type](https://docs.influxdata.com/influxdb/cloud/reference/syntax/line-protocol/#field-set).
+The parsing limitation is related to the Apache Druid project. For more information see this [issue](https://github.com/apache/druid/issues/10993)
  
 
 ## Sink

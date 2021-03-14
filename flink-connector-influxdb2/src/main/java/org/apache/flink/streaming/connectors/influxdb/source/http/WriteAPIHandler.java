@@ -37,7 +37,6 @@ import org.apache.flink.streaming.connectors.influxdb.common.InfluxParser;
 
 @Slf4j
 public final class WriteAPIHandler extends Handler {
-    private final InfluxParser parser = new InfluxParser();
     private final int maximumLinesPerRequest;
     private final FutureCompletingBlockingQueue ingestionQueue;
     private final int threadIndex;
@@ -65,7 +64,7 @@ public final class WriteAPIHandler extends Handler {
             final List<DataPoint> points = new ArrayList<>();
             int numberOfLinesParsed = 0;
             while ((line = in.readLine()) != null) {
-                final DataPoint dataPoint = this.parser.parseToDataPoint(line);
+                final DataPoint dataPoint = InfluxParser.parseToDataPoint(line);
                 points.add(dataPoint);
                 numberOfLinesParsed++;
                 if (numberOfLinesParsed > this.maximumLinesPerRequest) {

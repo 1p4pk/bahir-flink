@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.streaming.connectors.util;
+package org.apache.flink.streaming.connectors.influxdb.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -101,5 +101,22 @@ public final class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
 
     public String getUrl() {
         return "http://" + this.getHost() + ":" + this.getMappedPort(INFLUXDB_PORT);
+    }
+
+    private enum RetentionUnit {
+        NANOSECONDS("ns"),
+        MICROSECONDS("us"),
+        MILLISECONDS("ms"),
+        SECONDS("s"),
+        MINUTES("m"),
+        HOURS("h"),
+        DAYS("d"),
+        WEEKS("w");
+
+        final String label;
+
+        RetentionUnit(final String label) {
+            this.label = label;
+        }
     }
 }

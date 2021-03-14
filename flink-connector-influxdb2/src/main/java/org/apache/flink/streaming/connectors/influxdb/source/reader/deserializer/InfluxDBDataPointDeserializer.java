@@ -17,6 +17,7 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source.reader.deserializer;
 
+import java.io.IOException;
 import java.io.Serializable;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
@@ -30,9 +31,9 @@ public interface InfluxDBDataPointDeserializer<OUT> extends Serializable, Result
      * Deserialize a data point into the given collector.
      *
      * @param dataPoint the {@code DataPoint} to deserialize.
-     * @throws Exception if the deserialization failed.
+     * @throws IOException if the deserialization failed.
      */
-    OUT deserialize(DataPoint dataPoint) throws Exception;
+    OUT deserialize(DataPoint dataPoint) throws IOException;
 
     // static function for single data point
 

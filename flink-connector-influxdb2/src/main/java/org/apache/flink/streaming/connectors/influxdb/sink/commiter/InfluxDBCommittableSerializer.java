@@ -33,9 +33,9 @@ public final class InfluxDBCommittableSerializer implements SimpleVersionedSeria
     }
 
     @Override
-    public byte[] serialize(final Long value) {
+    public byte[] serialize(final Long timestamp) {
         final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-        buffer.putLong(0, value);
+        buffer.putLong(0, timestamp);
         return buffer.array();
     }
 
