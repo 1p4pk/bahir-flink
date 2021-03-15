@@ -21,8 +21,8 @@ import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 
 /**
- * Handles incoming health check requests from /health path. If the server is running a response code
- * 200 is sent
+ * Handles incoming health check requests from /health path. If the server is running a response
+ * code 200 is sent
  */
 public final class HealthCheckHandler extends Handler {
 
