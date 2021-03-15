@@ -20,12 +20,11 @@ package org.apache.flink.streaming.connectors.influxdb.sink;
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
 import com.influxdb.client.InfluxDBClientOptions;
-import java.util.Properties;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
-import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBOptionsBase;
+import org.apache.flink.configuration.Configuration;
 
-public final class InfluxDBSinkOptions extends InfluxDBOptionsBase {
+public final class InfluxDBSinkOptions {
 
     private InfluxDBSinkOptions() {}
 
@@ -73,20 +72,12 @@ public final class InfluxDBSinkOptions extends InfluxDBOptionsBase {
                     .noDefaultValue()
                     .withDescription("InfluxDB organization name.");
 
-    public static boolean writeDataPointCheckpoint(final Properties properties) {
-        return getOption(properties, WRITE_DATA_POINT_CHECKPOINT, Boolean::parseBoolean);
-    }
-
-    public static int getBufferSizeCapacity(final Properties properties) {
-        return getOption(properties, WRITE_BUFFER_SIZE, Integer::parseInt);
-    }
-
-    public static InfluxDBClient getInfluxDBClient(final Properties properties) {
-        final String url = getOption(properties, INFLUXDB_URL, String::toString);
-        final String username = getOption(properties, INFLUXDB_USERNAME, String::toString);
-        final String password = getOption(properties, INFLUXDB_PASSWORD, String::toString);
-        final String bucket = getOption(properties, INFLUXDB_BUCKET, String::toString);
-        final String organization = getOption(properties, INFLUXDB_ORGANIZATION, String::toString);
+    public static InfluxDBClient getInfluxDBClient(final Configuration configuration) {
+        final String url = configuration.getString(INFLUXDB_URL);
+        final String username = configuration.getString(INFLUXDB_USERNAME);
+        final String password = configuration.getString(INFLUXDB_PASSWORD);
+        final String bucket = configuration.getString(INFLUXDB_BUCKET);
+        final String organization = configuration.getString(INFLUXDB_ORGANIZATION);
         final InfluxDBClientOptions influxDBClientOptions =
                 InfluxDBClientOptions.builder()
                         .url(url)

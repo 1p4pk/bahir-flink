@@ -17,9 +17,9 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.sink.writer;
 
-import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.getBufferSizeCapacity;
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.WRITE_BUFFER_SIZE;
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.WRITE_DATA_POINT_CHECKPOINT;
 import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.getInfluxDBClient;
-import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.writeDataPointCheckpoint;
 
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.WriteApi;
@@ -27,10 +27,10 @@ import com.influxdb.client.write.Point;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.connector.sink.Sink.ProcessingTimeService;
 import org.apache.flink.api.connector.sink.SinkWriter;
+import org.apache.flink.configuration.Configuration;
 
 /**
  * This Class implements the {@link SinkWriter} and it is responsible to write incoming inputs to
@@ -55,12 +55,13 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
     private final InfluxDBClient influxDBClient;
 
     public InfluxDBWriter(
-            final InfluxDBSchemaSerializer<IN> schemaSerializer, final Properties properties) {
+            final InfluxDBSchemaSerializer<IN> schemaSerializer,
+            final Configuration configuration) {
         this.schemaSerializer = schemaSerializer;
-        this.bufferSize = getBufferSizeCapacity(properties);
+        this.bufferSize = configuration.getInteger(WRITE_BUFFER_SIZE);
         this.elements = new ArrayList<>(this.bufferSize);
-        this.writeCheckpoint = writeDataPointCheckpoint(properties);
-        this.influxDBClient = getInfluxDBClient(properties);
+        this.writeCheckpoint = configuration.getBoolean(WRITE_DATA_POINT_CHECKPOINT);
+        this.influxDBClient = getInfluxDBClient(configuration);
     }
 
     /**

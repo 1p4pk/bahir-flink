@@ -17,8 +17,8 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.sink.commiter;
 
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.WRITE_DATA_POINT_CHECKPOINT;
 import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.getInfluxDBClient;
-import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.writeDataPointCheckpoint;
 
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.WriteApi;
@@ -27,10 +27,10 @@ import com.influxdb.client.write.Point;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.connector.sink.Committer;
+import org.apache.flink.configuration.Configuration;
 
 /**
  * The InfluxDBCommitter implements the {@link Committer} interface The InfluxDBCommitter is called
@@ -43,9 +43,9 @@ public final class InfluxDBCommitter implements Committer<Long> {
     private final InfluxDBClient influxDBClient;
     private final boolean writeCheckpoint;
 
-    public InfluxDBCommitter(final Properties properties) {
-        this.influxDBClient = getInfluxDBClient(properties);
-        this.writeCheckpoint = writeDataPointCheckpoint(properties);
+    public InfluxDBCommitter(final Configuration configuration) {
+        this.influxDBClient = getInfluxDBClient(configuration);
+        this.writeCheckpoint = configuration.getBoolean(WRITE_DATA_POINT_CHECKPOINT);
     }
 
     /**

@@ -19,7 +19,6 @@ package org.apache.flink.streaming.connectors.influxdb;
 
 import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.getInfluxDBClient;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.influxdb.client.InfluxDBClient;
@@ -93,7 +92,7 @@ class InfluxDBSinkIntegrationTestCase extends TestLogger {
 
         env.execute();
 
-        final InfluxDBClient client = getInfluxDBClient(influxDBSink.getProperties());
+        final InfluxDBClient client = getInfluxDBClient(influxDBSink.getConfiguration());
         final List<String> actualWrittenPoints = queryWrittenData(client);
 
         assertEquals(actualWrittenPoints.size(), EXPECTED_COMMITTED_DATA_IN_STREAMING_MODE.size());

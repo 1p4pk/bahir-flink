@@ -26,7 +26,7 @@ import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOp
 import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.WRITE_DATA_POINT_CHECKPOINT;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-import java.util.Properties;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 
 public final class InfluxDBSinkBuilder<IN> {
@@ -36,7 +36,7 @@ public final class InfluxDBSinkBuilder<IN> {
     private String influxDBPassword;
     private String bucketName;
     private String organizationName;
-    private final Properties properties;
+    private final Configuration configuration;
 
     public InfluxDBSinkBuilder() {
         this.influxDBUrl = null;
@@ -45,32 +45,37 @@ public final class InfluxDBSinkBuilder<IN> {
         this.bucketName = null;
         this.organizationName = null;
         this.influxDBSchemaSerializer = null;
-        this.properties = new Properties();
+        this.configuration = new Configuration();
     }
 
     public InfluxDBSinkBuilder<IN> setInfluxDBUrl(final String influxDBUrl) {
         this.influxDBUrl = influxDBUrl;
-        return this.setProperty(INFLUXDB_URL.key(), influxDBUrl);
+        this.configuration.setString(INFLUXDB_URL, influxDBUrl);
+        return this;
     }
 
     public InfluxDBSinkBuilder<IN> setInfluxDBUsername(final String influxDBUsername) {
         this.influxDBUsername = influxDBUsername;
-        return this.setProperty(INFLUXDB_USERNAME.key(), influxDBUsername);
+        this.configuration.setString(INFLUXDB_USERNAME, influxDBUsername);
+        return this;
     }
 
     public InfluxDBSinkBuilder<IN> setInfluxDBPassword(final String influxDBPassword) {
         this.influxDBPassword = influxDBPassword;
-        return this.setProperty(INFLUXDB_PASSWORD.key(), influxDBPassword);
+        this.configuration.setString(INFLUXDB_PASSWORD, influxDBPassword);
+        return this;
     }
 
     public InfluxDBSinkBuilder<IN> setInfluxDBBucket(final String bucketName) {
         this.bucketName = bucketName;
-        return this.setProperty(INFLUXDB_BUCKET.key(), bucketName);
+        this.configuration.setString(INFLUXDB_BUCKET, bucketName);
+        return this;
     }
 
     public InfluxDBSinkBuilder<IN> setInfluxDBOrganization(final String organizationName) {
         this.organizationName = organizationName;
-        return this.setProperty(INFLUXDB_ORGANIZATION.key(), organizationName);
+        this.configuration.setString(INFLUXDB_ORGANIZATION, organizationName);
+        return this;
     }
 
     public InfluxDBSinkBuilder<IN> setInfluxDBSchemaSerializer(
@@ -80,34 +85,24 @@ public final class InfluxDBSinkBuilder<IN> {
     }
 
     public InfluxDBSinkBuilder<IN> addCheckpointDataPoint(final boolean shouldWrite) {
-        return this.setProperty(WRITE_DATA_POINT_CHECKPOINT.key(), String.valueOf(shouldWrite));
+        this.configuration.setBoolean(WRITE_DATA_POINT_CHECKPOINT, shouldWrite);
+        return this;
     }
 
     public InfluxDBSinkBuilder<IN> setWriteBufferSize(final int bufferSize) {
         if (bufferSize <= 0) {
             throw new IllegalArgumentException("The buffer size should be greater than 0.");
         }
-        return this.setProperty(WRITE_BUFFER_SIZE.key(), String.valueOf(bufferSize));
+        this.configuration.setInteger(WRITE_BUFFER_SIZE, bufferSize);
+        return this;
     }
 
     public InfluxDBSink<IN> build() {
         this.sanityCheck();
-        return new InfluxDBSink<>(this.influxDBSchemaSerializer, this.properties);
+        return new InfluxDBSink<>(this.influxDBSchemaSerializer, this.configuration);
     }
 
     // ------------- private helpers  --------------
-    /**
-     * Set an arbitrary property for the InfluxDBSink. The valid keys can be found in {@link
-     * InfluxDBSinkOptions}.
-     *
-     * @param key the key of the property.
-     * @param value the value of the property.
-     * @return this InfluxDBSinkBuilder.
-     */
-    private InfluxDBSinkBuilder<IN> setProperty(final String key, final String value) {
-        this.properties.setProperty(key, value);
-        return this;
-    }
 
     /** Checks if the SchemaSerializer and the influxDBConfig are not null and set. */
     private void sanityCheck() {
