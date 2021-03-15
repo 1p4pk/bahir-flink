@@ -35,6 +35,11 @@ import org.apache.flink.connector.base.source.reader.synchronization.FutureCompl
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.common.InfluxParser;
 
+/**
+ * This class handles the incoming requests through the path /api/v2/write. The handle function
+ * reads each line in the body and uses the {@link InfluxParser} to pars them to {@link DataPoint}
+ * objects.
+ */
 @Slf4j
 public final class WriteAPIHandler extends Handler {
     private final int maximumLinesPerRequest;
@@ -94,15 +99,15 @@ public final class WriteAPIHandler extends Handler {
             t.sendResponseHeaders(HttpURLConnection.HTTP_NO_CONTENT, -1);
             this.ingestionQueue.notifyAvailable();
         } catch (final ParseException e) {
-            this.sendResponse(t, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+            Handler.sendResponse(t, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
         } catch (final RequestTooLargeException e) {
-            this.sendResponse(t, HttpURLConnection.HTTP_ENTITY_TOO_LARGE, e.getMessage());
+            Handler.sendResponse(t, HttpURLConnection.HTTP_ENTITY_TOO_LARGE, e.getMessage());
         } catch (final TimeoutException e) {
             final int HTTP_TOO_MANY_REQUESTS = 429;
-            this.sendResponse(t, HTTP_TOO_MANY_REQUESTS, "Server overloaded");
+            Handler.sendResponse(t, HTTP_TOO_MANY_REQUESTS, "Server overloaded");
             log.error(e.getMessage());
         } catch (final ExecutionException | InterruptedException e) {
-            this.sendResponse(t, HttpURLConnection.HTTP_INTERNAL_ERROR, "Server Error");
+            Handler.sendResponse(t, HttpURLConnection.HTTP_INTERNAL_ERROR, "Server Error");
             log.error(e.getMessage());
         }
     }

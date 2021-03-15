@@ -96,7 +96,7 @@ public final class InfluxDBSource<OUT>
     public SplitEnumerator<InfluxDBSplit, InfluxDBSourceEnumState> restoreEnumerator(
             final SplitEnumeratorContext<InfluxDBSplit> splitEnumeratorContext,
             final InfluxDBSourceEnumState influxDBSourceEnumState) {
-        return null;
+        return new InfluxDBSplitEnumerator(splitEnumeratorContext);
     }
 
     @Override
