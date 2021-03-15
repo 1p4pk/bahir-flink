@@ -46,20 +46,14 @@ import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSource;
 import org.apache.flink.streaming.connectors.influxdb.util.InfluxDBTestDeserializer;
 import org.apache.flink.util.TestLogger;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
 /** Integration test for the InfluxDB source for Flink. */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class InfluxDBSourceIntegrationTestCase extends TestLogger {
 
     private static final String HTTP_ADDRESS = "http://localhost";
-    private ServerSocket serverSocket = null;
     private int port = 0;
 
     private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
@@ -79,26 +73,11 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
     @BeforeEach
     void init() {
         CollectSink.VALUES.clear();
-        try {
-            this.serverSocket = new ServerSocket(0);
-            this.port = this.serverSocket.getLocalPort();
+        try (final ServerSocket serverSocket = new ServerSocket(0)) {
+            this.port = serverSocket.getLocalPort();
             this.log.info("Using port {} for the HTTP server", this.port);
         } catch (final IOException ioException) {
             this.log.error("Could not open open port {}", ioException.getMessage());
-        }
-    }
-
-    @BeforeAll
-    void setUp() {
-    }
-
-    @AfterEach
-    void tearDown() {
-        try {
-            this.log.info("Closing port {}", this.port);
-            this.serverSocket.close();
-        } catch (final IOException e) {
-            e.printStackTrace();
         }
     }
 
