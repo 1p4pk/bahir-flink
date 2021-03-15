@@ -84,8 +84,9 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
      * Test the following topology.
      *
      * <pre>
-     *     test longValue=1i 1         +1               2
-     *     (source1/1) ------------> (map1/1) -----> (sink1/1)
+     *     test longValue=1i 1     +1            2
+     *     test longValue=2i 1     +1            3
+     *     (source) ------------> (map) -----> (sink)
      * </pre>
      */
     @Test
@@ -104,7 +105,8 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
         final JobClient jobClient = this.env.executeAsync();
         assertTrue(this.checkHealthCheckAvailable());
 
-        final int writeResponseCode = this.writeToInfluxDB("test longValue=1i 1");
+        final int writeResponseCode =
+                this.writeToInfluxDB("test longValue=1i 1\ntest longValue=2i 2");
 
         assertEquals(writeResponseCode, HttpURLConnection.HTTP_NO_CONTENT);
 
@@ -112,6 +114,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
 
         final Collection<Long> results = new ArrayList<>();
         results.add(2L);
+        results.add(3L);
         Thread.sleep(500);
         assertTrue(CollectSink.VALUES.containsAll(results));
     }
