@@ -20,7 +20,6 @@ package org.apache.flink.streaming.connectors.influxdb.sink;
 import com.influxdb.client.write.Point;
 import java.util.List;
 import java.util.Optional;
-import lombok.Getter;
 import org.apache.flink.api.connector.sink.Committer;
 import org.apache.flink.api.connector.sink.GlobalCommitter;
 import org.apache.flink.api.connector.sink.Sink;
@@ -36,7 +35,7 @@ import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter
 public final class InfluxDBSink<IN> implements Sink<IN, Long, Point, Void> {
 
     private final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer;
-    @Getter private final Configuration configuration;
+    private final Configuration configuration;
 
     InfluxDBSink(
             final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer,
@@ -86,5 +85,9 @@ public final class InfluxDBSink<IN> implements Sink<IN, Long, Point, Void> {
     @Override
     public Optional<SimpleVersionedSerializer<Void>> getGlobalCommittableSerializer() {
         return Optional.empty();
+    }
+
+    public Configuration getConfiguration() {
+        return this.configuration;
     }
 }

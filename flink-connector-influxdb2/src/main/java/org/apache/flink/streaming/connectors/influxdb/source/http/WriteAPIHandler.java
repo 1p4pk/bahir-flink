@@ -30,18 +30,20 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.common.InfluxParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class handles the incoming requests through the path /api/v2/write. The handle function
  * reads each line in the body and uses the {@link InfluxParser} to pars them to {@link DataPoint}
  * objects.
  */
-@Slf4j
 public final class WriteAPIHandler extends Handler {
+    private static final Logger LOG = LoggerFactory.getLogger(WriteAPIHandler.class);
+
     private final int maximumLinesPerRequest;
     private final FutureCompletingBlockingQueue ingestionQueue;
     private final int threadIndex;
@@ -105,10 +107,10 @@ public final class WriteAPIHandler extends Handler {
         } catch (final TimeoutException e) {
             final int HTTP_TOO_MANY_REQUESTS = 429;
             Handler.sendResponse(t, HTTP_TOO_MANY_REQUESTS, "Server overloaded");
-            log.error(e.getMessage());
+            LOG.error(e.getMessage());
         } catch (final ExecutionException | InterruptedException e) {
             Handler.sendResponse(t, HttpURLConnection.HTTP_INTERNAL_ERROR, "Server Error");
-            log.error(e.getMessage());
+            LOG.error(e.getMessage());
         }
     }
 

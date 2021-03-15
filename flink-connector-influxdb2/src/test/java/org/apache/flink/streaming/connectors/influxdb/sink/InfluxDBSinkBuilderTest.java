@@ -33,11 +33,10 @@ class InfluxDBSinkBuilderTest {
                         () ->
                                 InfluxDBSink.<Long>builder()
                                         .setInfluxDBSchemaSerializer(new InfluxDBTestSerializer())
-                                        .setInfluxDBUsername(InfluxDBContainer.getUsername())
-                                        .setInfluxDBPassword(InfluxDBContainer.getPassword())
-                                        .setInfluxDBBucket(InfluxDBContainer.getBucket())
-                                        .setInfluxDBOrganization(
-                                                InfluxDBContainer.getOrganization())
+                                        .setInfluxDBUsername(InfluxDBContainer.username)
+                                        .setInfluxDBPassword(InfluxDBContainer.password)
+                                        .setInfluxDBBucket(InfluxDBContainer.bucket)
+                                        .setInfluxDBOrganization(InfluxDBContainer.organization)
                                         .build());
         assertEquals(exception.getMessage(), "The InfluxDB URL is required but not provided.");
     }
@@ -50,10 +49,9 @@ class InfluxDBSinkBuilderTest {
                         () ->
                                 InfluxDBSink.<Long>builder()
                                         .setInfluxDBUrl("http://localhost:8086")
-                                        .setInfluxDBPassword(InfluxDBContainer.getPassword())
-                                        .setInfluxDBBucket(InfluxDBContainer.getBucket())
-                                        .setInfluxDBOrganization(
-                                                InfluxDBContainer.getOrganization())
+                                        .setInfluxDBPassword(InfluxDBContainer.password)
+                                        .setInfluxDBBucket(InfluxDBContainer.bucket)
+                                        .setInfluxDBOrganization(InfluxDBContainer.organization)
                                         .setInfluxDBSchemaSerializer(new InfluxDBTestSerializer())
                                         .build());
         assertEquals(exception.getMessage(), "The InfluxDB username is required but not provided.");
@@ -67,10 +65,9 @@ class InfluxDBSinkBuilderTest {
                         () ->
                                 InfluxDBSink.<Long>builder()
                                         .setInfluxDBUrl("http://localhost:8086")
-                                        .setInfluxDBUsername(InfluxDBContainer.getUsername())
-                                        .setInfluxDBBucket(InfluxDBContainer.getBucket())
-                                        .setInfluxDBOrganization(
-                                                InfluxDBContainer.getOrganization())
+                                        .setInfluxDBUsername(InfluxDBContainer.username)
+                                        .setInfluxDBBucket(InfluxDBContainer.bucket)
+                                        .setInfluxDBOrganization(InfluxDBContainer.organization)
                                         .setInfluxDBSchemaSerializer(new InfluxDBTestSerializer())
                                         .build());
         assertEquals(exception.getMessage(), "The InfluxDB password is required but not provided.");
@@ -84,10 +81,9 @@ class InfluxDBSinkBuilderTest {
                         () ->
                                 InfluxDBSink.<Long>builder()
                                         .setInfluxDBUrl("http://localhost:8086")
-                                        .setInfluxDBUsername(InfluxDBContainer.getUsername())
-                                        .setInfluxDBPassword(InfluxDBContainer.getPassword())
-                                        .setInfluxDBOrganization(
-                                                InfluxDBContainer.getOrganization())
+                                        .setInfluxDBUsername(InfluxDBContainer.username)
+                                        .setInfluxDBPassword(InfluxDBContainer.password)
+                                        .setInfluxDBOrganization(InfluxDBContainer.organization)
                                         .setInfluxDBSchemaSerializer(new InfluxDBTestSerializer())
                                         .build());
         assertEquals(exception.getMessage(), "The Bucket name is required but not provided.");
@@ -101,9 +97,9 @@ class InfluxDBSinkBuilderTest {
                         () ->
                                 InfluxDBSink.<Long>builder()
                                         .setInfluxDBUrl("http://localhost:8086")
-                                        .setInfluxDBUsername(InfluxDBContainer.getUsername())
-                                        .setInfluxDBPassword(InfluxDBContainer.getPassword())
-                                        .setInfluxDBBucket(InfluxDBContainer.getBucket())
+                                        .setInfluxDBUsername(InfluxDBContainer.username)
+                                        .setInfluxDBPassword(InfluxDBContainer.password)
+                                        .setInfluxDBBucket(InfluxDBContainer.bucket)
                                         .setInfluxDBSchemaSerializer(new InfluxDBTestSerializer())
                                         .build());
         assertEquals(exception.getMessage(), "The Organization name is required but not provided.");
@@ -117,11 +113,10 @@ class InfluxDBSinkBuilderTest {
                         () ->
                                 InfluxDBSink.<Long>builder()
                                         .setInfluxDBUrl("http://localhost:8086")
-                                        .setInfluxDBUsername(InfluxDBContainer.getUsername())
-                                        .setInfluxDBPassword(InfluxDBContainer.getPassword())
-                                        .setInfluxDBBucket(InfluxDBContainer.getBucket())
-                                        .setInfluxDBOrganization(
-                                                InfluxDBContainer.getOrganization())
+                                        .setInfluxDBUsername(InfluxDBContainer.username)
+                                        .setInfluxDBPassword(InfluxDBContainer.password)
+                                        .setInfluxDBBucket(InfluxDBContainer.bucket)
+                                        .setInfluxDBOrganization(InfluxDBContainer.organization)
                                         .build());
         assertEquals(exception.getMessage(), "Serialization schema is required but not provided.");
     }

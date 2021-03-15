@@ -28,10 +28,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.connector.sink.Sink.ProcessingTimeService;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.configuration.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This Class implements the {@link SinkWriter} and it is responsible to write incoming inputs to
@@ -44,8 +45,9 @@ import org.apache.flink.configuration.Configuration;
  * @param <IN> Type of the input
  * @see WriteApi
  */
-@Slf4j
 public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(InfluxDBWriter.class);
 
     private final int bufferSize;
     private final boolean writeCheckpoint;
@@ -77,11 +79,11 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
     @Override
     public void write(final IN in, final Context context) throws IOException {
         if (this.elements.size() == this.bufferSize) {
-            log.debug("Buffer size reached preparing to write the elements.");
+            LOG.debug("Buffer size reached preparing to write the elements.");
             this.writeCurrentElements();
             this.elements.clear();
         } else {
-            log.trace("Adding elements to buffer. Buffer size: {}", this.elements.size());
+            LOG.trace("Adding elements to buffer. Buffer size: {}", this.elements.size());
             this.elements.add(this.schemaSerializer.serialize(in, context));
             if (context.timestamp() != null) {
                 this.lastTimestamp = Math.max(this.lastTimestamp, context.timestamp());
@@ -113,9 +115,9 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
 
     @Override
     public void close() throws Exception {
-        log.debug("Preparing to write the elements in InfluxDB.");
+        LOG.debug("Preparing to write the elements in InfluxDB.");
         this.writeCurrentElements();
-        log.debug("Closing the writer.");
+        LOG.debug("Closing the writer.");
         this.elements.clear();
     }
 
@@ -126,7 +128,7 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
     private void writeCurrentElements() {
         try (final WriteApi writeApi = this.influxDBClient.getWriteApi()) {
             writeApi.writePoints(this.elements);
-            log.debug("Wrote {} data points", this.elements.size());
+            LOG.debug("Wrote {} data points", this.elements.size());
         }
     }
 }

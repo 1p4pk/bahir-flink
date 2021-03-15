@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -44,7 +43,6 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@Slf4j
 @Testcontainers
 class InfluxDBSinkIntegrationTestCase extends TestLogger {
 
@@ -80,10 +78,10 @@ class InfluxDBSinkIntegrationTestCase extends TestLogger {
                 InfluxDBSink.<Long>builder()
                         .setInfluxDBSchemaSerializer(new InfluxDBTestSerializer())
                         .setInfluxDBUrl(influxDBContainer.getUrl())
-                        .setInfluxDBUsername(InfluxDBContainer.getUsername())
-                        .setInfluxDBPassword(InfluxDBContainer.getPassword())
-                        .setInfluxDBBucket(InfluxDBContainer.getBucket())
-                        .setInfluxDBOrganization(InfluxDBContainer.getOrganization())
+                        .setInfluxDBUsername(InfluxDBContainer.username)
+                        .setInfluxDBPassword(InfluxDBContainer.password)
+                        .setInfluxDBBucket(InfluxDBContainer.bucket)
+                        .setInfluxDBOrganization(InfluxDBContainer.organization)
                         .addCheckpointDataPoint(true)
                         .build();
 
@@ -119,7 +117,7 @@ class InfluxDBSinkIntegrationTestCase extends TestLogger {
                         "from(bucket: \"%s\") |> "
                                 + "range(start: -1h) |> "
                                 + "filter(fn:(r) => r._measurement == \"test\")",
-                        InfluxDBContainer.getBucket());
+                        InfluxDBContainer.bucket);
         final List<FluxTable> tables = influxDBClient.getQueryApi().query(query);
         for (final FluxTable table : tables) {
             for (final FluxRecord record : table.getRecords()) {
@@ -137,7 +135,7 @@ class InfluxDBSinkIntegrationTestCase extends TestLogger {
                         "from(bucket: \"%s\") |> "
                                 + "range(start: -1h) |> "
                                 + "filter(fn:(r) => r._measurement == \"checkpoint\")",
-                        InfluxDBContainer.getBucket());
+                        InfluxDBContainer.bucket);
 
         final List<FluxTable> tables = influxDBClient.getQueryApi().query(query);
         for (final FluxTable table : tables) {

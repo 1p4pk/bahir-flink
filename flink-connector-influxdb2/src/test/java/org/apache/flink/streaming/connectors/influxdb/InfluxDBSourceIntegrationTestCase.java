@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import lombok.SneakyThrows;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.core.execution.JobClient;
@@ -166,8 +165,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
         jobClient.cancel();
     }
 
-    @SneakyThrows
-    private int writeToInfluxDB(final String line) {
+    private int writeToInfluxDB(final String line) throws IOException {
         final HttpContent content = ByteArrayContent.fromString("text/plain; charset=utf-8", line);
         final HttpRequest request =
                 HTTP_REQUEST_FACTORY.buildPostRequest(
@@ -177,8 +175,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
         return request.execute().getStatusCode();
     }
 
-    @SneakyThrows
-    private boolean checkHealthCheckAvailable() {
+    private boolean checkHealthCheckAvailable() throws IOException {
         final HttpRequest request =
                 HTTP_REQUEST_FACTORY.buildGetRequest(
                         new GenericUrl(String.format("%s:%s/health", HTTP_ADDRESS, this.port)));

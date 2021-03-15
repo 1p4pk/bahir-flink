@@ -22,8 +22,8 @@ import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
-import lombok.Getter;
 
 /**
  * InfluxDB data point class.
@@ -42,10 +42,11 @@ import lombok.Getter;
  * <p>{@link InfluxParser} parses line protocol into this data point representation.
  */
 public final class DataPoint {
-    @Getter private final String measurement;
+
+    private final String measurement;
     private final Map<String, String> tags = new HashMap();
     private final Map<String, Object> fields = new HashMap();
-    @Getter private final Long timestamp;
+    private final Long timestamp;
 
     DataPoint(final String measurementName, @Nullable final Long timestamp) {
         Arguments.checkNotNull(measurementName, "measurement");
@@ -111,6 +112,10 @@ public final class DataPoint {
         return this.tags.getOrDefault(key, null);
     }
 
+    public Long getTimestamp() {
+        return this.timestamp;
+    }
+
     /**
      * A point is uniquely identified by the measurement name, tag set, and timestamp. If you submit
      * line protocol with the same measurement, tag set, and timestamp, but with a different field
@@ -140,8 +145,13 @@ public final class DataPoint {
         // typecast o to DataPoint so that we can compare data members
         final DataPoint point = (DataPoint) obj;
 
-        return point.getMeasurement().equals(this.getMeasurement())
+        return point.measurement.equals(this.measurement)
                 && point.tags.equals(this.tags)
                 && (point.timestamp.equals(this.timestamp));
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.measurement, this.fields, this.timestamp);
     }
 }

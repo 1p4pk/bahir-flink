@@ -30,9 +30,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
@@ -48,7 +47,6 @@ import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit
  *
  * <p>The returned type are in the format of {@link DataPoint}.
  */
-@Slf4j
 public final class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit> {
 
     private final long enqueueWaitTime;
@@ -69,15 +67,18 @@ public final class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxD
         this.ingestionQueue = new FutureCompletingBlockingQueue<>(capacity);
     }
 
-    @SneakyThrows
     @Override
-    public RecordsWithSplitIds<DataPoint> fetch() {
+    public RecordsWithSplitIds<DataPoint> fetch() throws IOException {
         if (this.split == null) {
             return null;
         }
         final InfluxDBSplitRecords recordsBySplits = new InfluxDBSplitRecords(this.split.splitId());
 
-        this.ingestionQueue.getAvailabilityFuture().get();
+        try {
+            this.ingestionQueue.getAvailabilityFuture().get();
+        } catch (final InterruptedException | ExecutionException exception) {
+            throw new IOException("An exception occurred during fetch", exception);
+        }
         final List<DataPoint> requests = this.ingestionQueue.poll();
         if (requests == null) {
             recordsBySplits.prepareForRead();
