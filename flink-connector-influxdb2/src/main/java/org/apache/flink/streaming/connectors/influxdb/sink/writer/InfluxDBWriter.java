@@ -24,6 +24,7 @@ import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOp
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.WriteApi;
 import com.influxdb.client.write.Point;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -74,21 +75,17 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
      * @see org.apache.flink.api.connector.sink.SinkWriter.Context
      */
     @Override
-    public void write(final IN in, final Context context) {
-        try {
-            if (this.elements.size() == this.bufferSize) {
-                log.debug("Buffer size reached preparing to write the elements.");
-                this.writeCurrentElements();
-                this.elements.clear();
-            } else {
-                log.trace("Adding elements to buffer. Buffer size: {}", this.elements.size());
-                this.elements.add(this.schemaSerializer.serialize(in, context));
-                if (context.timestamp() != null) {
-                    this.lastTimestamp = Math.max(this.lastTimestamp, context.timestamp());
-                }
+    public void write(final IN in, final Context context) throws IOException {
+        if (this.elements.size() == this.bufferSize) {
+            log.debug("Buffer size reached preparing to write the elements.");
+            this.writeCurrentElements();
+            this.elements.clear();
+        } else {
+            log.trace("Adding elements to buffer. Buffer size: {}", this.elements.size());
+            this.elements.add(this.schemaSerializer.serialize(in, context));
+            if (context.timestamp() != null) {
+                this.lastTimestamp = Math.max(this.lastTimestamp, context.timestamp());
             }
-        } catch (final Exception e) {
-            log.error(e.getMessage());
         }
     }
 
@@ -126,7 +123,7 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
         this.processingTimerService = processingTimerService;
     }
 
-    private void writeCurrentElements() throws Exception {
+    private void writeCurrentElements() {
         try (final WriteApi writeApi = this.influxDBClient.getWriteApi()) {
             writeApi.writePoints(this.elements);
             log.debug("Wrote {} data points", this.elements.size());

@@ -17,6 +17,7 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source.reader;
 
+import java.io.IOException;
 import org.apache.flink.api.connector.source.SourceOutput;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
@@ -33,7 +34,7 @@ public final class InfluxDBRecordEmitter<T> implements RecordEmitter<DataPoint, 
     @Override
     public void emitRecord(
             final DataPoint element, final SourceOutput<T> output, final InfluxDBSplit splitState)
-            throws Exception {
+            throws IOException {
         output.collect(this.dataPointDeserializer.deserialize(element), element.getTimestamp());
     }
 }

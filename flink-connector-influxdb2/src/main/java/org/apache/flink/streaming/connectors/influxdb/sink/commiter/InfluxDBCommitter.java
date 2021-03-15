@@ -24,6 +24,7 @@ import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.WriteApi;
 import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -63,7 +64,6 @@ public final class InfluxDBCommitter implements Committer<Long> {
      * @see <a
      *     href=https://docs.influxdata.com/influxdb/v2.0/reference/syntax/line-protocol/#timestamp></a>
      */
-    @SneakyThrows
     @Override
     public List<Long> commit(final List<Long> committables) {
         if (this.writeCheckpoint) {
