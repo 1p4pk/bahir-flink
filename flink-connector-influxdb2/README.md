@@ -46,7 +46,7 @@ When using Telegraf, you have two choices to configure it. You can either config
 InfluxDBSource<Long> influxDBSource = InfluxBSource.<Long>builder()
         .setDeserializer(new TestDeserializer())
         .build()
-        
+
 // ...
 
 /**
@@ -76,8 +76,8 @@ class TestDeserializer implements InfluxDBDataPointDeserializer<Long> {
 
 ### Supported Data Types in Field Set
 
-| Field Set     | Support       | 
-| ------------- |:-------------:| 
+| Field Set     | Support       |
+| ------------- |:-------------:|
 |    Float      | ✅            |
 |    Integer    | ✅            |
 |    UInteger   | ❌            |
@@ -86,7 +86,7 @@ class TestDeserializer implements InfluxDBDataPointDeserializer<Long> {
 
 See InfluxDB field set value [data type](https://docs.influxdata.com/influxdb/cloud/reference/syntax/line-protocol/#field-set).
 The parsing limitation is related to the Apache Druid project. For more information see this [issue](https://github.com/apache/druid/issues/10993)
- 
+
 
 ## Sink
 
@@ -112,7 +112,7 @@ InfluxDBSink<Long> influxDBSink = InfluxDBSink.<Long>builder()
         .setInfluxDBBucket(getBucket())     // default
         .setInfluxDBOrganization(getOrg())  // influxdata
         .build();
-        
+
 // ...
 
 /**
@@ -120,7 +120,7 @@ InfluxDBSink<Long> influxDBSink = InfluxDBSink.<Long>builder()
  * (element) -----> (dataPoint)
  *  1L -----------> test,longValue=1 fieldKey="fieldValue"
  *  2L -----------> test,longValue=2 fieldKey="fieldValue"
- *  3L -----------> test,longValue=3 fieldKey="fieldValue"           
+ *  3L -----------> test,longValue=3 fieldKey="fieldValue"
  */
 class TestSerializer implements InfluxDBSchemaSerializer<Long> {
 
@@ -151,7 +151,7 @@ class TestSerializer implements InfluxDBSchemaSerializer<Long> {
 The connector can be built by using maven:
 
 ```bash
-mvn clean install -DskipTests -pl flink-connector-influxdb2 
+mvn clean install -DskipTests -pl flink-connector-influxdb2
 ```
 
 ## Benchmarks
@@ -172,6 +172,11 @@ This timestamp was then compared to the insertion timestamp set by InfluxDB itse
 
 The results of these benchmarks are visualized [here](media/benchmarks.pdf).
 
+
+## Usage and Deployment Example
+
+See [`Shark/flink-connector-influxdb-example`](https://github.com/Shark/flink-connector-influxdb-example) for an example showing you how to use and deploy the InfluxDB source and sink connectors in a Flink application on a Kubernetes cluster.
+
 ## Future Work
 
 * [Source] Dynamic (unprivileged) ports for HTTP server
@@ -185,7 +190,7 @@ The results of these benchmarks are visualized [here](media/benchmarks.pdf).
 <table>
   <tr class="noBorder">
     <td class="noBorder" align="center">
-        <a href="https://github.com/1p4pk"><img class="roundImg"  
+        <a href="https://github.com/1p4pk"><img class="roundImg"
          src="https://avatars.githubusercontent.com/u/32157576?v=4?s=100"width="100px;"/><br /><sub><b>Leon Papke</b></sub>
          </a>
      </td>
