@@ -22,7 +22,7 @@ import org.apache.flink.api.connector.sink.SinkWriter.Context;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 import org.jetbrains.annotations.Nullable;
 
-public class InfluxDBTestSerializer<Long> implements InfluxDBSchemaSerializer<Long> {
+public class InfluxDBTestSerializer implements InfluxDBSchemaSerializer<Long> {
 
     @Override
     public Point serialize(final Long element, @Nullable final Context context) {

@@ -20,7 +20,7 @@ package org.apache.flink.streaming.connectors.influxdb.util;
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.source.reader.deserializer.InfluxDBDataPointDeserializer;
 
-public class InfluxDBTestDeserializer<Long> implements InfluxDBDataPointDeserializer<Long> {
+public class InfluxDBTestDeserializer implements InfluxDBDataPointDeserializer<Long> {
 
     @Override
     public Long deserialize(final DataPoint dataPoint) {

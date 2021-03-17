@@ -39,8 +39,8 @@ import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter
  * values from a former operator and sends it to an InfluxDB instance.
  *
  * <pre>{@code
- * InfluxDBSink<?> influxDBSink = InfluxDBSink.builder()
- * .setInfluxDBSchemaSerializer(new InfluxDBSerializer<>())
+ * InfluxDBSink<Long> influxDBSink = InfluxDBSink.builder()
+ * .setInfluxDBSchemaSerializer(new InfluxDBSerializer())
  * .setInfluxDBUrl(getUrl())
  * .setInfluxDBUsername(getUsername())
  * .setInfluxDBPassword(getPassword())
@@ -141,10 +141,11 @@ public final class InfluxDBSinkBuilder<IN> {
      * @param influxDBSchemaSerializer the serializer for the input type.
      * @return this InfluxDBSourceBuilder.
      */
-    public <I extends IN> InfluxDBSinkBuilder<I> setInfluxDBSchemaSerializer(
-            final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer) {
-        this.influxDBSchemaSerializer = influxDBSchemaSerializer;
-        return (InfluxDBSinkBuilder<I>) this;
+    public <T extends IN> InfluxDBSinkBuilder<T> setInfluxDBSchemaSerializer(
+            final InfluxDBSchemaSerializer<T> influxDBSchemaSerializer) {
+        final InfluxDBSinkBuilder<T> sinkBuilder = (InfluxDBSinkBuilder<T>) this;
+        sinkBuilder.influxDBSchemaSerializer = influxDBSchemaSerializer;
+        return sinkBuilder;
     }
 
     /**
