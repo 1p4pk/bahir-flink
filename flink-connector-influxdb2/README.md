@@ -2,7 +2,7 @@
 
 This connector provides a Source that parses the [InfluxDB Line Protocol](https://docs.influxdata.com/influxdb/v2.0/reference/syntax/line-protocol/) and a Sink that can write to [InfluxDB](https://www.influxdata.com/). The Source implements the unified [Data Source API](https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/stream/sources.html). Our sink implements the unified [Sink API](https://cwiki.apache.org/confluence/display/FLINK/FLIP-143%3A+Unified+Sink+API#FLIP143:UnifiedSinkAPI-SinkAPI).
 
-For the InfluxDB Source serves as an output target for [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/) (and compatible tools). Telegraf pushes data to the source. The process is push-based, so it is a stateless (non-replayable) source.
+The InfluxDB Source serves as an output target for [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/) (and compatible tools). Telegraf pushes data to the source. The process is push-based, so it is a stateless (non-replayable) source.
 
 ![Flink InfluxDB Connector Architecture](media/connector-architecture.png)
 
