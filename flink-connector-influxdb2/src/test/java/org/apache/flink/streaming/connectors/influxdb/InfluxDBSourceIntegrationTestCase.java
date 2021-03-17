@@ -93,10 +93,10 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
      */
     @Test
     void testIncrementPipeline() throws Exception {
-        final InfluxDBSource<Long> influxDBSource =
-                InfluxDBSource.<Long>builder()
+        final InfluxDBSource<?> influxDBSource =
+                InfluxDBSource.builder()
                         .setPort(this.port)
-                        .setDeserializer(new InfluxDBTestDeserializer())
+                        .setDeserializer(new InfluxDBTestDeserializer<>())
                         .build();
 
         this.env
@@ -122,10 +122,10 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
 
     @Test
     void testBadRequestException() throws Exception {
-        final InfluxDBSource<Long> influxDBSource =
-                InfluxDBSource.<Long>builder()
+        final InfluxDBSource<?> influxDBSource =
+                InfluxDBSource.builder()
                         .setPort(this.port)
-                        .setDeserializer(new InfluxDBTestDeserializer())
+                        .setDeserializer(new InfluxDBTestDeserializer<>())
                         .build();
 
         this.env
@@ -145,10 +145,10 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
 
     @Test
     void testRequestTooLargeException() throws Exception {
-        final InfluxDBSource<Long> influxDBSource =
-                InfluxDBSource.<Long>builder()
+        final InfluxDBSource<?> influxDBSource =
+                InfluxDBSource.builder()
                         .setPort(this.port)
-                        .setDeserializer(new InfluxDBTestDeserializer())
+                        .setDeserializer(new InfluxDBTestDeserializer<>())
                         .setMaximumLinesPerRequest(2)
                         .build();
         this.env
@@ -195,7 +195,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
     // ---------------- private helper class --------------------
 
     /** Simple incrementation with map. */
-    private static class IncrementMapFunction implements MapFunction<Long, Long> {
+    private static class IncrementMapFunction<Integer> implements MapFunction<Long, Long> {
 
         @Override
         public Long map(final Long record) {

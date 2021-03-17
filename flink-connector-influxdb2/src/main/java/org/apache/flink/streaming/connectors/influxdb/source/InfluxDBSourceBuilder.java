@@ -29,8 +29,8 @@ import org.apache.flink.util.Preconditions;
  * values from a line protocol source.
  *
  * <pre>{@code
- * InfluxDBSource<Long> influxDBSource = InfluxBSource.<Long>builder()
- * .setDeserializer(new InfluxDBDeserializer())
+ * InfluxDBSource<?> influxDBSource = InfluxBSource.builder()
+ * .setDeserializer(new InfluxDBDeserializer<>())
  * .build()
  * }</pre>
  *
@@ -60,10 +60,10 @@ public final class InfluxDBSourceBuilder<OUT> {
      *     org.apache.flink.streaming.connectors.influxdb.common.DataPoint DataPoint}.
      * @return this InfluxDBSourceBuilder.
      */
-    public InfluxDBSourceBuilder<OUT> setDeserializer(
+    public <O extends OUT> InfluxDBSourceBuilder<O> setDeserializer(
             final InfluxDBDataPointDeserializer<OUT> dataPointDeserializer) {
         this.deserializationSchema = dataPointDeserializer;
-        return this;
+        return (InfluxDBSourceBuilder<O>) this;
     }
 
     /**

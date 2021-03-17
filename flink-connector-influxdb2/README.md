@@ -43,8 +43,8 @@ When using Telegraf, you have two choices to configure it. You can either config
 ### Usage
 
 ```java
-InfluxDBSource<Long> influxDBSource = InfluxBSource.<Long>builder()
-        .setDeserializer(new TestDeserializer())
+InfluxDBSource<?> influxDBSource = InfluxBSource.builder()
+        .setDeserializer(new TestDeserializer<>())
         .build()
 
 // ...
@@ -104,8 +104,8 @@ The timestamp refers to the latest element that Flink serializes.
 
 ```java
 // The InfluxDB Sink uses the build pattern to create a Sink object
-InfluxDBSink<Long> influxDBSink = InfluxDBSink.<Long>builder()
-        .setInfluxDBSchemaSerializer(new TestSerializer())
+InfluxDBSink<?> influxDBSink = InfluxDBSink.builder()
+        .setInfluxDBSchemaSerializer(new TestSerializer<>())
         .setInfluxDBUrl(getUrl())           // http://localhost:8086
         .setInfluxDBUsername(getUsername()) // admin
         .setInfluxDBPassword(getPassword()) // admin

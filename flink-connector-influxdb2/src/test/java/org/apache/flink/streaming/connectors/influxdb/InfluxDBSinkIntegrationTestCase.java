@@ -74,9 +74,9 @@ class InfluxDBSinkIntegrationTestCase extends TestLogger {
     void testSinkDataToInfluxDB() throws Exception {
         final StreamExecutionEnvironment env = buildStreamEnv();
 
-        final InfluxDBSink<Long> influxDBSink =
-                InfluxDBSink.<Long>builder()
-                        .setInfluxDBSchemaSerializer(new InfluxDBTestSerializer())
+        final InfluxDBSink<?> influxDBSink =
+                InfluxDBSink.builder()
+                        .setInfluxDBSchemaSerializer(new InfluxDBTestSerializer<>())
                         .setInfluxDBUrl(influxDBContainer.getUrl())
                         .setInfluxDBUsername(InfluxDBContainer.username)
                         .setInfluxDBPassword(InfluxDBContainer.password)

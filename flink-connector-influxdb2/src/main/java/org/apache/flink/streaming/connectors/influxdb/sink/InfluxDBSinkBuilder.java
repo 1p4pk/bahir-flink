@@ -36,11 +36,11 @@ import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter
  * InfluxDBSink}.
  *
  * <p>The following example shows the minimum setup to create a InfluxDBSink that uses the Long
- * values from a former operator and sends it to an InlfuxDB instance.
+ * values from a former operator and sends it to an InfluxDB instance.
  *
  * <pre>{@code
- * InfluxDBSink<Long> influxDBSink = InfluxDBSink.<Long>builder()
- * .setInfluxDBSchemaSerializer(new InfluxDBSerializer())
+ * InfluxDBSink<?> influxDBSink = InfluxDBSink.builder()
+ * .setInfluxDBSchemaSerializer(new InfluxDBSerializer<>())
  * .setInfluxDBUrl(getUrl())
  * .setInfluxDBUsername(getUsername())
  * .setInfluxDBPassword(getPassword())
@@ -141,10 +141,10 @@ public final class InfluxDBSinkBuilder<IN> {
      * @param influxDBSchemaSerializer the serializer for the input type.
      * @return this InfluxDBSourceBuilder.
      */
-    public InfluxDBSinkBuilder<IN> setInfluxDBSchemaSerializer(
+    public <I extends IN> InfluxDBSinkBuilder<I> setInfluxDBSchemaSerializer(
             final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer) {
         this.influxDBSchemaSerializer = influxDBSchemaSerializer;
-        return this;
+        return (InfluxDBSinkBuilder<I>) this;
     }
 
     /**
