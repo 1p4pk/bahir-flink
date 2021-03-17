@@ -15,15 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.streaming.connectors.util;
+package org.apache.flink.streaming.connectors.influxdb.source;
 
-import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
-import org.apache.flink.streaming.connectors.influxdb.source.reader.deserializer.InfluxDBDataPointDeserializer;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class InfluxDBTestDeserializer implements InfluxDBDataPointDeserializer<Long> {
+import org.junit.jupiter.api.Test;
 
-    @Override
-    public Long deserialize(final DataPoint dataPoint) {
-        return (Long) dataPoint.getField("longValue");
+class InfluxDBSourceBuilderTest {
+    @Test
+    void shouldNotBuildSourceWhenSchemaDeserializerIsNotProvided() {
+        final NullPointerException exception =
+                assertThrows(
+                        NullPointerException.class, () -> InfluxDBSource.<Long>builder().build());
+        assertEquals(
+                exception.getMessage(), "Deserialization schema is required but not provided.");
     }
 }

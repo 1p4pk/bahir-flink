@@ -15,23 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.streaming.connectors.util;
+package org.apache.flink.streaming.connectors.influxdb.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
-import lombok.Getter;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
-@Slf4j
 public final class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
         extends GenericContainer<SELF> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(InfluxDBContainer.class);
 
     public static final Integer INFLUXDB_PORT = 8086;
 
@@ -43,12 +43,12 @@ public final class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
     private static final int NO_CONTENT_STATUS_CODE = 204;
     private static final String INFLUX_SETUP_SH = "influx-setup.sh";
 
-    @Getter private static final String username = "test-user";
-    @Getter private static final String password = "test-password";
-    @Getter private static final String bucket = "test-bucket";
-    @Getter private static final String organization = "test-org";
+    public static final String username = "test-user";
+    public static final String password = "test-password";
+    public static final String bucket = "test-bucket";
+    public static final String organization = "test-org";
     private static final int retention = 0;
-    private final String retentionUnit = RetentionUnit.NANOSECONDS.label;
+    private static final String retentionUnit = "ns";
 
     private InfluxDBContainer(final DockerImageName imageName) {
         super(imageName);
@@ -67,7 +67,7 @@ public final class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
     }
 
     public static InfluxDBContainer<?> createWithDefaultTag() {
-        log.info("Starting influxDB test container with default tag {}", DEFAULT_IMAGE_NAME);
+        LOG.info("Starting influxDB test container with default tag {}", DEFAULT_IMAGE_NAME);
         return new InfluxDBContainer<>(DEFAULT_IMAGE_NAME);
     }
 
@@ -77,7 +77,7 @@ public final class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
         this.addEnv("INFLUXDB_BUCKET", bucket);
         this.addEnv("INFLUXDB_ORG", organization);
         this.addEnv("INFLUXDB_RETENTION", String.valueOf(retention));
-        this.addEnv("INFLUXDB_RETENTION_UNIT", this.retentionUnit);
+        this.addEnv("INFLUXDB_RETENTION_UNIT", retentionUnit);
     }
 
     private void startContainer() {
@@ -86,17 +86,20 @@ public final class InfluxDBContainer<SELF extends InfluxDBContainer<SELF>>
                 String.format("%s", INFLUX_SETUP_SH));
         this.start();
         this.setUpInfluxDB();
-        log.info("Started InfluxDB container on: {}", this.getUrl());
+        LOG.info("Started InfluxDB container on: {}", this.getUrl());
     }
 
-    @SneakyThrows({InterruptedException.class, IOException.class})
     private void setUpInfluxDB() {
-        final ExecResult execResult =
-                this.execInContainer("chmod", "-x", String.format("/%s", INFLUX_SETUP_SH));
-        assertEquals(execResult.getExitCode(), 0);
-        final ExecResult writeResult =
-                this.execInContainer("/bin/bash", String.format("/%s", INFLUX_SETUP_SH));
-        assertEquals(writeResult.getExitCode(), 0);
+        final ExecResult execResult;
+        try {
+            execResult = this.execInContainer("chmod", "-x", String.format("/%s", INFLUX_SETUP_SH));
+            assertEquals(execResult.getExitCode(), 0);
+            final ExecResult writeResult =
+                    this.execInContainer("/bin/bash", String.format("/%s", INFLUX_SETUP_SH));
+            assertEquals(writeResult.getExitCode(), 0);
+        } catch (final InterruptedException | IOException e) {
+            LOG.error("An error occurred while setting up InfluxDB {}", e.getMessage());
+        }
     }
 
     public String getUrl() {

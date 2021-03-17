@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.streaming.connectors;
+package org.apache.flink.streaming.connectors.influxdb;
 
 import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.getInfluxDBClient;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,20 +31,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSink;
-import org.apache.flink.streaming.connectors.util.InfluxDBContainer;
-import org.apache.flink.streaming.connectors.util.InfluxDBTestSerializer;
+import org.apache.flink.streaming.connectors.influxdb.util.InfluxDBContainer;
+import org.apache.flink.streaming.connectors.influxdb.util.InfluxDBTestSerializer;
 import org.apache.flink.streaming.util.FiniteTestSource;
 import org.apache.flink.util.TestLogger;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@Slf4j
 @Testcontainers
 class InfluxDBSinkIntegrationTestCase extends TestLogger {
 
@@ -80,11 +78,11 @@ class InfluxDBSinkIntegrationTestCase extends TestLogger {
                 InfluxDBSink.<Long>builder()
                         .setInfluxDBSchemaSerializer(new InfluxDBTestSerializer())
                         .setInfluxDBUrl(influxDBContainer.getUrl())
-                        .setInfluxDBUsername(InfluxDBContainer.getUsername())
-                        .setInfluxDBPassword(InfluxDBContainer.getPassword())
-                        .setInfluxDBBucket(InfluxDBContainer.getBucket())
-                        .setInfluxDBOrganization(InfluxDBContainer.getOrganization())
-                        .setDataPointCheckpoint(true)
+                        .setInfluxDBUsername(InfluxDBContainer.username)
+                        .setInfluxDBPassword(InfluxDBContainer.password)
+                        .setInfluxDBBucket(InfluxDBContainer.bucket)
+                        .setInfluxDBOrganization(InfluxDBContainer.organization)
+                        .addCheckpointDataPoint(true)
                         .build();
 
         env.addSource(new FiniteTestSource(SOURCE_DATA), BasicTypeInfo.LONG_TYPE_INFO)
@@ -92,7 +90,7 @@ class InfluxDBSinkIntegrationTestCase extends TestLogger {
 
         env.execute();
 
-        final InfluxDBClient client = getInfluxDBClient(influxDBSink.getProperties());
+        final InfluxDBClient client = getInfluxDBClient(influxDBSink.getConfiguration());
         final List<String> actualWrittenPoints = queryWrittenData(client);
 
         assertEquals(actualWrittenPoints.size(), EXPECTED_COMMITTED_DATA_IN_STREAMING_MODE.size());
@@ -119,7 +117,7 @@ class InfluxDBSinkIntegrationTestCase extends TestLogger {
                         "from(bucket: \"%s\") |> "
                                 + "range(start: -1h) |> "
                                 + "filter(fn:(r) => r._measurement == \"test\")",
-                        InfluxDBContainer.getBucket());
+                        InfluxDBContainer.bucket);
         final List<FluxTable> tables = influxDBClient.getQueryApi().query(query);
         for (final FluxTable table : tables) {
             for (final FluxRecord record : table.getRecords()) {
@@ -137,7 +135,7 @@ class InfluxDBSinkIntegrationTestCase extends TestLogger {
                         "from(bucket: \"%s\") |> "
                                 + "range(start: -1h) |> "
                                 + "filter(fn:(r) => r._measurement == \"checkpoint\")",
-                        InfluxDBContainer.getBucket());
+                        InfluxDBContainer.bucket);
 
         final List<FluxTable> tables = influxDBClient.getQueryApi().query(query);
         for (final FluxTable table : tables) {

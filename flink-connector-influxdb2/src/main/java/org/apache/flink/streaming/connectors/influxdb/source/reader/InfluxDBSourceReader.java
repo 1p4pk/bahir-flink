@@ -19,6 +19,7 @@ package org.apache.flink.streaming.connectors.influxdb.source.reader;
 
 import java.util.Map;
 import java.util.function.Supplier;
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
@@ -27,6 +28,7 @@ import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
 
 /** The source reader for the InfluxDB line protocol. */
+@Internal
 public final class InfluxDBSourceReader<OUT>
         extends SingleThreadMultiplexSourceReaderBase<
                 DataPoint, OUT, InfluxDBSplit, InfluxDBSplit> {

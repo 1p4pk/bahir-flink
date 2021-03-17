@@ -19,7 +19,6 @@ package org.apache.flink.streaming.connectors.influxdb.source.enumerator;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-import java.io.IOException;
 import java.util.List;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.connector.source.SplitEnumerator;
@@ -57,10 +56,10 @@ public final class InfluxDBSplitEnumerator
     }
 
     @Override
-    public InfluxDBSourceEnumState snapshotState() throws Exception {
-        return null;
+    public InfluxDBSourceEnumState snapshotState() {
+        return new InfluxDBSourceEnumState();
     }
 
     @Override
-    public void close() throws IOException {}
+    public void close() {}
 }

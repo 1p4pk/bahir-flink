@@ -17,19 +17,38 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source;
 
-import java.util.Properties;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.connectors.influxdb.source.reader.deserializer.InfluxDBDataPointDeserializer;
 import org.apache.flink.util.Preconditions;
 
+/**
+ * The @builder class for {@link InfluxDBSource} to make it easier for the users to construct a
+ * {@link InfluxDBSource}.
+ *
+ * <p>The following example shows the minimum setup to create a InfluxDBSource that reads the Long
+ * values from a line protocol source.
+ *
+ * <pre>{@code
+ * InfluxDBSource<Long> influxDBSource = InfluxBSource.<Long>builder()
+ * .setDeserializer(new InfluxDBDeserializer())
+ * .build()
+ * }</pre>
+ *
+ * <p>To specify the starting port on which the InfluxDBSource starts its HTTP server, one can call
+ * {@link #setPort(int)}.
+ *
+ * <p>Check the Java docs of each individual methods to learn more about the settings to build a
+ * InfluxDBSource.
+ */
 public final class InfluxDBSourceBuilder<OUT> {
 
     private InfluxDBDataPointDeserializer<OUT> deserializationSchema;
     // Configurations
-    private final Properties properties;
+    private final Configuration configuration;
 
     InfluxDBSourceBuilder() {
         this.deserializationSchema = null;
-        this.properties = new Properties();
+        this.configuration = new Configuration();
     }
 
     /**
@@ -54,8 +73,8 @@ public final class InfluxDBSourceBuilder<OUT> {
      * @return this InfluxDBSourceBuilder.
      */
     public InfluxDBSourceBuilder<OUT> setEnqueueWaitTime(final long timeOut) {
-        return this.setProperty(
-                InfluxDBSourceOptions.ENQUEUE_WAIT_TIME.key(), String.valueOf(timeOut));
+        this.configuration.setLong(InfluxDBSourceOptions.ENQUEUE_WAIT_TIME, timeOut);
+        return this;
     }
 
     /**
@@ -65,8 +84,8 @@ public final class InfluxDBSourceBuilder<OUT> {
      * @return this InfluxDBSourceBuilder.
      */
     public InfluxDBSourceBuilder<OUT> setIngestQueueCapacity(final int capacity) {
-        return this.setProperty(
-                InfluxDBSourceOptions.INGEST_QUEUE_CAPACITY.key(), String.valueOf(capacity));
+        this.configuration.setInteger(InfluxDBSourceOptions.INGEST_QUEUE_CAPACITY, capacity);
+        return this;
     }
 
     /**
@@ -77,8 +96,8 @@ public final class InfluxDBSourceBuilder<OUT> {
      * @return this InfluxDBSourceBuilder.
      */
     public InfluxDBSourceBuilder<OUT> setMaximumLinesPerRequest(final int max) {
-        return this.setProperty(
-                InfluxDBSourceOptions.MAXIMUM_LINES_PER_REQUEST.key(), String.valueOf(max));
+        this.configuration.setInteger(InfluxDBSourceOptions.MAXIMUM_LINES_PER_REQUEST, max);
+        return this;
     }
 
     /**
@@ -89,18 +108,7 @@ public final class InfluxDBSourceBuilder<OUT> {
      * @return this InfluxDBSourceBuilder.
      */
     public InfluxDBSourceBuilder<OUT> setPort(final int port) {
-        return this.setProperty(InfluxDBSourceOptions.PORT.key(), String.valueOf(port));
-    }
-
-    /**
-     * Set arbitrary properties for the InfluxDBSource. The valid keys can be found in {@link
-     * InfluxDBSourceOptions}.
-     *
-     * @param properties the properties to set for the InfluxDBSource.
-     * @return this InfluxDBSourceBuilder.
-     */
-    public InfluxDBSourceBuilder<OUT> setProperties(final Properties properties) {
-        this.properties.putAll(properties);
+        this.configuration.setInteger(InfluxDBSourceOptions.PORT, port);
         return this;
     }
 
@@ -111,22 +119,10 @@ public final class InfluxDBSourceBuilder<OUT> {
      */
     public InfluxDBSource<OUT> build() {
         this.sanityCheck();
-        return new InfluxDBSource<>(this.properties, this.deserializationSchema);
+        return new InfluxDBSource<>(this.configuration, this.deserializationSchema);
     }
 
     // ------------- private helpers  --------------
-    /**
-     * Set an arbitrary property for the InfluxDBSource. The valid keys can be found in {@link
-     * InfluxDBSourceOptions}.
-     *
-     * @param key the key of the property.
-     * @param value the value of the property.
-     * @return this InfluxDBSourceBuilder.
-     */
-    private InfluxDBSourceBuilder<OUT> setProperty(final String key, final String value) {
-        this.properties.setProperty(key, value);
-        return this;
-    }
 
     private void sanityCheck() {
         Preconditions.checkNotNull(

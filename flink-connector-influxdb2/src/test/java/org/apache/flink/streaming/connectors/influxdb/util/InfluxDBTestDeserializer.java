@@ -15,21 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.streaming.connectors.util;
+package org.apache.flink.streaming.connectors.influxdb.util;
 
-public enum RetentionUnit {
-    NANOSECONDS("ns"),
-    MICROSECONDS("us"),
-    MILLISECONDS("ms"),
-    SECONDS("s"),
-    MINUTES("m"),
-    HOURS("h"),
-    DAYS("d"),
-    WEEKS("w");
+import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
+import org.apache.flink.streaming.connectors.influxdb.source.reader.deserializer.InfluxDBDataPointDeserializer;
 
-    final String label;
+public class InfluxDBTestDeserializer implements InfluxDBDataPointDeserializer<Long> {
 
-    RetentionUnit(final String label) {
-        this.label = label;
+    @Override
+    public Long deserialize(final DataPoint dataPoint) {
+        return dataPoint.getField("longValue");
     }
 }

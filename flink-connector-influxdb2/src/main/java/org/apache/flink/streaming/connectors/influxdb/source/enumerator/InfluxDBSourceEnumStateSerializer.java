@@ -17,10 +17,11 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source.enumerator;
 
-import java.io.IOException;
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 /** InfluxDB is stateless due to its unreplayable HTTP request source. */
+@Internal
 public final class InfluxDBSourceEnumStateSerializer
         implements SimpleVersionedSerializer<InfluxDBSourceEnumState> {
     @Override
@@ -34,7 +35,7 @@ public final class InfluxDBSourceEnumStateSerializer
     }
 
     @Override
-    public InfluxDBSourceEnumState deserialize(final int i, final byte[] bytes) throws IOException {
+    public InfluxDBSourceEnumState deserialize(final int i, final byte[] bytes) {
         return new InfluxDBSourceEnumState();
     }
 }

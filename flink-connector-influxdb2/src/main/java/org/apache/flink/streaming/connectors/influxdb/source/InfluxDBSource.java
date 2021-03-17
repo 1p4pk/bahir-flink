@@ -17,7 +17,6 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source;
 
-import java.util.Properties;
 import java.util.function.Supplier;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.Boundedness;
@@ -42,7 +41,13 @@ import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit
 /**
  * The Source implementation of InfluxDB. Please use a {@link InfluxDBSourceBuilder} to construct a
  * {@link InfluxDBSource}. The following example shows how to create an InfluxDBSource emitting
- * records of <code>String</code> type.
+ * records of <code>Long</code> type.
+ *
+ * <pre>{@code
+ * InfluxDBSource<Long> influxDBSource = InfluxBSource.<Long>builder()
+ * .setDeserializer(new InfluxDBDeserializer())
+ * .build()
+ * }</pre>
  *
  * <p>See {@link InfluxDBSourceBuilder} for more details.
  *
@@ -51,13 +56,13 @@ import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit
 public final class InfluxDBSource<OUT>
         implements Source<OUT, InfluxDBSplit, InfluxDBSourceEnumState>, ResultTypeQueryable<OUT> {
 
-    private final Properties properties;
+    private final Configuration configuration;
     private final InfluxDBDataPointDeserializer<OUT> deserializationSchema;
 
     InfluxDBSource(
-            final Properties properties,
+            final Configuration configuration,
             final InfluxDBDataPointDeserializer<OUT> deserializationSchema) {
-        this.properties = properties;
+        this.configuration = configuration;
         this.deserializationSchema = deserializationSchema;
     }
 
@@ -79,15 +84,12 @@ public final class InfluxDBSource<OUT>
     public SourceReader<OUT, InfluxDBSplit> createReader(
             final SourceReaderContext sourceReaderContext) {
         final Supplier<InfluxDBSplitReader> splitReaderSupplier =
-                () -> new InfluxDBSplitReader(this.properties);
+                () -> new InfluxDBSplitReader(this.configuration);
         final InfluxDBRecordEmitter<OUT> recordEmitter =
                 new InfluxDBRecordEmitter<>(this.deserializationSchema);
 
         return new InfluxDBSourceReader<>(
-                splitReaderSupplier,
-                recordEmitter,
-                this.toConfiguration(this.properties),
-                sourceReaderContext);
+                splitReaderSupplier, recordEmitter, this.configuration, sourceReaderContext);
     }
 
     @Override
@@ -100,7 +102,7 @@ public final class InfluxDBSource<OUT>
     public SplitEnumerator<InfluxDBSplit, InfluxDBSourceEnumState> restoreEnumerator(
             final SplitEnumeratorContext<InfluxDBSplit> splitEnumeratorContext,
             final InfluxDBSourceEnumState influxDBSourceEnumState) {
-        return null;
+        return new InfluxDBSplitEnumerator(splitEnumeratorContext);
     }
 
     @Override
@@ -116,13 +118,5 @@ public final class InfluxDBSource<OUT>
     @Override
     public TypeInformation<OUT> getProducedType() {
         return this.deserializationSchema.getProducedType();
-    }
-
-    // ----------- private helper methods ---------------
-
-    private Configuration toConfiguration(final Properties props) {
-        final Configuration config = new Configuration();
-        props.stringPropertyNames().forEach(key -> config.setString(key, props.getProperty(key)));
-        return config;
     }
 }

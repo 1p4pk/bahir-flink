@@ -21,10 +21,13 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.io.OutputStream;
+import org.apache.flink.annotation.Internal;
 import org.jetbrains.annotations.NotNull;
 
+/** Abstract base handle class for creating a response */
+@Internal
 abstract class Handler implements HttpHandler {
-    void sendResponse(
+    static void sendResponse(
             @NotNull final HttpExchange t, final int responseCode, @NotNull final String message)
             throws IOException {
         final byte[] response = message.getBytes();

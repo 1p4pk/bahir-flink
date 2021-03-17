@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.streaming.connectors;
+package org.apache.flink.streaming.connectors.influxdb;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,17 +37,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import lombok.SneakyThrows;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSource;
-import org.apache.flink.streaming.connectors.util.InfluxDBTestDeserializer;
+import org.apache.flink.streaming.connectors.influxdb.util.InfluxDBTestDeserializer;
 import org.apache.flink.util.TestLogger;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -72,11 +71,11 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
     private final StreamExecutionEnvironment env =
             StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
 
-    @BeforeAll
-    void setUp() {
+    @BeforeEach
+    void init() {
         CollectSink.VALUES.clear();
-        try {
-            this.port = new ServerSocket(0).getLocalPort();
+        try (final ServerSocket serverSocket = new ServerSocket(0)) {
+            this.port = serverSocket.getLocalPort();
             this.log.info("Using port {} for the HTTP server", this.port);
         } catch (final IOException ioException) {
             this.log.error("Could not open open port {}", ioException.getMessage());
@@ -87,8 +86,9 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
      * Test the following topology.
      *
      * <pre>
-     *     test longValue=1i 1         +1               2
-     *     (source1/1) ------------> (map1/1) -----> (sink1/1)
+     *     test longValue=1i 1     +1            2
+     *     test longValue=2i 1     +1            3
+     *     (source) ------------> (map) -----> (sink)
      * </pre>
      */
     @Test
@@ -107,7 +107,8 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
         final JobClient jobClient = this.env.executeAsync();
         assertTrue(this.checkHealthCheckAvailable());
 
-        final int writeResponseCode = this.writeToInfluxDB("test longValue=1i 1");
+        final int writeResponseCode =
+                this.writeToInfluxDB("test longValue=1i 1\ntest longValue=2i 2");
 
         assertEquals(writeResponseCode, HttpURLConnection.HTTP_NO_CONTENT);
 
@@ -115,7 +116,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
 
         final Collection<Long> results = new ArrayList<>();
         results.add(2L);
-        Thread.sleep(500);
+        results.add(3L);
         assertTrue(CollectSink.VALUES.containsAll(results));
     }
 
@@ -168,8 +169,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
         jobClient.cancel();
     }
 
-    @SneakyThrows
-    private int writeToInfluxDB(final String line) {
+    private int writeToInfluxDB(final String line) throws IOException {
         final HttpContent content = ByteArrayContent.fromString("text/plain; charset=utf-8", line);
         final HttpRequest request =
                 HTTP_REQUEST_FACTORY.buildPostRequest(
@@ -179,8 +179,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
         return request.execute().getStatusCode();
     }
 
-    @SneakyThrows
-    private boolean checkHealthCheckAvailable() {
+    private boolean checkHealthCheckAvailable() throws IOException {
         final HttpRequest request =
                 HTTP_REQUEST_FACTORY.buildGetRequest(
                         new GenericUrl(String.format("%s:%s/health", HTTP_ADDRESS, this.port)));
