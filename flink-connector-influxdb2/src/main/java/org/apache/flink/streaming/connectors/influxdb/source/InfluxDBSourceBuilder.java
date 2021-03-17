@@ -21,7 +21,6 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.connectors.influxdb.source.reader.deserializer.InfluxDBDataPointDeserializer;
-import org.apache.flink.util.Preconditions;
 
 /**
  * The @builder class for {@link InfluxDBSource} to make it easier for the users to construct a
