@@ -38,7 +38,7 @@ public final class InfluxDBSinkBuilder<IN> {
     private String organizationName;
     private final Configuration configuration;
 
-    public InfluxDBSinkBuilder() {
+    InfluxDBSinkBuilder() {
         this.influxDBUrl = null;
         this.influxDBUsername = null;
         this.influxDBPassword = null;

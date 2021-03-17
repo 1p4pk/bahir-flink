@@ -19,12 +19,14 @@ package org.apache.flink.streaming.connectors.influxdb.source.split;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 /**
  * The {@link org.apache.flink.core.io.SimpleVersionedSerializer serializer} for {@link
  * InfluxDBSplit}.
  */
+@Internal
 public final class InfluxDBSplitSerializer implements SimpleVersionedSerializer<InfluxDBSplit> {
 
     private static final int CURRENT_VERSION = 0;

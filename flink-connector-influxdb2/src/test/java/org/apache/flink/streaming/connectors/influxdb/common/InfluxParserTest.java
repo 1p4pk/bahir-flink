@@ -55,7 +55,7 @@ class InfluxParserTest {
         assertNotEquals(dataPoint, notEqualDataPoint);
 
         final String equalLineProtocol =
-            "test,testTagKey=testTagValue testFieldKey=\"testFieldValue\" 1556813561098000000";
+                "test,testTagKey=testTagValue testFieldKey=\"testFieldValue\" 1556813561098000000";
         final DataPoint equalDataPoint = InfluxParser.parseToDataPoint(equalLineProtocol);
 
         assertEquals(equalDataPoint, dataPoint);

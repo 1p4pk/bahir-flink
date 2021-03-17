@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
@@ -47,6 +48,7 @@ import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit
  *
  * <p>The returned type are in the format of {@link DataPoint}.
  */
+@Internal
 public final class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit> {
 
     private final long enqueueWaitTime;

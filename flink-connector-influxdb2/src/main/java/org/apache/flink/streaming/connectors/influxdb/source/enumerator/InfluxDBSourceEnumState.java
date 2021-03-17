@@ -17,5 +17,8 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source.enumerator;
 
+import org.apache.flink.annotation.Internal;
+
 /** The state of InfluxDB source enumerator. */
+@Internal
 public final class InfluxDBSourceEnumState {}

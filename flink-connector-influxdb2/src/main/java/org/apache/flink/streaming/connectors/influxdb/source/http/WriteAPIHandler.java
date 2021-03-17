@@ -30,6 +30,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.common.InfluxParser;
@@ -41,6 +42,7 @@ import org.slf4j.LoggerFactory;
  * reads each line in the body and uses the {@link InfluxParser} to pars them to {@link DataPoint}
  * objects.
  */
+@Internal
 public final class WriteAPIHandler extends Handler {
     private static final Logger LOG = LoggerFactory.getLogger(WriteAPIHandler.class);
 
