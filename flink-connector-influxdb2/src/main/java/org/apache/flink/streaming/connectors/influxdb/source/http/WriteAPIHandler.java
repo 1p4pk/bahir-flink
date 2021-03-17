@@ -30,14 +30,20 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
 import org.apache.flink.streaming.connectors.influxdb.common.InfluxParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@Slf4j
+/**
+ * This class handles the incoming requests through the path /api/v2/write. The handle function
+ * reads each line in the body and uses the {@link InfluxParser} to pars them to {@link DataPoint}
+ * objects.
+ */
 public final class WriteAPIHandler extends Handler {
-    private final InfluxParser parser = new InfluxParser();
+    private static final Logger LOG = LoggerFactory.getLogger(WriteAPIHandler.class);
+
     private final int maximumLinesPerRequest;
     private final FutureCompletingBlockingQueue ingestionQueue;
     private final int threadIndex;
@@ -65,7 +71,7 @@ public final class WriteAPIHandler extends Handler {
             final List<DataPoint> points = new ArrayList<>();
             int numberOfLinesParsed = 0;
             while ((line = in.readLine()) != null) {
-                final DataPoint dataPoint = this.parser.parseToDataPoint(line);
+                final DataPoint dataPoint = InfluxParser.parseToDataPoint(line);
                 points.add(dataPoint);
                 numberOfLinesParsed++;
                 if (numberOfLinesParsed > this.maximumLinesPerRequest) {
@@ -95,16 +101,16 @@ public final class WriteAPIHandler extends Handler {
             t.sendResponseHeaders(HttpURLConnection.HTTP_NO_CONTENT, -1);
             this.ingestionQueue.notifyAvailable();
         } catch (final ParseException e) {
-            this.sendResponse(t, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+            Handler.sendResponse(t, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
         } catch (final RequestTooLargeException e) {
-            this.sendResponse(t, HttpURLConnection.HTTP_ENTITY_TOO_LARGE, e.getMessage());
+            Handler.sendResponse(t, HttpURLConnection.HTTP_ENTITY_TOO_LARGE, e.getMessage());
         } catch (final TimeoutException e) {
             final int HTTP_TOO_MANY_REQUESTS = 429;
-            this.sendResponse(t, HTTP_TOO_MANY_REQUESTS, "Server overloaded");
-            log.error(e.getMessage());
+            Handler.sendResponse(t, HTTP_TOO_MANY_REQUESTS, "Server overloaded");
+            LOG.error(e.getMessage());
         } catch (final ExecutionException | InterruptedException e) {
-            this.sendResponse(t, HttpURLConnection.HTTP_INTERNAL_ERROR, "Server Error");
-            log.error(e.getMessage());
+            Handler.sendResponse(t, HttpURLConnection.HTTP_INTERNAL_ERROR, "Server Error");
+            LOG.error(e.getMessage());
         }
     }
 

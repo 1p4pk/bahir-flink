@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.streaming.connectors;
+package org.apache.flink.streaming.connectors.influxdb;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,29 +30,30 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.util.ExponentialBackOff;
+import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import lombok.SneakyThrows;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSource;
-import org.apache.flink.streaming.connectors.util.InfluxDBTestDeserializer;
+import org.apache.flink.streaming.connectors.influxdb.util.InfluxDBTestDeserializer;
 import org.apache.flink.util.TestLogger;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /** Integration test for the InfluxDB source for Flink. */
 class InfluxDBSourceIntegrationTestCase extends TestLogger {
 
     private static final String HTTP_ADDRESS = "http://localhost";
-    private static final int PORT = 8000;
+    private int port = 0;
 
     private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
             new NetHttpTransport().createRequestFactory();
@@ -67,36 +68,45 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
 
     private final StreamExecutionEnvironment env =
             StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
-    private final InfluxDBSource<Long> influxDBSource =
-            InfluxDBSource.<Long>builder()
-                    .setPort(PORT)
-                    .setDeserializer(new InfluxDBTestDeserializer())
-                    .build();
 
-    @BeforeAll
-    static void setUp() {
+    @BeforeEach
+    void init() {
         CollectSink.VALUES.clear();
+        try (final ServerSocket serverSocket = new ServerSocket(0)) {
+            this.port = serverSocket.getLocalPort();
+            this.log.info("Using port {} for the HTTP server", this.port);
+        } catch (final IOException ioException) {
+            this.log.error("Could not open open port {}", ioException.getMessage());
+        }
     }
 
     /**
      * Test the following topology.
      *
      * <pre>
-     *     1,2,3                +1              2,3,4
-     *     (source1/1) -----> (map1/1) -----> (sink1/1)
+     *     test longValue=1i 1     +1            2
+     *     test longValue=2i 1     +1            3
+     *     (source) ------------> (map) -----> (sink)
      * </pre>
      */
     @Test
     void testIncrementPipeline() throws Exception {
+        final InfluxDBSource<Long> influxDBSource =
+                InfluxDBSource.<Long>builder()
+                        .setPort(this.port)
+                        .setDeserializer(new InfluxDBTestDeserializer())
+                        .build();
+
         this.env
-                .fromSource(this.influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
+                .fromSource(influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
                 .map(new IncrementMapFunction())
                 .addSink(new CollectSink());
 
         final JobClient jobClient = this.env.executeAsync();
-        assertTrue(checkHealthCheckAvailable());
+        assertTrue(this.checkHealthCheckAvailable());
 
-        final int writeResponseCode = writeToInfluxDB("test longValue=1i 1");
+        final int writeResponseCode =
+                this.writeToInfluxDB("test longValue=1i 1\ntest longValue=2i 2");
 
         assertEquals(writeResponseCode, HttpURLConnection.HTTP_NO_CONTENT);
 
@@ -104,22 +114,29 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
 
         final Collection<Long> results = new ArrayList<>();
         results.add(2L);
+        results.add(3L);
         assertTrue(CollectSink.VALUES.containsAll(results));
     }
 
     @Test
     void testBadRequestException() throws Exception {
+        final InfluxDBSource<Long> influxDBSource =
+                InfluxDBSource.<Long>builder()
+                        .setPort(this.port)
+                        .setDeserializer(new InfluxDBTestDeserializer())
+                        .build();
+
         this.env
-                .fromSource(this.influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
+                .fromSource(influxDBSource, WatermarkStrategy.noWatermarks(), "InfluxDBSource")
                 .map(new IncrementMapFunction())
                 .addSink(new CollectSink());
 
         final JobClient jobClient = this.env.executeAsync();
-        assertTrue(checkHealthCheckAvailable());
+        assertTrue(this.checkHealthCheckAvailable());
         final HttpResponseException thrown =
                 Assertions.assertThrows(
                         HttpResponseException.class,
-                        () -> writeToInfluxDB("malformedLineProtocol_test"));
+                        () -> this.writeToInfluxDB("malformedLineProtocol_test"));
         assertTrue(thrown.getMessage().contains("Unable to parse line."));
         jobClient.cancel();
     }
@@ -128,7 +145,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
     void testRequestTooLargeException() throws Exception {
         final InfluxDBSource<Long> influxDBSource =
                 InfluxDBSource.<Long>builder()
-                        .setPort(PORT)
+                        .setPort(this.port)
                         .setDeserializer(new InfluxDBTestDeserializer())
                         .setMaximumLinesPerRequest(2)
                         .build();
@@ -138,32 +155,32 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
                 .addSink(new CollectSink());
 
         final JobClient jobClient = this.env.executeAsync();
-        assertTrue(checkHealthCheckAvailable());
+        assertTrue(this.checkHealthCheckAvailable());
 
         final String lines = "test longValue=1i 1\ntest longValue=1i 1\ntest longValue=1i 1";
         final HttpResponseException thrown =
-                Assertions.assertThrows(HttpResponseException.class, () -> writeToInfluxDB(lines));
+                Assertions.assertThrows(
+                        HttpResponseException.class, () -> this.writeToInfluxDB(lines));
         assertTrue(
                 thrown.getMessage()
                         .contains("Payload too large. Maximum number of lines per request is 2."));
         jobClient.cancel();
     }
 
-    @SneakyThrows
-    private static int writeToInfluxDB(final String line) {
+    private int writeToInfluxDB(final String line) throws IOException {
         final HttpContent content = ByteArrayContent.fromString("text/plain; charset=utf-8", line);
         final HttpRequest request =
                 HTTP_REQUEST_FACTORY.buildPostRequest(
-                        new GenericUrl(String.format("%s:%s/api/v2/write", HTTP_ADDRESS, PORT)),
+                        new GenericUrl(
+                                String.format("%s:%s/api/v2/write", HTTP_ADDRESS, this.port)),
                         content);
         return request.execute().getStatusCode();
     }
 
-    @SneakyThrows
-    private static boolean checkHealthCheckAvailable() {
+    private boolean checkHealthCheckAvailable() throws IOException {
         final HttpRequest request =
                 HTTP_REQUEST_FACTORY.buildGetRequest(
-                        new GenericUrl(String.format("%s:%s/health", HTTP_ADDRESS, PORT)));
+                        new GenericUrl(String.format("%s:%s/health", HTTP_ADDRESS, this.port)));
 
         request.setUnsuccessfulResponseHandler(
                 new HttpBackOffUnsuccessfulResponseHandler(HTTP_BACKOFF));

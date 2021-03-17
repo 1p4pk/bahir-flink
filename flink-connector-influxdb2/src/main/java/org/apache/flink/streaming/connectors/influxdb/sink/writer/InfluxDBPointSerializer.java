@@ -23,14 +23,13 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import lombok.SneakyThrows;
+import java.text.ParseException;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.streaming.connectors.influxdb.common.InfluxParser;
 
 public final class InfluxDBPointSerializer implements SimpleVersionedSerializer<Point> {
 
     private static final Charset CHARSET = StandardCharsets.UTF_8;
-    private final InfluxParser parser = new InfluxParser();
 
     @Override
     public int getVersion() {
@@ -48,13 +47,16 @@ public final class InfluxDBPointSerializer implements SimpleVersionedSerializer<
         return targetBytes;
     }
 
-    @SneakyThrows
     @Override
     public Point deserialize(final int version, final byte[] serialized) throws IOException {
         final ByteBuffer bb = ByteBuffer.wrap(serialized).order(ByteOrder.LITTLE_ENDIAN);
         final byte[] targetStringBytes = new byte[bb.getInt()];
         bb.get(targetStringBytes);
         final String line = new String(targetStringBytes, CHARSET);
-        return this.parser.parseToDataPoint(line).toPoint();
+        try {
+            return InfluxParser.parseToDataPoint(line).toPoint();
+        } catch (final ParseException exception) {
+            throw new IOException("An parse exception occurred during parsing the line", exception);
+        }
     }
 }

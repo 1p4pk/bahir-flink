@@ -17,20 +17,22 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.sink.writer;
 
-import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.getBufferSizeCapacity;
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.WRITE_BUFFER_SIZE;
+import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.WRITE_DATA_POINT_CHECKPOINT;
 import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.getInfluxDBClient;
-import static org.apache.flink.streaming.connectors.influxdb.sink.InfluxDBSinkOptions.writeDataPointCheckpoint;
 
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.WriteApi;
 import com.influxdb.client.write.Point;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.connector.sink.Sink.ProcessingTimeService;
 import org.apache.flink.api.connector.sink.SinkWriter;
+import org.apache.flink.configuration.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This Class implements the {@link SinkWriter} and it is responsible to write incoming inputs to
@@ -43,8 +45,9 @@ import org.apache.flink.api.connector.sink.SinkWriter;
  * @param <IN> Type of the input
  * @see WriteApi
  */
-@Slf4j
 public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(InfluxDBWriter.class);
 
     private final int bufferSize;
     private final boolean writeCheckpoint;
@@ -55,12 +58,13 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
     private final InfluxDBClient influxDBClient;
 
     public InfluxDBWriter(
-            final InfluxDBSchemaSerializer<IN> schemaSerializer, final Properties properties) {
+            final InfluxDBSchemaSerializer<IN> schemaSerializer,
+            final Configuration configuration) {
         this.schemaSerializer = schemaSerializer;
-        this.bufferSize = getBufferSizeCapacity(properties);
+        this.bufferSize = configuration.getInteger(WRITE_BUFFER_SIZE);
         this.elements = new ArrayList<>(this.bufferSize);
-        this.writeCheckpoint = writeDataPointCheckpoint(properties);
-        this.influxDBClient = getInfluxDBClient(properties);
+        this.writeCheckpoint = configuration.getBoolean(WRITE_DATA_POINT_CHECKPOINT);
+        this.influxDBClient = getInfluxDBClient(configuration);
     }
 
     /**
@@ -73,26 +77,22 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
      * @see org.apache.flink.api.connector.sink.SinkWriter.Context
      */
     @Override
-    public void write(final IN in, final Context context) {
-        try {
-            if (this.elements.size() == this.bufferSize) {
-                log.info("Buffer size reached preparing to write the elements.");
-                this.writeCurrentElements();
-                this.elements.clear();
-            } else {
-                log.debug("Adding elements to buffer. Buffer size: {}", this.elements.size());
-                this.elements.add(this.schemaSerializer.serialize(in, context));
-                if (context.timestamp() != null) {
-                    this.lastTimestamp = Math.max(this.lastTimestamp, context.timestamp());
-                }
+    public void write(final IN in, final Context context) throws IOException {
+        if (this.elements.size() == this.bufferSize) {
+            LOG.debug("Buffer size reached preparing to write the elements.");
+            this.writeCurrentElements();
+            this.elements.clear();
+        } else {
+            LOG.trace("Adding elements to buffer. Buffer size: {}", this.elements.size());
+            this.elements.add(this.schemaSerializer.serialize(in, context));
+            if (context.timestamp() != null) {
+                this.lastTimestamp = Math.max(this.lastTimestamp, context.timestamp());
             }
-        } catch (final Exception e) {
-            log.error(e.getMessage());
         }
     }
 
     /**
-     * This method is called whenever a checkpoint is set by Flink. It creates a list and feels it
+     * This method is called whenever a checkpoint is set by Flink. It creates a list and fills it
      * up with the latest timestamp.
      *
      * @param flush
@@ -115,9 +115,9 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
 
     @Override
     public void close() throws Exception {
-        log.debug("Preparing to write the elements in close.");
+        LOG.debug("Preparing to write the elements in InfluxDB.");
         this.writeCurrentElements();
-        log.debug("Closing the writer.");
+        LOG.debug("Closing the writer.");
         this.elements.clear();
     }
 
@@ -125,10 +125,10 @@ public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
         this.processingTimerService = processingTimerService;
     }
 
-    private void writeCurrentElements() throws Exception {
+    private void writeCurrentElements() {
         try (final WriteApi writeApi = this.influxDBClient.getWriteApi()) {
             writeApi.writePoints(this.elements);
-            log.debug("Wrote {} data points", this.elements.size());
+            LOG.debug("Wrote {} data points", this.elements.size());
         }
     }
 }

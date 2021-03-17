@@ -19,10 +19,16 @@ package org.apache.flink.streaming.connectors.influxdb.source.http;
 
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 
+/**
+ * Handles incoming health check requests from /health path. If the server is running a response
+ * code 200 is sent
+ */
 public final class HealthCheckHandler extends Handler {
+
     @Override
     public void handle(final HttpExchange t) throws IOException {
-        this.sendResponse(t, 200, "ready for writes");
+        Handler.sendResponse(t, HttpURLConnection.HTTP_OK, "ready for writes");
     }
 }

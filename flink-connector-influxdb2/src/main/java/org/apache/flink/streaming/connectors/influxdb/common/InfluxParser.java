@@ -38,12 +38,13 @@ import org.apache.druid.data.input.influx.InfluxLineProtocolParser.TimestampCont
  *     href=https://github.com/apache/druid/blob/master/extensions-contrib/influx-extensions/src/main/java/org/apache/druid/data/input/influx/InfluxParser.java>
  *     Apache Druid InfluxDB Parser </a>
  */
-public class InfluxParser {
+public final class InfluxParser {
     private static final Pattern BACKSLASH_PATTERN = Pattern.compile("\\\\\"");
     private static final Pattern IDENTIFIER_PATTERN = Pattern.compile("\\\\([,= ])");
 
-    @Nullable
-    public DataPoint parseToDataPoint(final String input) throws ParseException {
+    private InfluxParser() {}
+
+    public static DataPoint parseToDataPoint(final String input) throws ParseException {
         final CharStream charStream = new ANTLRInputStream(input);
         final InfluxLineProtocolLexer lexer = new InfluxLineProtocolLexer(charStream);
         final TokenStream tokenStream = new CommonTokenStream(lexer);
@@ -59,64 +60,61 @@ public class InfluxParser {
         }
 
         final InfluxLineProtocolParser.LineContext line = lines.get(0);
-        final String measurement = this.parseIdentifier(line.identifier());
+        final String measurement = parseIdentifier(line.identifier());
 
-        final Number timestamp = this.parseTimestamp(line.timestamp());
+        final Long timestamp = parseTimestamp(line.timestamp());
 
         final DataPoint out = new DataPoint(measurement, timestamp);
 
         if (line.tag_set() != null) {
-            line.tag_set().tag_pair().forEach(t -> this.parseTag(t, out));
+            line.tag_set().tag_pair().forEach(t -> parseTag(t, out));
         }
 
-        line.field_set().field_pair().forEach(t -> this.parseField(t, out));
+        line.field_set().field_pair().forEach(t -> parseField(t, out));
 
         return out;
     }
 
-    private void parseTag(final InfluxLineProtocolParser.Tag_pairContext tag, final DataPoint out) {
-        final String key = this.parseIdentifier(tag.identifier(0));
-        final String value = this.parseIdentifier(tag.identifier(1));
+    private static void parseTag(
+            final InfluxLineProtocolParser.Tag_pairContext tag, final DataPoint out) {
+        final String key = parseIdentifier(tag.identifier(0));
+        final String value = parseIdentifier(tag.identifier(1));
         out.addTag(key, value);
     }
 
-    private void parseField(
+    private static void parseField(
             final InfluxLineProtocolParser.Field_pairContext field, final DataPoint out) {
-        final String key = this.parseIdentifier(field.identifier());
+        final String key = parseIdentifier(field.identifier());
         final InfluxLineProtocolParser.Field_valueContext valueContext = field.field_value();
         final Object value;
         if (valueContext.NUMBER() != null) {
-            value = this.parseNumber(valueContext.NUMBER().getText());
+            value = parseNumber(valueContext.NUMBER().getText());
         } else if (valueContext.BOOLEAN() != null) {
-            value = this.parseBool(valueContext.BOOLEAN().getText());
+            value = parseBool(valueContext.BOOLEAN().getText());
         } else {
-            value = this.parseQuotedString(valueContext.QUOTED_STRING().getText());
+            value = parseQuotedString(valueContext.QUOTED_STRING().getText());
         }
         out.addField(key, value);
     }
 
-    private Object parseQuotedString(final String text) {
+    private static String parseQuotedString(final String text) {
         return BACKSLASH_PATTERN.matcher(text.substring(1, text.length() - 1)).replaceAll("\"");
     }
 
-    private Object parseNumber(final String raw) {
+    private static Number parseNumber(final String raw) {
         if (raw.endsWith("i")) {
             return Long.valueOf(raw.substring(0, raw.length() - 1));
         }
 
-        return new Double(raw);
+        return Double.valueOf(raw);
     }
 
-    private Object parseBool(final String raw) {
+    private static Boolean parseBool(final String raw) {
         final char first = raw.charAt(0);
-        if (first == 't' || first == 'T') {
-            return "true";
-        } else {
-            return "false";
-        }
+        return (first == 't' || first == 'T');
     }
 
-    private String parseIdentifier(final InfluxLineProtocolParser.IdentifierContext ctx) {
+    private static String parseIdentifier(final InfluxLineProtocolParser.IdentifierContext ctx) {
         if (ctx.BOOLEAN() != null || ctx.NUMBER() != null) {
             return ctx.getText();
         }
@@ -124,7 +122,7 @@ public class InfluxParser {
         return IDENTIFIER_PATTERN.matcher(ctx.IDENTIFIER_STRING().getText()).replaceAll("$1");
     }
 
-    private Number parseTimestamp(@Nullable final TimestampContext timestamp) {
+    private static Long parseTimestamp(@Nullable final TimestampContext timestamp) {
         if (timestamp == null) {
             return null;
         }
@@ -134,7 +132,7 @@ public class InfluxParser {
         if (strTimestamp.length() < 7) {
             return 0L;
         } else {
-            return Long.valueOf(strTimestamp.substring(0, strTimestamp.length() - 6));
+            return Long.valueOf(strTimestamp);
         }
     }
 }

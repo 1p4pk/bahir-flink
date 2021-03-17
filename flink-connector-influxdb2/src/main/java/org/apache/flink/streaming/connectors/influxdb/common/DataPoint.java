@@ -22,37 +22,49 @@ import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
-import lombok.Getter;
 
 /**
  * InfluxDB data point class.
  *
+ * <h3>Elements of line protocol</h3>
+ *
+ * <pre>
+ *
+ * measurementName,tagKey=tagValue fieldKey="fieldValue" 1465839830100400200
+ * --------------- --------------- --------------------- -------------------
+ *      |               |                   |                     |
+ * Measurement       Tag set            Field set              Timestamp
+ *
+ * </pre>
+ *
  * <p>{@link InfluxParser} parses line protocol into this data point representation.
  */
 public final class DataPoint {
-    @Getter private final String name;
+
+    private final String measurement;
     private final Map<String, String> tags = new HashMap();
     private final Map<String, Object> fields = new HashMap();
-    @Getter private final Number timestamp;
+    private final Long timestamp;
 
-    DataPoint(final String measurementName, @Nullable final Number timestamp) {
+    DataPoint(final String measurementName, @Nullable final Long timestamp) {
         Arguments.checkNotNull(measurementName, "measurement");
-        this.name = measurementName;
+        this.measurement = measurementName;
         this.timestamp = timestamp;
     }
 
     /**
-     * Converts this {@link DataPoint} to {@link Point}.
+     * Converts the DataPoint object to {@link Point} object.
      *
      * @return {@link Point}.
      */
     public Point toPoint() {
-        final Point out = new Point(this.name);
-        out.time(this.timestamp, WritePrecision.NS);
-        out.addTags(this.tags);
-        out.addFields(this.fields);
-        return out;
+        final Point point = new Point(this.measurement);
+        point.time(this.timestamp, WritePrecision.NS);
+        point.addTags(this.tags);
+        point.addFields(this.fields);
+        return point;
     }
 
     /**
@@ -72,9 +84,10 @@ public final class DataPoint {
      * @param field Key of field.
      * @return value Value for the field key.
      */
-    public Object getField(final String field) {
+    @SuppressWarnings("unchecked")
+    public <T> T getField(final String field) {
         Arguments.checkNonEmpty(field, "fieldName");
-        return this.fields.getOrDefault(field, null);
+        return (T) this.fields.getOrDefault(field, null);
     }
 
     /**
@@ -97,5 +110,48 @@ public final class DataPoint {
     public String getTag(final String key) {
         Arguments.checkNotNull(key, "tagName");
         return this.tags.getOrDefault(key, null);
+    }
+
+    public Long getTimestamp() {
+        return this.timestamp;
+    }
+
+    /**
+     * A point is uniquely identified by the measurement name, tag set, and timestamp. If you submit
+     * line protocol with the same measurement, tag set, and timestamp, but with a different field
+     * set, the field set becomes the union of the old field set and the new field set, where any
+     * conflicts favor the new field set.
+     *
+     * @see <a
+     *     href="https://docs.influxdata.com/influxdb/cloud/reference/syntax/line-protocol/#duplicate-points">
+     *     Duplicate points </a>
+     * @param obj: Object to compare to
+     * @return Either the object is equal to the data point or not
+     */
+    @Override
+    public boolean equals(final Object obj) {
+
+        // If the object is compared with itself then return true
+        if (obj == this) {
+            return true;
+        }
+
+        /* Check if o is an instance of Complex or not
+        "null instanceof [type]" also returns false */
+        if (!(obj instanceof DataPoint)) {
+            return false;
+        }
+
+        // typecast o to DataPoint so that we can compare data members
+        final DataPoint point = (DataPoint) obj;
+
+        return point.measurement.equals(this.measurement)
+                && point.tags.equals(this.tags)
+                && (point.timestamp.equals(this.timestamp));
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.measurement, this.fields, this.timestamp);
     }
 }

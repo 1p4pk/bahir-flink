@@ -6,7 +6,7 @@ This connector provides a Source that parses the [InfluxDB Line Protocol](https:
 
 To use this connector, add the following dependency to your project:
 
-```xml=
+```xml
 <dependency>
   <groupId>org.apache.bahir</groupId>
   <artifactId>flink-connector-influxdb2_2.12</artifactId>
@@ -14,7 +14,7 @@ To use this connector, add the following dependency to your project:
 </dependency>
 ```
 
-Note that the streaming connectors are not part of the binary distribution of Flink. You need to link them into your job jar for cluster execution. See how to link with them for cluster execution [here](https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/project-configuration.html#adding-connector-and-library-dependencies).
+Note that the streaming connectors are not part of the binary distribution of Flink. You need to shade them into your job jar for cluster execution. See how to link with them for cluster execution [here](https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/project-configuration.html#adding-connector-and-library-dependencies).
 
 ## Compatibility
 
@@ -42,11 +42,11 @@ When using Telegraf, you have two choices to configure it. You can either config
 
 ### Usage
 
-```java=
+```java
 InfluxDBSource<Long> influxDBSource = InfluxBSource.<Long>builder()
         .setDeserializer(new TestDeserializer())
         .build()
-        
+
 // ...
 
 /**
@@ -76,8 +76,8 @@ class TestDeserializer implements InfluxDBDataPointDeserializer<Long> {
 
 ### Supported Data Types in Field Set
 
-| Field Set     | Support       | 
-| ------------- |:-------------:| 
+| Field Set     | Support       |
+| ------------- |:-------------:|
 |    Float      | ✅            |
 |    Integer    | ✅            |
 |    UInteger   | ❌            |
@@ -85,7 +85,8 @@ class TestDeserializer implements InfluxDBDataPointDeserializer<Long> {
 |    Boolean    | ✅            |
 
 See InfluxDB field set value [data type](https://docs.influxdata.com/influxdb/cloud/reference/syntax/line-protocol/#field-set).
- 
+The parsing limitation is related to the Apache Druid project. For more information see this [issue](https://github.com/apache/druid/issues/10993)
+
 
 ## Sink
 
@@ -101,7 +102,7 @@ The timestamp refers to the latest element that Flink serializes.
 
 ### Usage
 
-```java=
+```java
 // The InfluxDB Sink uses the build pattern to create a Sink object
 InfluxDBSink<Long> influxDBSink = InfluxDBSink.<Long>builder()
         .setInfluxDBSchemaSerializer(new TestSerializer())
@@ -111,7 +112,7 @@ InfluxDBSink<Long> influxDBSink = InfluxDBSink.<Long>builder()
         .setInfluxDBBucket(getBucket())     // default
         .setInfluxDBOrganization(getOrg())  // influxdata
         .build();
-        
+
 // ...
 
 /**
@@ -119,7 +120,7 @@ InfluxDBSink<Long> influxDBSink = InfluxDBSink.<Long>builder()
  * (element) -----> (dataPoint)
  *  1L -----------> test,longValue=1 fieldKey="fieldValue"
  *  2L -----------> test,longValue=2 fieldKey="fieldValue"
- *  3L -----------> test,longValue=3 fieldKey="fieldValue"           
+ *  3L -----------> test,longValue=3 fieldKey="fieldValue"
  */
 class TestSerializer implements InfluxDBSchemaSerializer<Long> {
 
@@ -150,7 +151,7 @@ class TestSerializer implements InfluxDBSchemaSerializer<Long> {
 The connector can be built by using maven:
 
 ```bash
-mvn clean install -DskipTests -pl flink-connector-influxdb2 
+mvn clean install -DskipTests -pl flink-connector-influxdb2
 ```
 
 ## Benchmarks
@@ -171,6 +172,11 @@ This timestamp was then compared to the insertion timestamp set by InfluxDB itse
 
 The results of these benchmarks are visualized [here](media/benchmarks.pdf).
 
+
+## Usage and Deployment Example
+
+See [`Shark/flink-connector-influxdb-example`](https://github.com/Shark/flink-connector-influxdb-example) for an example showing you how to use and deploy the InfluxDB source and sink connectors in a Flink application on a Kubernetes cluster.
+
 ## Future Work
 
 * [Source] Dynamic (unprivileged) ports for HTTP server
@@ -184,7 +190,7 @@ The results of these benchmarks are visualized [here](media/benchmarks.pdf).
 <table>
   <tr class="noBorder">
     <td class="noBorder" align="center">
-        <a href="https://github.com/1p4pk"><img class="roundImg"  
+        <a href="https://github.com/1p4pk"><img class="roundImg"
          src="https://avatars.githubusercontent.com/u/32157576?v=4?s=100"width="100px;"/><br /><sub><b>Leon Papke</b></sub>
          </a>
      </td>

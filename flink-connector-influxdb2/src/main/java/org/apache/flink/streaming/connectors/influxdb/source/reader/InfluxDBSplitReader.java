@@ -17,6 +17,11 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source.reader;
 
+import static org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSourceOptions.ENQUEUE_WAIT_TIME;
+import static org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSourceOptions.INGEST_QUEUE_CAPACITY;
+import static org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSourceOptions.MAXIMUM_LINES_PER_REQUEST;
+import static org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSourceOptions.PORT;
+
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -24,17 +29,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.streaming.connectors.influxdb.common.DataPoint;
-import org.apache.flink.streaming.connectors.influxdb.source.InfluxDBSourceOptions;
 import org.apache.flink.streaming.connectors.influxdb.source.http.HealthCheckHandler;
 import org.apache.flink.streaming.connectors.influxdb.source.http.WriteAPIHandler;
 import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit;
@@ -44,7 +47,6 @@ import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit
  *
  * <p>The returned type are in the format of {@link DataPoint}.
  */
-@Slf4j
 public final class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxDBSplit> {
 
     private final long enqueueWaitTime;
@@ -57,23 +59,26 @@ public final class InfluxDBSplitReader implements SplitReader<DataPoint, InfluxD
 
     private InfluxDBSplit split;
 
-    public InfluxDBSplitReader(final Properties properties) {
-        this.enqueueWaitTime = InfluxDBSourceOptions.getEnqueueWaitTime(properties);
-        this.maximumLinesPerRequest = InfluxDBSourceOptions.getMaximumLinesPerRequest(properties);
-        this.defaultPort = InfluxDBSourceOptions.getPort(properties);
-        final int capacity = InfluxDBSourceOptions.getIngestQueueCapacity(properties);
+    public InfluxDBSplitReader(final Configuration configuration) {
+        this.enqueueWaitTime = configuration.getLong(ENQUEUE_WAIT_TIME);
+        this.maximumLinesPerRequest = configuration.getInteger(MAXIMUM_LINES_PER_REQUEST);
+        this.defaultPort = configuration.getInteger(PORT);
+        final int capacity = configuration.getInteger(INGEST_QUEUE_CAPACITY);
         this.ingestionQueue = new FutureCompletingBlockingQueue<>(capacity);
     }
 
-    @SneakyThrows
     @Override
-    public RecordsWithSplitIds<DataPoint> fetch() {
+    public RecordsWithSplitIds<DataPoint> fetch() throws IOException {
         if (this.split == null) {
             return null;
         }
         final InfluxDBSplitRecords recordsBySplits = new InfluxDBSplitRecords(this.split.splitId());
 
-        this.ingestionQueue.getAvailabilityFuture().get();
+        try {
+            this.ingestionQueue.getAvailabilityFuture().get();
+        } catch (final InterruptedException | ExecutionException exception) {
+            throw new IOException("An exception occurred during fetch", exception);
+        }
         final List<DataPoint> requests = this.ingestionQueue.poll();
         if (requests == null) {
             recordsBySplits.prepareForRead();

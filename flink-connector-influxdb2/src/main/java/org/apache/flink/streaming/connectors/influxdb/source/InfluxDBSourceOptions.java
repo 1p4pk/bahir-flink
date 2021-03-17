@@ -17,13 +17,11 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source;
 
-import java.util.Properties;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
-import org.apache.flink.streaming.connectors.influxdb.common.InfluxDBOptionsBase;
 
 /* Configurations for a InfluxDBSource. */
-public final class InfluxDBSourceOptions extends InfluxDBOptionsBase {
+public final class InfluxDBSourceOptions {
 
     private InfluxDBSourceOptions() {}
 
@@ -54,20 +52,4 @@ public final class InfluxDBSourceOptions extends InfluxDBOptionsBase {
                     .defaultValue(8000)
                     .withDescription(
                             "TCP port on which the split reader's HTTP server is running on.");
-
-    public static long getEnqueueWaitTime(final Properties properties) {
-        return getOption(properties, ENQUEUE_WAIT_TIME, Long::parseLong);
-    }
-
-    public static int getIngestQueueCapacity(final Properties properties) {
-        return getOption(properties, INGEST_QUEUE_CAPACITY, Integer::parseInt);
-    }
-
-    public static int getMaximumLinesPerRequest(final Properties properties) {
-        return getOption(properties, MAXIMUM_LINES_PER_REQUEST, Integer::parseInt);
-    }
-
-    public static int getPort(final Properties properties) {
-        return getOption(properties, PORT, Integer::parseInt);
-    }
 }
