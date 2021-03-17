@@ -28,6 +28,7 @@ import org.antlr.v4.runtime.TokenStream;
 import org.apache.druid.data.input.influx.InfluxLineProtocolLexer;
 import org.apache.druid.data.input.influx.InfluxLineProtocolParser;
 import org.apache.druid.data.input.influx.InfluxLineProtocolParser.TimestampContext;
+import org.apache.flink.annotation.Internal;
 
 /**
  * This is an InfluxDB line protocol parser.
@@ -38,6 +39,7 @@ import org.apache.druid.data.input.influx.InfluxLineProtocolParser.TimestampCont
  *     href=https://github.com/apache/druid/blob/master/extensions-contrib/influx-extensions/src/main/java/org/apache/druid/data/input/influx/InfluxParser.java>
  *     Apache Druid InfluxDB Parser </a>
  */
+@Internal
 public final class InfluxParser {
     private static final Pattern BACKSLASH_PATTERN = Pattern.compile("\\\\\"");
     private static final Pattern IDENTIFIER_PATTERN = Pattern.compile("\\\\([,= ])");

@@ -20,11 +20,13 @@ package org.apache.flink.streaming.connectors.influxdb.source.http;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import org.apache.flink.annotation.Internal;
 
 /**
  * Handles incoming health check requests from /health path. If the server is running a response
  * code 200 is sent
  */
+@Internal
 public final class HealthCheckHandler extends Handler {
 
     @Override

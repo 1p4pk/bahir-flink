@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.connector.sink.Sink.ProcessingTimeService;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.configuration.Configuration;
@@ -45,6 +46,7 @@ import org.slf4j.LoggerFactory;
  * @param <IN> Type of the input
  * @see WriteApi
  */
+@Internal
 public final class InfluxDBWriter<IN> implements SinkWriter<IN, Long, Point> {
 
     private static final Logger LOG = LoggerFactory.getLogger(InfluxDBWriter.class);

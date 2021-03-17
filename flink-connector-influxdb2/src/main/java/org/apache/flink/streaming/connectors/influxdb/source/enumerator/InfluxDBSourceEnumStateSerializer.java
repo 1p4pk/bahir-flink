@@ -17,9 +17,11 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source.enumerator;
 
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 /** InfluxDB is stateless due to its unreplayable HTTP request source. */
+@Internal
 public final class InfluxDBSourceEnumStateSerializer
         implements SimpleVersionedSerializer<InfluxDBSourceEnumState> {
     @Override

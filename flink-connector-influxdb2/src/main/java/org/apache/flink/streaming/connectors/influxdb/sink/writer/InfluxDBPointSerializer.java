@@ -24,9 +24,11 @@ import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.streaming.connectors.influxdb.common.InfluxParser;
 
+@Internal
 public final class InfluxDBPointSerializer implements SimpleVersionedSerializer<Point> {
 
     private static final Charset CHARSET = StandardCharsets.UTF_8;
