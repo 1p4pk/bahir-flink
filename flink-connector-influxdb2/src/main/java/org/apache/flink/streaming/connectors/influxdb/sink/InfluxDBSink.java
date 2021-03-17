@@ -32,6 +32,26 @@ import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBPointS
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBSchemaSerializer;
 import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter;
 
+/**
+ * This Sink implementation of InfluxDB/Line Protocol. Please use a {@link InfluxDBSinkBuilder} to
+ * construct a {@link InfluxDBSink}. The following example shows how to create an InfluxDBSink
+ * having records of <code>Long</code> as input type.
+ *
+ * <pre>{@code
+ * InfluxDBSink<Long> influxDBSink = InfluxDBSink.<Long>builder()
+ * .setInfluxDBSchemaSerializer(new InfluxDBSerializer())
+ * .setInfluxDBUrl(getUrl())
+ * .setInfluxDBUsername(getUsername())
+ * .setInfluxDBPassword(getPassword())
+ * .setInfluxDBBucket(getBucket())
+ * .setInfluxDBOrganization(getOrg())
+ * .build();
+ * }</pre>
+ *
+ * <p>See {@link InfluxDBSinkBuilder} for more details.
+ *
+ * @param <IN> type of the input of the sink.
+ */
 public final class InfluxDBSink<IN> implements Sink<IN, Long, Point, Void> {
 
     private final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer;
