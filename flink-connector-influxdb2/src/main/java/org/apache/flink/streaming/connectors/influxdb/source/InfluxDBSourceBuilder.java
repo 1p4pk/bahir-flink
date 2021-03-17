@@ -62,7 +62,7 @@ public final class InfluxDBSourceBuilder<OUT> {
      *     org.apache.flink.streaming.connectors.influxdb.common.DataPoint DataPoint}.
      * @return this InfluxDBSourceBuilder.
      */
-    public <T> InfluxDBSourceBuilder<T> setDeserializer(
+    public <T extends OUT> InfluxDBSourceBuilder<T> setDeserializer(
             final InfluxDBDataPointDeserializer<T> dataPointDeserializer) {
         checkNotNull(dataPointDeserializer);
         final InfluxDBSourceBuilder<T> sourceBuilder = (InfluxDBSourceBuilder<T>) this;
