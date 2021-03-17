@@ -31,7 +31,7 @@ class InfluxDBSinkBuilderTest {
                 assertThrows(
                         NullPointerException.class,
                         () ->
-                                InfluxDBSink.<Long>builder()
+                                InfluxDBSink.builder()
                                         .setInfluxDBSchemaSerializer(new InfluxDBTestSerializer())
                                         .setInfluxDBUsername(InfluxDBContainer.username)
                                         .setInfluxDBPassword(InfluxDBContainer.password)
@@ -47,7 +47,7 @@ class InfluxDBSinkBuilderTest {
                 assertThrows(
                         NullPointerException.class,
                         () ->
-                                InfluxDBSink.<Long>builder()
+                                InfluxDBSink.builder()
                                         .setInfluxDBUrl("http://localhost:8086")
                                         .setInfluxDBPassword(InfluxDBContainer.password)
                                         .setInfluxDBBucket(InfluxDBContainer.bucket)
@@ -63,7 +63,7 @@ class InfluxDBSinkBuilderTest {
                 assertThrows(
                         NullPointerException.class,
                         () ->
-                                InfluxDBSink.<Long>builder()
+                                InfluxDBSink.builder()
                                         .setInfluxDBUrl("http://localhost:8086")
                                         .setInfluxDBUsername(InfluxDBContainer.username)
                                         .setInfluxDBBucket(InfluxDBContainer.bucket)
@@ -79,7 +79,7 @@ class InfluxDBSinkBuilderTest {
                 assertThrows(
                         NullPointerException.class,
                         () ->
-                                InfluxDBSink.<Long>builder()
+                                InfluxDBSink.builder()
                                         .setInfluxDBUrl("http://localhost:8086")
                                         .setInfluxDBUsername(InfluxDBContainer.username)
                                         .setInfluxDBPassword(InfluxDBContainer.password)
@@ -95,7 +95,7 @@ class InfluxDBSinkBuilderTest {
                 assertThrows(
                         NullPointerException.class,
                         () ->
-                                InfluxDBSink.<Long>builder()
+                                InfluxDBSink.builder()
                                         .setInfluxDBUrl("http://localhost:8086")
                                         .setInfluxDBUsername(InfluxDBContainer.username)
                                         .setInfluxDBPassword(InfluxDBContainer.password)
@@ -111,7 +111,7 @@ class InfluxDBSinkBuilderTest {
                 assertThrows(
                         NullPointerException.class,
                         () ->
-                                InfluxDBSink.<Long>builder()
+                                InfluxDBSink.builder()
                                         .setInfluxDBUrl("http://localhost:8086")
                                         .setInfluxDBUsername(InfluxDBContainer.username)
                                         .setInfluxDBPassword(InfluxDBContainer.password)
@@ -126,7 +126,7 @@ class InfluxDBSinkBuilderTest {
         final IllegalArgumentException exception =
                 assertThrows(
                         IllegalArgumentException.class,
-                        () -> InfluxDBSink.<Long>builder().setWriteBufferSize(0));
+                        () -> InfluxDBSink.builder().setWriteBufferSize(0));
         assertEquals(exception.getMessage(), "The buffer size should be greater than 0.");
     }
 }

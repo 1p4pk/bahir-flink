@@ -44,7 +44,7 @@ import org.apache.flink.streaming.connectors.influxdb.source.split.InfluxDBSplit
  * records of <code>Long</code> type.
  *
  * <pre>{@code
- * InfluxDBSource<Long> influxDBSource = InfluxBSource.<Long>builder()
+ * InfluxDBSource<Long> influxDBSource = InfluxBSource.builder()
  * .setDeserializer(new InfluxDBDeserializer())
  * .build()
  * }</pre>
