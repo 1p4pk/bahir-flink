@@ -75,7 +75,7 @@ class InfluxDBSinkIntegrationTestCase extends TestLogger {
         final StreamExecutionEnvironment env = buildStreamEnv();
 
         final InfluxDBSink<Long> influxDBSink =
-                InfluxDBSink.<Long>builder()
+                InfluxDBSink.builder()
                         .setInfluxDBSchemaSerializer(new InfluxDBTestSerializer())
                         .setInfluxDBUrl(influxDBContainer.getUrl())
                         .setInfluxDBUsername(InfluxDBContainer.username)

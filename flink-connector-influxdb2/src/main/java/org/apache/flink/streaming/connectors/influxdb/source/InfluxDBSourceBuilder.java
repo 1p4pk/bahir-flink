@@ -17,9 +17,10 @@
  */
 package org.apache.flink.streaming.connectors.influxdb.source;
 
+import static org.apache.flink.util.Preconditions.checkNotNull;
+
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.connectors.influxdb.source.reader.deserializer.InfluxDBDataPointDeserializer;
-import org.apache.flink.util.Preconditions;
 
 /**
  * The @builder class for {@link InfluxDBSource} to make it easier for the users to construct a
@@ -29,7 +30,7 @@ import org.apache.flink.util.Preconditions;
  * values from a line protocol source.
  *
  * <pre>{@code
- * InfluxDBSource<Long> influxDBSource = InfluxBSource.<Long>builder()
+ * InfluxDBSource<Long> influxDBSource = InfluxBSource.builder()
  * .setDeserializer(new InfluxDBDeserializer())
  * .build()
  * }</pre>
@@ -60,10 +61,12 @@ public final class InfluxDBSourceBuilder<OUT> {
      *     org.apache.flink.streaming.connectors.influxdb.common.DataPoint DataPoint}.
      * @return this InfluxDBSourceBuilder.
      */
-    public InfluxDBSourceBuilder<OUT> setDeserializer(
-            final InfluxDBDataPointDeserializer<OUT> dataPointDeserializer) {
-        this.deserializationSchema = dataPointDeserializer;
-        return this;
+    public <T extends OUT> InfluxDBSourceBuilder<T> setDeserializer(
+            final InfluxDBDataPointDeserializer<T> dataPointDeserializer) {
+        checkNotNull(dataPointDeserializer);
+        final InfluxDBSourceBuilder<T> sourceBuilder = (InfluxDBSourceBuilder<T>) this;
+        sourceBuilder.deserializationSchema = dataPointDeserializer;
+        return sourceBuilder;
     }
 
     /**
@@ -125,7 +128,7 @@ public final class InfluxDBSourceBuilder<OUT> {
     // ------------- private helpers  --------------
 
     private void sanityCheck() {
-        Preconditions.checkNotNull(
+        checkNotNull(
                 this.deserializationSchema, "Deserialization schema is required but not provided.");
     }
 }

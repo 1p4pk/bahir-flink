@@ -48,8 +48,10 @@ import org.apache.flink.util.TestLogger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 /** Integration test for the InfluxDB source for Flink. */
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class InfluxDBSourceIntegrationTestCase extends TestLogger {
 
     private static final String HTTP_ADDRESS = "http://localhost";
@@ -92,7 +94,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
     @Test
     void testIncrementPipeline() throws Exception {
         final InfluxDBSource<Long> influxDBSource =
-                InfluxDBSource.<Long>builder()
+                InfluxDBSource.builder()
                         .setPort(this.port)
                         .setDeserializer(new InfluxDBTestDeserializer())
                         .build();
@@ -115,13 +117,14 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
         final Collection<Long> results = new ArrayList<>();
         results.add(2L);
         results.add(3L);
+        Thread.sleep(500);
         assertTrue(CollectSink.VALUES.containsAll(results));
     }
 
     @Test
     void testBadRequestException() throws Exception {
         final InfluxDBSource<Long> influxDBSource =
-                InfluxDBSource.<Long>builder()
+                InfluxDBSource.builder()
                         .setPort(this.port)
                         .setDeserializer(new InfluxDBTestDeserializer())
                         .build();
@@ -144,7 +147,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
     @Test
     void testRequestTooLargeException() throws Exception {
         final InfluxDBSource<Long> influxDBSource =
-                InfluxDBSource.<Long>builder()
+                InfluxDBSource.builder()
                         .setPort(this.port)
                         .setDeserializer(new InfluxDBTestDeserializer())
                         .setMaximumLinesPerRequest(2)

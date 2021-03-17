@@ -42,7 +42,7 @@ When using Telegraf, use its [HTTP output plugin](https://docs.influxdata.com/te
 ### Usage
 
 ```java
-InfluxDBSource<Long> influxDBSource = InfluxBSource.<Long>builder()
+InfluxDBSource<Long> influxDBSource = InfluxBSource.builder()
         .setDeserializer(new TestDeserializer())
         .build()
 
@@ -103,7 +103,7 @@ The timestamp refers to the latest element that Flink serializes.
 
 ```java
 // The InfluxDB Sink uses the build pattern to create a Sink object
-InfluxDBSink<Long> influxDBSink = InfluxDBSink.<Long>builder()
+InfluxDBSink<Long> influxDBSink = InfluxDBSink.builder()
         .setInfluxDBSchemaSerializer(new TestSerializer())
         .setInfluxDBUrl(getUrl())           // http://localhost:8086
         .setInfluxDBUsername(getUsername()) // admin
@@ -159,7 +159,7 @@ Some basic benchmarks were conducted.
 
 ### Source
 A data generator that sends line protocol in form of HTTP requests to an REST endpoint was used for the source benchmarks.
-Throughput and latency was measured for a direct connection between the data generator and the InlfuxDB source.
+Throughput and latency was measured for a direct connection between the data generator and the InfluxDB source.
 A setup including Telegraf was used to benchmark the latency in a more realistic setup.
 
 ### Sink
