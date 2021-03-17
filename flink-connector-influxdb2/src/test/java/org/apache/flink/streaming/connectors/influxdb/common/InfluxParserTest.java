@@ -48,11 +48,17 @@ class InfluxParserTest {
                 "test,testTagKey=testTagValue testFieldKey=\"testFieldValue\" 1556813561098000000";
         final DataPoint dataPoint = InfluxParser.parseToDataPoint(lineProtocol);
 
-        final String lineProtocol2 =
+        final String notEqualLineProtocol =
                 "test,testTagKey=diff testFieldKey=\"testFieldValue\" 1556813561098000000";
-        final DataPoint dataPoint2 = InfluxParser.parseToDataPoint(lineProtocol2);
+        final DataPoint notEqualDataPoint = InfluxParser.parseToDataPoint(notEqualLineProtocol);
 
-        assertNotEquals(dataPoint, dataPoint2);
+        assertNotEquals(dataPoint, notEqualDataPoint);
+
+        final String equalLineProtocol =
+            "test,testTagKey=testTagValue testFieldKey=\"testFieldValue\" 1556813561098000000";
+        final DataPoint equalDataPoint = InfluxParser.parseToDataPoint(equalLineProtocol);
+
+        assertEquals(equalDataPoint, dataPoint);
     }
 
     @Test
