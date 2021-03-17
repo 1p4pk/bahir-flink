@@ -37,8 +37,6 @@ under the License.
 
   <properties>
     <influxdbClient.version>2.0.0</influxdbClient.version>
-    <flink.new.version>1.12.2</flink.new.version>
-    <scala.binary.new.version>2.11</scala.binary.new.version>
     <spotless.version>2.7.0</spotless.version>
     <druid.version>0.13.0-incubating</druid.version>
     <!--  Test Properties  -->
@@ -53,14 +51,14 @@ under the License.
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-core</artifactId>
-      <version>${flink.new.version}</version>
+      <version>${flink.version}</version>
     </dependency>
 
 
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-base</artifactId>
-      <version>${flink.new.version}</version>
+      <version>${flink.version}</version>
     </dependency>
 
     <!-- InfluxDB  -->
@@ -83,15 +81,15 @@ under the License.
 
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-test-utils_${scala.binary.new.version}</artifactId>
-      <version>${flink.new.version}</version>
+      <artifactId>flink-test-utils_${scala.binary.version}</artifactId>
+      <version>${flink.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-streaming-java_${scala.binary.new.version}</artifactId>
-      <version>${flink.new.version}</version>
+      <artifactId>flink-streaming-java_${scala.binary.version}</artifactId>
+      <version>${flink.version}</version>
       <scope>test</scope>
       <classifier>tests</classifier>
     </dependency>
