@@ -21,6 +21,25 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.connectors.influxdb.source.reader.deserializer.InfluxDBDataPointDeserializer;
 import org.apache.flink.util.Preconditions;
 
+/**
+ * The @builder class for {@link InfluxDBSource} to make it easier for the users to construct a
+ * {@link InfluxDBSource}.
+ *
+ * <p>The following example shows the minimum setup to create a InfluxDBSource that reads the Long
+ * values from a line protocol source.
+ *
+ * <pre>{@code
+ * InfluxDBSource<Long> influxDBSource = InfluxBSource.<Long>builder()
+ * .setDeserializer(new InfluxDBDeserializer())
+ * .build()
+ * }</pre>
+ *
+ * <p>To specify the starting port on which the InfluxDBSource starts its HTTP server, one can call
+ * {@link #setPort(int)}.
+ *
+ * <p>Check the Java docs of each individual methods to learn more about the settings to build a
+ * InfluxDBSource.
+ */
 public final class InfluxDBSourceBuilder<OUT> {
 
     private InfluxDBDataPointDeserializer<OUT> deserializationSchema;
