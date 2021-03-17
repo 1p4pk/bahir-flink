@@ -160,7 +160,7 @@ Some basic benchmarks were conducted.
 
 ### Source
 A data generator that sends line protocol in form of HTTP requests to an REST endpoint was used for the source benchmarks.
-Throughput and latency was measured for a direct connection between the data generator and the InlfuxDB source.
+Throughput and latency was measured for a direct connection between the data generator and the InfluxDB source.
 A setup including Telegraf was used to benchmark the latency in a more realistic setup.
 
 ### Sink
