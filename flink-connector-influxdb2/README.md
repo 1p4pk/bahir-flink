@@ -175,7 +175,7 @@ The results of these benchmarks are visualized [here](media/benchmarks.pdf).
 
 ## Usage and Deployment Example
 
-See [`Shark/flink-connector-influxdb-example](https://github.com/Shark/flink-connector-influxdb-example) for an example showing you how to use and deploy the InfluxDB source and sink connectors in a Flink application on a Kubernetes cluster.
+See [`Shark/flink-connector-influxdb-example`](https://github.com/Shark/flink-connector-influxdb-example) for an example showing you how to use and deploy the InfluxDB source and sink connectors in a Flink application on a Kubernetes cluster.
 
 ## Future Work
 
