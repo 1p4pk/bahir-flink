@@ -2,6 +2,10 @@
 
 This connector provides a Source that parses the [InfluxDB Line Protocol](https://docs.influxdata.com/influxdb/v2.0/reference/syntax/line-protocol/) and a Sink that can write to [InfluxDB](https://www.influxdata.com/). The Source implements the unified [Data Source API](https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/stream/sources.html). Our sink implements the unified [Sink API](https://cwiki.apache.org/confluence/display/FLINK/FLIP-143%3A+Unified+Sink+API#FLIP143:UnifiedSinkAPI-SinkAPI).
 
+The InfluxDB Source serves as an output target for [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/) (and compatible tools). Telegraf pushes data to the source. The process is push-based, so it is a stateless (non-replayable) source.
+
+![Flink InfluxDB Connector Architecture](media/connector-architecture.png)
+
 ## Installation
 
 To use this connector, add the following dependency to your project:
@@ -22,18 +26,13 @@ This module is compatible with InfluxDB 2.x and InfluxDB 1.8+. See more informat
 
 ## Source
 
-The Source accepts data in the form of the [Line Protocol](https://docs.influxdata.com/influxdb/v2.0/reference/syntax/line-protocol/). One HTTP server starts per SplitReader that parses HTTP requests to our Data Point class. That Data Point instance is deserialized by a user-provided implementation of our InfluxDBDataPointDeserializer and send to the next Flink operator.
+The Source accepts data in the form of the [Line Protocol](https://docs.influxdata.com/influxdb/v2.0/reference/syntax/line-protocol/). One HTTP server per source instance is started. It parses HTTP requests to our Data Point class. That Data Point instance is deserialized by a user-provided implementation of our InfluxDBDataPointDeserializer and sent to the next Flink operator.
 
-When using Telegraf, you have two choices to configure it. You can either configure its [InfluxDB v2 output plugin](https://docs.influxdata.com/telegraf/v1.17/plugins/#influxdb_v2) for writing to the running HTTP servers or use its [HTTP output plugin](https://docs.influxdata.com/telegraf/v1.17/plugins/#http) for that:
+When using Telegraf, use its [HTTP output plugin](https://docs.influxdata.com/telegraf/v1.17/plugins/#http):
 
 ```toml
-[[outputs.influxdb_v2]]
-  urls = ["http://task-manager-1:8000", "http:/task-manager-2:8000"]
-
-# or
-
 [[outputs.http]]
-  url = "http://task-manager-1:8000/api/v2/write"
+  url = "http://task-manager:8000/api/v2/write"
   method = "POST"
   data_format = "influx"
 ```
@@ -72,7 +71,7 @@ class TestDeserializer implements InfluxDBDataPointDeserializer<Long> {
 | ENQUEUE_WAIT_TIME | The time out in seconds for enqueuing an HTTP request to the queue. | 5 |
 | INGEST_QUEUE_CAPACITY | Size of queue that buffers HTTP requests data points before fetching. | 1000 |
 | MAXIMUM_LINES_PER_REQUEST | The maximum number of lines that should be parsed per HTTP request. | 10000 |
-| PORT | TCP port on which the split reader's HTTP server is running on. | 8000 |
+| PORT | TCP port on which the source's HTTP server is running on. | 8000 |
 
 ### Supported Data Types in Field Set
 
