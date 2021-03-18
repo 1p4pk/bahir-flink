@@ -94,7 +94,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
     @Test
     void testIncrementPipeline() throws Exception {
         final InfluxDBSource<Long> influxDBSource =
-                InfluxDBSource.<Long>builder()
+                InfluxDBSource.builder()
                         .setPort(this.port)
                         .setDeserializer(new InfluxDBTestDeserializer())
                         .build();
@@ -117,13 +117,14 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
         final Collection<Long> results = new ArrayList<>();
         results.add(2L);
         results.add(3L);
+        Thread.sleep(500);
         assertTrue(CollectSink.VALUES.containsAll(results));
     }
 
     @Test
     void testBadRequestException() throws Exception {
         final InfluxDBSource<Long> influxDBSource =
-                InfluxDBSource.<Long>builder()
+                InfluxDBSource.builder()
                         .setPort(this.port)
                         .setDeserializer(new InfluxDBTestDeserializer())
                         .build();
@@ -146,7 +147,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
     @Test
     void testRequestTooLargeException() throws Exception {
         final InfluxDBSource<Long> influxDBSource =
-                InfluxDBSource.<Long>builder()
+                InfluxDBSource.builder()
                         .setPort(this.port)
                         .setDeserializer(new InfluxDBTestDeserializer())
                         .setMaximumLinesPerRequest(2)

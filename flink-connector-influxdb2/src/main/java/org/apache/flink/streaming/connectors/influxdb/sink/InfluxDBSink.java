@@ -38,7 +38,7 @@ import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter
  * having records of <code>Long</code> as input type.
  *
  * <pre>{@code
- * InfluxDBSink<Long> influxDBSink = InfluxDBSink.<Long>builder()
+ * InfluxDBSink<Long> influxDBSink = InfluxDBSink.builder()
  * .setInfluxDBSchemaSerializer(new InfluxDBSerializer())
  * .setInfluxDBUrl(getUrl())
  * .setInfluxDBUsername(getUsername())

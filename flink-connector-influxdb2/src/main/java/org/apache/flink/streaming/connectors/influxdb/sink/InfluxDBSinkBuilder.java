@@ -36,10 +36,10 @@ import org.apache.flink.streaming.connectors.influxdb.sink.writer.InfluxDBWriter
  * InfluxDBSink}.
  *
  * <p>The following example shows the minimum setup to create a InfluxDBSink that uses the Long
- * values from a former operator and sends it to an InlfuxDB instance.
+ * values from a former operator and sends it to an InfluxDB instance.
  *
  * <pre>{@code
- * InfluxDBSink<Long> influxDBSink = InfluxDBSink.<Long>builder()
+ * InfluxDBSink<Long> influxDBSink = InfluxDBSink.builder()
  * .setInfluxDBSchemaSerializer(new InfluxDBSerializer())
  * .setInfluxDBUrl(getUrl())
  * .setInfluxDBUsername(getUsername())
@@ -82,7 +82,7 @@ public final class InfluxDBSinkBuilder<IN> {
      */
     public InfluxDBSinkBuilder<IN> setInfluxDBUrl(final String influxDBUrl) {
         this.influxDBUrl = influxDBUrl;
-        this.configuration.setString(INFLUXDB_URL, influxDBUrl);
+        this.configuration.setString(INFLUXDB_URL, checkNotNull(influxDBUrl));
         return this;
     }
 
@@ -94,7 +94,7 @@ public final class InfluxDBSinkBuilder<IN> {
      */
     public InfluxDBSinkBuilder<IN> setInfluxDBUsername(final String influxDBUsername) {
         this.influxDBUsername = influxDBUsername;
-        this.configuration.setString(INFLUXDB_USERNAME, influxDBUsername);
+        this.configuration.setString(INFLUXDB_USERNAME, checkNotNull(influxDBUsername));
         return this;
     }
 
@@ -106,7 +106,7 @@ public final class InfluxDBSinkBuilder<IN> {
      */
     public InfluxDBSinkBuilder<IN> setInfluxDBPassword(final String influxDBPassword) {
         this.influxDBPassword = influxDBPassword;
-        this.configuration.setString(INFLUXDB_PASSWORD, influxDBPassword);
+        this.configuration.setString(INFLUXDB_PASSWORD, checkNotNull(influxDBPassword));
         return this;
     }
 
@@ -118,7 +118,7 @@ public final class InfluxDBSinkBuilder<IN> {
      */
     public InfluxDBSinkBuilder<IN> setInfluxDBBucket(final String bucketName) {
         this.bucketName = bucketName;
-        this.configuration.setString(INFLUXDB_BUCKET, bucketName);
+        this.configuration.setString(INFLUXDB_BUCKET, checkNotNull(bucketName));
         return this;
     }
 
@@ -130,7 +130,7 @@ public final class InfluxDBSinkBuilder<IN> {
      */
     public InfluxDBSinkBuilder<IN> setInfluxDBOrganization(final String organizationName) {
         this.organizationName = organizationName;
-        this.configuration.setString(INFLUXDB_ORGANIZATION, organizationName);
+        this.configuration.setString(INFLUXDB_ORGANIZATION, checkNotNull(organizationName));
         return this;
     }
 
@@ -141,10 +141,12 @@ public final class InfluxDBSinkBuilder<IN> {
      * @param influxDBSchemaSerializer the serializer for the input type.
      * @return this InfluxDBSourceBuilder.
      */
-    public InfluxDBSinkBuilder<IN> setInfluxDBSchemaSerializer(
-            final InfluxDBSchemaSerializer<IN> influxDBSchemaSerializer) {
-        this.influxDBSchemaSerializer = influxDBSchemaSerializer;
-        return this;
+    public <T extends IN> InfluxDBSinkBuilder<T> setInfluxDBSchemaSerializer(
+            final InfluxDBSchemaSerializer<T> influxDBSchemaSerializer) {
+        checkNotNull(influxDBSchemaSerializer);
+        final InfluxDBSinkBuilder<T> sinkBuilder = (InfluxDBSinkBuilder<T>) this;
+        sinkBuilder.influxDBSchemaSerializer = influxDBSchemaSerializer;
+        return sinkBuilder;
     }
 
     /**
@@ -160,7 +162,7 @@ public final class InfluxDBSinkBuilder<IN> {
 
     /**
      * Sets the buffer size of the {@link InfluxDBWriter}. This also determines the number of {@link
-     * Point} send to the InlfuxDB instance per request.
+     * Point} send to the InfluxDB instance per request.
      *
      * @param bufferSize size of the buffer.
      * @return this InfluxDBSinkBuilder.

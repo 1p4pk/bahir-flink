@@ -26,8 +26,7 @@ class InfluxDBSourceBuilderTest {
     @Test
     void shouldNotBuildSourceWhenSchemaDeserializerIsNotProvided() {
         final NullPointerException exception =
-                assertThrows(
-                        NullPointerException.class, () -> InfluxDBSource.<Long>builder().build());
+                assertThrows(NullPointerException.class, () -> InfluxDBSource.builder().build());
         assertEquals(
                 exception.getMessage(), "Deserialization schema is required but not provided.");
     }
