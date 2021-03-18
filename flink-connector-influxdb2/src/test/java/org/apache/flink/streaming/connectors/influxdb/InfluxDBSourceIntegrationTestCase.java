@@ -117,7 +117,7 @@ class InfluxDBSourceIntegrationTestCase extends TestLogger {
         final Collection<Long> results = new ArrayList<>();
         results.add(2L);
         results.add(3L);
-        Thread.sleep(500);
+        Thread.sleep(5000);
         assertTrue(CollectSink.VALUES.containsAll(results));
     }
 
