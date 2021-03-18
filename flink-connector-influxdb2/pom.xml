@@ -139,37 +139,6 @@ under the License.
           </execution>
         </executions>
       </plugin>
-
-      <plugin>
-        <groupId>com.diffplug.spotless</groupId>
-        <artifactId>spotless-maven-plugin</artifactId>
-        <version>${spotless.version}</version>
-        <configuration>
-          <java>
-            <includes>
-              <include>src/main/java/**/*.java</include>
-              <include>src/test/java/**/*.java</include>
-            </includes>
-
-            <importOrder/>
-            <importOrder>
-              <order>java,javax,org,com,com.diffplug,
-              </order>
-            </importOrder>
-
-            <removeUnusedImports/>
-
-            <googleJavaFormat>
-              <style>AOSP</style>
-            </googleJavaFormat>
-
-            <licenseHeader>
-              <file>${basedir}/license-header</file>
-            </licenseHeader>
-
-          </java>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 </project>
