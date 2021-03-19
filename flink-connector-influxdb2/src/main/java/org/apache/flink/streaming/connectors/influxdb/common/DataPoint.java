@@ -55,7 +55,9 @@ public final class DataPoint {
     }
 
     /**
-     * Converts the DataPoint object to {@link Point} object.
+     * Converts the DataPoint object to {@link Point} object. The default precision for timestamps
+     * is in nanoseconds. For more information about timestamp precision please go to <a
+     * href=https://docs.influxdata.com/influxdb/cloud/write-data/#timestamp-precision>timestamp-precision</a>
      *
      * @return {@link Point}.
      */
