@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 @Internal
 abstract class Handler implements HttpHandler {
 
-    public static final int HTTP_TOO_MANY_REQUESTS = 415;
+    private static final int HTTP_TOO_MANY_REQUESTS = 415;
 
     static void sendResponse(
             @NotNull final HttpExchange t, final int responseCode, @NotNull final String message)
