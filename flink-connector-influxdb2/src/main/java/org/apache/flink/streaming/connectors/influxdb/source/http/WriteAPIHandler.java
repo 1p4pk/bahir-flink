@@ -107,7 +107,6 @@ public final class WriteAPIHandler extends Handler {
         } catch (final RequestTooLargeException e) {
             Handler.sendResponse(t, HttpURLConnection.HTTP_ENTITY_TOO_LARGE, e.getMessage());
         } catch (final TimeoutException e) {
-            final int HTTP_TOO_MANY_REQUESTS = 429;
             Handler.sendResponse(t, HTTP_TOO_MANY_REQUESTS, "Server overloaded");
             LOG.error(e.getMessage());
         } catch (final ExecutionException | InterruptedException e) {
